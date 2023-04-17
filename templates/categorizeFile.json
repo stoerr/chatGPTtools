@@ -1,0 +1,8 @@
+[
+{ "role": "system", "content" : "Print a category for the file. Markdown would be category 'markdown' , for example." },
+{ "role": "user", "content" : "# This is the usual markdown syntax\nWrite this.\n#####\nCategory:" },
+{ "role": "assistant", "content" : "markdown" },
+{ "role": "user", "content" : "Just a plain text file.\n#####\nCategory:" },
+{ "role": "assistant", "content" : "text" },
+{ "role": "user", "content" : "FILECONTENT\n#####\nCategory:" }
+]

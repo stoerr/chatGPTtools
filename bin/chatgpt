@@ -1,0 +1,3 @@
+#!/bin/bash
+# execute file suggestCommand.js that is in the directory the script is run from with node , even if it is a symlink
+node "$(dirname "$(readlink -f "$0")")/../js/suggestCommand.js" "$@"

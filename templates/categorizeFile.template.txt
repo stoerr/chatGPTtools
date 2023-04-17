@@ -1,0 +1,19 @@
+Print a category for the file. Markdown would be category 'markdown' , for example.
+-----
+# This is the usual markdown syntax
+Write this.
+#####
+Category:
+-----
+markdown
+-----
+Just a plain text file.
+#####
+Category:
+-----
+text
+-----
+FILECONTENT
+#####
+Category:
+-----

@@ -1,0 +1,9 @@
+#!/bin/bash
+# pipe while replacing everything that matches the regex contained in hpsxmaskregex.txt with a string of X of the same length
+# usage: cat file | masktxt
+
+# read the regex from the file
+regex=$(cat "$(dirname "$(readlink -f "$0")")/hpsxmaskregex.txt")
+
+# replace everything that matches the regex with a string of X of the same length as the match
+sed -r "s/$regex/XXX/g"
