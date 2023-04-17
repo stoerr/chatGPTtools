@@ -1,0 +1,1 @@
+alert('TODO: bookmarkletlib.js');
