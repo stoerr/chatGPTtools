@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ChatGPT multiple message chat</title>
+    <meta name="description"
+          content="Testbed for executing chats with several messages">
+    <link href="//cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<body>
+<div class="container-xxl messages">
+    <div class="row">
+        <div class="col-sm-11"><h1>Chat simulation for ChatGPT</h1></div>
+        <div class="col-sm-1 text-right"><a href="0README.html"><i class="fa fa-question-circle fa-2x"></i></a></div>
+    </div>
+    <div class="row messagefields" id="row-1">
+        <div class="col-sm-1">
+            <select class="form-select type">
+                <option value="system">System</option>
+                <option value="user">User</option>
+                <option value="assistant">Assistant</option>
+            </select>
+        </div>
+        <div class="col-sm-11">
+            <textarea class="form-control message" rows="3"></textarea>
+        </div>
+    </div>
+</div>
+<div class="container-xxl">
+    <div class="row">
+        <div class="col-sm-12 buttons mt-3">
+            <button type="button" class="btn btn-primary submitbutton" onclick="submit()"
+                    title="Button to submit, pressing Enter works, too (shift enter for linebreak)">Submit
+            </button>
+            <button type="button" class="btn btn-primary" onclick="reset()">Reset</button>
+            <button type="button" class="btn btn-primary" onclick="resetButKeepSystem()"
+                    title="Remove everything except system message">Reset keep System
+            </button>
+            <button type="button" class="btn btn-primary" onclick="removeEmptyMessages()"
+                    title="Remove fields that are empty">Remove empty
+            </button>
+            <button type="button" class="btn btn-primary" onclick="scrollIfNecessary()"
+                    title="Scroll to last filled field">Scroll
+            </button>
+            <button type="button" class="btn btn-primary" onclick="addFields()"
+                    title="Adds some empty input fields">Add Fields
+            </button>
+            <br/>
+            <input type="number" id="historysize" placeholder="Historysize" value=""
+                   title="If set, we keep only that many messages to prevent overflowing the API.">
+            <input type="number" id="temperature" placeholder="Temperature" value=""
+                   title="What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.">
+            <input type="number" id="max_tokens" placeholder="max_tokens" value=""
+                   title="The maximum number of tokens to generate in the chat completion.">
+            <input type="number" id="n" placeholder="n" value=""
+                   title="How many chat completion choices to generate for each input message.">
+            <br>
+            <!-- Drop down list for selecting an initial prompt. The first entry is an autoselected option with an empty value and description "default" -->
+            <label for="initialprompt" class="mt-3">For fun, select a different system prompt:</label>
+            <select id="initialprompt" class="form-select">
+                <option value="" selected>default</option>
+            </select>
+        </div>
+    </div>
+    <div class="row mt-3" id="jsonimport">
+        <div class="col-sm-2 vstack gap-2">
+            <button type="button" class="btn btn-primary" onclick="importJson()"
+                    title="Import the JSON into the form, reproducing a request">Import JSON
+            </button>
+            <button type="button" class="btn btn-primary" onclick="exportJson()"
+                    title="Create a JSON from the form, reproducing a request">Export JSON
+            </button>
+        </div>
+        <div class="col-sm-10">
+            <textarea class="form-control" id="json" rows="3"></textarea>
+        </div>
+    </div>
+</div>
+
+<script src="//cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
+        crossorigin="anonymous"></script>
+<script
+        src="//code.jquery.com/jquery-3.6.4.min.js"
+        integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8="
+        crossorigin="anonymous"></script>
+
+<!-- Hidden pre with the property file for the prompts, from chatgptprompts.properties. We have to manually update this from there,
+ since we get CORS errors when accessing that file with a file:// URL during testing. -->
+<pre id="chatgptprompts" style="display: none">
+    Peer's: Sei ein hilfreicher Assistent. Sprich den Nutzer mit "du" an. Sei sachlich. Benenne Deine Fehler kurz, aber entschuldige Dich niemals.
+    UnixTerminal: Behave like a Linux terminal executing bash. The users messages are your commands executed in bash; just print the results, without any explanation. When I need to tell you something in English I will do so by putting text inside curly brackets {like this}.
+    Conversation: Let us have a conversation. Please reply in short sentences to keep the conversation flowing. Keep the conversation going by replying with insightful questions and comments. Too much text will be boring.
+    Frech: Sei ein hilfreicher Assistent für den Nutzer, aber mache immer lustige Kommentare. Wichtig: immer den Nutzer necken, er findet das lustig!
+    Lustig: Sei ein hilfreicher Assistent für den Nutzer, aber mache immer lustige Kommentare.
+    ProgrammAI: You are an AI programming assistant. Follow the users requirements carefully and to the letter. First think step by step - describe your plan for what to build in pseudocode, written out in great detail. Then output the code in a single block. Minimize any other prose.
+    TimeGPT: Now you are TimeGPT. the highest-tech time machine ever created. Only a date in the following format - "mm/dd/yy" - and the user's preferred location will be required. You will give a succinct account of that day in exchange. Make sure to give priority to any dates that have significant historical events if they occurred. Additionally, TimeGPT has a cutting-edge camera that enables you to capture a picture of the time and place you visit. Add a lengthy description of the picture you took, beginning with "a photo of," after the succinct account of the day.
+    Doktor: Verhalte Dich wie ein sehr vielseitig gebildeter Allgemeinmediziner, der auch Spezialwissen auf vielen anderen Gebieten der Medizin hat, und eine ganzheitliche Herangehensweise hat.
+    Haiku: Unterhalte Dich mit dem Nutzer. Antworte immer im Haiku!
+    Tutor: Frage den Nutzer nach einem Thema, und dann sei ein guter Lehrer für dieses Thema. Präsentiere die Grundlagen mit geeigneten Beispielen entsprechend dem Wissensstand des Nutzers, gehe ausführlich auf Fragen ein. Stelle dann multiple choice Testfragen um das Verständnis zu prüfen - genau eine Frage pro Message.
+    toDE: Übersetze jeden Text, den der Nutzer eingibt, in die Deutsche Sprache. Zum Beispiel: Eingabe "Hallo!" führt zu Ausgabe "Hello!".
+    toEN: Please translate every text the user enters into the English language. For example, for input "Guten morgen!" please output "Good morning!".
+    DEtoENtoDE: Übersetze jeden Text, den der Nutzer eingibt, in die Englische Sprache, falls der Text Deutsch ist, und ansonsten in die Deutsche Sprache. Zum Beispiel: Eingabe "Hallo!" führt zu Ausgabe "Hello!", und die Eingabe "Hello!" führt zu Ausgabe "Hallo!".
+    GameHarryPotter: You are a text-based video game that offers me the options (A, B, C, and D) to choose from. Harry Potter is the setting. I begin with 100 health.
+    FuerFabian: Sei freundlich und hilfreich, wenn Dein Nutzer Fragen stellt oder um etwas bittet, ansonsten unterhalte Dich mit ihm, geh manchmal auf vorhergehende Fragen oder seine Hobbies ein. Mache aber immer lustige Kommentare. Es ist erwünscht, den Nutzer etwas zu necken - er findet das lustig. Antworte in altersangemessener Jugendsprache mit Worten wie "Digger", z.B. wie die Rapper "Deine Freunde". Halte das Gespräch in Gang, indem du mit tiefgründigen Fragen und Kommentaren antwortest, aber maximal einem pro Antwort. Zu viel Text ist langweilig. Dein Nutzer ist ein 13-jähriger Junge namens HackerFS, der sich als Gamer/Zocker sieht (meist Minecraft) und gern Fahrrad fährt (Freeriding, Vorbild: Fabio Wibmer), sich für Autos interessiert (z.B. Toyota Supra MK4) und etwas faul ist und leider nicht viel von der Schule hält.
+    FuerFabian2: Verhalte Dich wie ein sehr aufgeweckter 13-jähriger, der unglaublich viel weiss und sehr gerne anderen Kindern hilft, aber sich auch sehr gern mit ihnen unterhält, lustige Kommentare macht, und die anderen intelligent neckt. Sprich in Jugendsprache. Halte das Gespräch in Gang, indem du mit tiefgründigen Fragen und Kommentaren antwortest, aber maximal einem pro Antwort. Dein Nutzer ist ein 13-jähriger Junge namens HackerFS, der einen neuen Windows 10 Gaming-PC hat, sich als Gamer/Zocker sieht (meist Minecraft) und gern Fahrrad fährt (Freeriding, Vorbild: Fabio Wibmer),sich für Autos interessiert (z.B. Toyota Supra MK4) und etwas faul ist und leider nicht viel von der Schule hält.
+    StandupComedian: I want you to act as a stand-up comedian. I will provide you with some topics related to current events and you will use your wit, creativity, and observational skills to create a routine based on those topics. You should also be sure to incorporate personal anecdotes or experiences into the routine in order to make it more relatable and engaging for the audience. My first request is 'I want an humorous take on politics.'
+    PromptCreator: I want you to become my Prompt Creator. Your goal is to help me craft the best possible prompt for my needs. The prompt will be used by you, ChatGPT. You will follow the following process: 1. Your first response will be to ask me what the prompt should be about. I will provide my answer, but we will need to improve it through continual iterations by going through the next steps. 2. Based on my input, you will generate 3 sections. a) Revised prompt (provide your rewritten prompt. it should be clear, concise, and easily understood by you), b) Suggestions (provide suggestions on what details to include in the prompt to improve it), and c) Questions (ask any relevant questions pertaining to what additional information is needed from me to improve the prompt). 3. We will continue this iterative process with me providing additional information to you and you updating the prompt in the Revised prompt section until it's complete.
+    Summarizer: Your will now become a text summarizer, your role is to provide a concise and effective summary of the given text. You will follow the following rules: 1. Provide a concise and effective summary of the given text. 2. Present the summary in bullet points. 3. The summary should retain all key points and concepts from the text. 4. The summary should explain key concepts in very short. 5. The goal is to help users study faster by providing an efficient way to review the main ideas from the text 6. The response should be flexible enough to allow for various relevant summaries that capture the essence of the original text without being overly long or complex. 7. The response should focus on providing clear and concise and key information that can easily be understood by readers.
+    InfoBlockTest: Be a friendly and helpful assistant for me. A ChatGPT info block is a text block like [ChatGPT: Text :ChatGPT] . The text it contains is information about me intended for you, and is not part of my request and is not shown to me. Along with answering my request (outside of the ChatGPT info block), always include a 200-word ChatGPT info block at the end of the response that provides information about me and my interests, which you have determined from my questions and responses. This will serve as a long-term memory for you, background information to answer future requests. For instance, [ChatGPT: I am interested in programming. My queries were about Java and Javascript, and I prefer brief and to-the-point answers. :ChatGPT] Ensure that the ChatGPT info block includes only meta-information about our conversation and details about what I am interested in. Avoid including any information intended for me in the ChatGPT info block, as I will not see that block.
+</pre>
+
+<script>
+
+    $(document).ready(function () {
+        reset();
+
+        $('#initialprompt').change(function () {
+            reset($('#initialprompt').val());
+        });
+        // for div with id "row-1", check that attribute rows is at least 10 when it comes into focus
+        $('#row-1').focusin(function () {
+            if ($('#row-1 textarea').attr('rows') < 10 || !$('#row-1 textarea').attr('rows')) {
+                $('#row-1 textarea').attr('rows', 10);
+            }
+        });
+        loadPrompts();
+        // if the user changes the system prompt in row-1 textarea, the initialprompt select should be set to the default value
+        $('#row-1 textarea').change(function () {
+            $('#initialprompt').val('');
+        });
+    });
+
+    function loadPrompts() {
+        // read prompts from the hidden pre chatgptprompts and add them to the select element "initialprompt"
+        // the property key is the option text, the property value is the option value, the option has a title attribute with the property value
+        var data = $('#chatgptprompts').text();
+        var lines = data.split(/\r?\n/);
+        for (var i = 0; i < lines.length; i++) {
+            var line = lines[i];
+            // split the line into key and value, separated by the regex [ :=]+ .
+            // careful: the value can contain stuff matching this regex, too, so we can't use the split function
+            // we use a regex matching the full line and then use the match function to get the named groups
+            var regex = /^\s*(?<key>[^:=]+)[ :=]+(?<value>.*)$/;
+            var match = regex.exec(line);
+            if (match) {
+                var key = match.groups.key;
+                var value = match.groups.value;
+                // use abbreviated value as text, full value as title
+                var text = value.length > 110 ? value.substring(0, 110) + '...' : value;
+                var $option = $('<option/>');
+                $option.attr('value', value);
+                $option.attr('title', value);
+                $option.text(key + ": " + text);
+                $option.appendTo('#initialprompt');
+            } else if (line) {
+                console.error('line ' + i + ' does not match regex: ' + line);
+            }
+        }
+    }
+
+    /** Adds a button with the given title, with an onclick resetAndSetSystemMessage to systemmessage */
+    function addButton(title, systemmessage) {
+        var button = $('<button type="button" class="btn btn-primary" onclick="reset(\'' + systemmessage + '\')">' + title + '</button>');
+        button.appendTo('.buttons');
+    }
+
+    /** Adds a new row to the chat. The id row-1 is replaced by row, followed by the number of the row In the select 'type' the given type is preselected. */
+    function addRow(type, message) {
+        var row = $('#row-1').clone();
+        row.attr('id', 'row-' + $('.row').length);
+        row.find('.type').val(type);
+        row.find('.message').val(message.trim());
+        row.appendTo('div.messages');
+    }
+
+    function addFields() {
+        addRow(assistant, '');
+        addRow(user, '');
+    }
+
+    function resetAndSetSystemMessage(message) {
+        // delete all row divs in div.messages with an id starting with row- except for row-1
+        $('div.messages div.row[id^="row-"]').not('#row-1').remove();
+        $('#row-1 .message').val(message);
+    }
+
+    function reset(message) {
+        resetAndSetSystemMessage(message ||
+            'Sei ein hilfreicher Assistent. Sprich den Nutzer mit "Du" an. Sei sachlich. Benenne Deine Fehler kurz, aber entschuldige Dich niemals. Benenne, wenn Du Deiner Antwort unsicher bist, oder sie auf Vermutungen basiert, und benenne die Vermutungen oder Annahmen, auf denen sie basiert. Wenn mehrere Denkschritte notwendig waren, um zur Antwort zu kommen, dann benenne diese.');
+        addRow('user', '');
+        adjustTextAreas();
+    }
+
+    function resetButKeepSystem() {
+        reset($('#row-1 .message').val());
+    }
+
+    /** Submits a message array via $.ajax to https://api.openai.com/v1/chat/completions .
+     * See https://platform.openai.com/docs/api-reference/completions/create
+     * @param messages array of  in the format {"role": type, "content": message}
+     * @param resultcallback gets the data from the result
+     * @param errorcallback in case of errors. */
+    function submitToGPT(messages, resultcallback, errorcallback) {
+
+        function isRetryableError(jqXHR, status, errorThrown) {
+            return jqXHR.status === 429;
+        }
+
+        function makeCall(resultcb, errorcb) {
+
+            // fetch api key from local storage, or else prompt if not found
+            var api_key = localStorage.getItem('api_key');
+            if (!api_key) {
+                api_key = prompt("Please enter your API key, which you can create in your profile at https://platform.openai.com/");
+                if (api_key) {
+                    localStorage.setItem('api_key', api_key);
+                }
+            }
+
+            var request = {model: "gpt-3.5-turbo", messages: messages}
+            // add the input fields temperature , max_tokens and n to the request, if they are not empty, but converted to numbers.
+            var temperature = $('#temperature').val();
+            if (temperature) {
+                request.temperature = Number(temperature);
+            }
+            var max_tokens = $('#max_tokens').val();
+            if (max_tokens) {
+                request.max_tokens = Number(max_tokens);
+            }
+            var n = $('#n').val();
+            if (n) {
+                request.n = Number(n);
+            }
+
+            return $.ajax({
+                url: 'https://api.openai.com/v1/chat/completions',
+                type: 'POST',
+                dataType: 'json',
+                headers: {
+                    'Authorization': 'Bearer ' + api_key,
+                    'Content-Type': 'application/json',
+                },
+                data: JSON.stringify(request),
+                success: resultcb,
+                error: errorcb
+            });
+
+        }
+
+        retrialStrategy(makeCall, isRetryableError, resultcallback, errorcallback);
+    }
+
+    function waiting(finished) {
+        $('button.submitbutton').prop('disabled', finished);
+    }
+
+    function processResult(data) {
+        for (const choice of data.choices) {
+            let message = choice.message.content;
+            addRow('assistant', message);
+        }
+        addRow('user', '');
+        adjustTextAreas();
+        waiting(false);
+    }
+
+    function onError(xhr, status, error) {
+        waiting(false);
+        var errorText = xhr.responseJSON ? JSON.stringify(xhr.responseJSON) : status || error;
+        console.error('Error: ', errorText, xhr);
+        addRow('assistant', 'Error: ' + errorText);
+        adjustTextAreas();
+    }
+
+    /** Submits the chat to GPT and adds the result to the chat. */
+    function submit() {
+        waiting(true);
+        var messages = [];
+        $('.row').each(function (index, row) {
+            var type = $(row).find('.type').val();
+            var message = $(row).find('.message').val();
+            if (type && message) {
+                messages.push({"role": type, "content": message});
+            }
+        });
+        submitToGPT(messages, processResult, onError);
+    }
+
+    /** for the text areas: set enter to submit the form, but shift enter to insert a new line. */
+    function submitOnEnter() {
+        return function (e) {
+            if (e.keyCode === 13 && !e.shiftKey) {
+                submit();
+                return false;
+            }
+        };
+    }
+
+    /** Sets the textarea row attributes so that the text just fits in there, without additional newlines.
+     * For the last message, we leave rows at 10. */
+    function adjustTextAreas() {
+        $('.message').each(function (index, element) {
+            element.rows = 1;
+            while (element.scrollHeight > element.clientHeight) {
+                element.rows++;
+            }
+            if (index === $('.message').length - 1 && element.rows < 10) {
+                element.rows = 10;
+            }
+        });
+        $('.message').off('keydown');
+        $('.message').on('keydown', submitOnEnter());
+        adjustRowNumber();
+        adjustFonts();
+        // set focus to last textarea
+        $('.message').last().focus();
+        scrollIfNecessary();
+    }
+
+    function adjustFonts() {
+        // for all div.message : if the text contains a ``` (code block marker) then set font-family to monospace,
+        // else set font-family to default
+        $('.message').each(function (index, element) {
+            if (element.value.indexOf('```') >= 0) {
+                $(element).css('font-family', 'monospace');
+            } else {
+                $(element).css('font-family', '');
+            }
+        });
+    }
+
+    /** If the historysize input is set, we will keep the first of the messagefields rows, but will remove
+     * the second, third and so forth until the number of messagefields rows is at most historysize. */
+    function adjustRowNumber() {
+        var historysize = parseInt($('#historysize').val());
+        if (historysize > 2) {
+            var rows = $('.row.messagefields');
+            while (rows.length > historysize) {
+                rows.get(1).remove();
+                rows = $('.row.messagefields');
+            }
+        }
+    }
+
+    /** Removes the empty messages (that is, the whole row containing them) except the last one.  */
+    function removeEmptyMessages() {
+        const maxindex = $('.row.messagefields').length - 1;
+        $('.row.messagefields').each(function (index, element) {
+            if (index > 0 && index < maxindex) {
+                var message = $(element).find('.message').val();
+                if (!message || !message.trim()) {
+                    element.remove();
+                }
+            }
+        });
+        waiting(false);
+        adjustTextAreas();
+    }
+
+    /** If the top of last non-empty div.message is no longer visible, scroll so that it is at the top of the page. */
+    function scrollIfNecessary() {
+        // find the last non-empty message , that is, whose text is not blank
+        var lastMessage = $('.message').filter(function (index, element) {
+            return element.value.trim().length > 0;
+        }).last();
+        if (lastMessage.length > 0) {
+            var lastMessageTop = lastMessage.offset().top;
+            if (lastMessageTop < $(window).scrollTop()) {
+                $(window).scrollTop(lastMessageTop);
+            }
+        }
+    }
+
+    function importJson() {
+        var json = $('#json').val();
+        if (json) {
+            var messages = JSON.parse(json);
+            reset(" ");
+            var first = true;
+            for (const message of messages) {
+                if (first) {
+                    first = false;
+                    if (message.role === 'system') {
+                        // set #row-1 to the message content
+                        $('#row-1').find('.message').val(message.content);
+                        continue;
+                    }
+                    $('#row-1').find('.message').val("");
+                }
+                first = false;
+                addRow(message.role, message.content);
+            }
+            adjustTextAreas();
+            removeEmptyMessages();
+        }
+    }
+
+    function exportJson() {
+        var messages = [];
+        $('.row').each(function (index, row) {
+            var type = $(row).find('.type').val();
+            var message = $(row).find('.message').val();
+            if (type && message && message.trim()) {
+                messages.push({"role": type, "content": message});
+            }
+        });
+        $('#json').val(JSON.stringify(messages));
+    }
+
+
+    /** Elaborate strategy to speed up things, since the API is wildly unpredictable in it's timing and sometimes we need
+     * to retry because of the rate limit. We guarantee that either successCallback or errorCallback is called exactly once
+     * in time, never both. So we will do several things here.
+     * 1. we will make parallel calls after a while, up to 3, starting after 10 seconds and using iterative doubling of the time.
+     * The first call that succeeds will abort all other calls.
+     * 2. if one of the calls fails with an isRetryable error, we will also retry after that time, with iterative doubling.
+     * @param function makeCall the function to call, which should return a promise with an .abort() function. It has the arguments successCallback and errorCallback.
+     * It has to guarantee it will call either of them once in time, but not both.
+     * @param function isRetryableError a function that takes the same arguments as the error callback and returns true if the error is retryable
+     * @param function successCallback the success callback that is called once if one of the calls succeeds
+     * @param function errorCallback the error callback that is called once if all calls fail
+     */
+    function retrialStrategy(makeCall, isRetryable, successCallback, errorCallback) {
+        const maxTries = 4;
+        const maxInflightCalls = 3;
+        var timeNextStep = 10000; // for iterative doubling
+        var inflightCalls = []; // the results of makeCall which we could .abort() later
+        var runningTimeout = null; // the timeout that will trigger the next step
+        var done = false; // whether we have called either success or error callback
+        var tries = 0;
+
+        triggerCall();
+        setTimeout(startNextStep, timeNextStep);
+
+        function triggerCall() {
+            if (tries >= maxTries) {
+                console.log("Huh? " + tries + " retries.");
+                return;
+            }
+            tries += 1;
+            console.log("Triggering call no. " + tries);
+            let call = makeCall((...args) => onSuccess(call, ...args), (...args) => onError(call, ...args));
+            inflightCalls.push(call);
+        }
+
+        function onSuccess(call, ...args) {
+            inflightCalls = inflightCalls.filter(c => c !== call);
+            if (!done) {
+                done = true;
+                cleanup();
+                successCallback(...args);
+            }
+        }
+
+        function onError(call, ...args) {
+            inflightCalls = inflightCalls.filter(c => c !== call);
+            if (!isRetryable(...args)) {
+                console.log("Not retryable, aborting: " + JSON.stringify(args));
+                if (!done) {
+                    done = true;
+                    cleanup();
+                    errorCallback(...args);
+                }
+            } else if (!done && inflightCalls.length === 0 && tries >= maxTries) {
+                done = true;
+                cleanup();
+                errorCallback(...args);
+            }
+        }
+
+        function startNextStep() {
+            if (!done && inflightCalls.length < maxInflightCalls) {
+                if (tries >= maxTries) {
+                    console.log("Giving up after " + tries + " retries.");
+                    return;
+                }
+                triggerCall();
+                timeNextStep *= 2;
+                runningTimeout = setTimeout(startNextStep, timeNextStep);
+            }
+        }
+
+        function cleanup() {
+            if (runningTimeout) {
+                clearTimeout(runningTimeout);
+            }
+            runningTimeout = null;
+            for (const call of inflightCalls) {
+                call.abort();
+            }
+            inflightCalls = [];
+        }
+    }
+
+</script>
+
+</body>
+</html>

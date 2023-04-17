@@ -1,0 +1,6 @@
+Gebe eine Kategorie und einige Schlagworte fuer den Inhalt der Datei aus.
+-----
+FILECONTENT
+#####
+Kategorie und Schlagworte:
+-----

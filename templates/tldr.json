@@ -1,0 +1,4 @@
+[
+{ "role": "system", "content" : "Summarize:" },
+{ "role": "user", "content" : "FILECONTENT\n#####\nTL;DR:" }
+]

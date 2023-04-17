@@ -1,0 +1,13 @@
+#!/bin/bash
+URL=$1
+if [ -z "$URL" ]; then
+  echo "Usage: $0 URL"
+  exit 1
+fi
+curl -fsSL $URL | chatgpt - "TL;DR:"
+#(
+#  curl -fsSL $URL | html2text
+#  echo "\n\nTL;DR:"
+#)| node "$(dirname "$(readlink -f "$0")")/../js/suggestCommand.js" -
+# curl -fsSL $URL | pup --pre 'body text{}'
+## | node "$(dirname "$(readlink -f "$0")")/../js/suggestCommand.js" "$@"

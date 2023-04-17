@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ChatGPT quick question</title>
+    <meta name="description"
+          content="Testbed for executing chats with several messages">
+    <link href="//cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+</head>
+<body>
+<div class="container messages">
+    <div class="row">
+        <div class="col-sm-12">
+            <h1>Chat simulation for ChatGPT</h1>
+        </div>
+    </div>
+    <div class="row messagefields" id="row-1">
+        <div class="col-sm-1">
+            <select class="form-select type">
+                <option value="system">System</option>
+                <option value="user">User</option>
+                <option value="assistant">Assistant</option>
+            </select>
+        </div>
+        <div class="col-sm-11">
+            <textarea class="form-control message" rows="3"></textarea>
+        </div>
+    </div>
+</div>
+<div class="container-xxl">
+    <div class="row">
+        <div class="col-sm-12 buttons">
+            <button type="button" class="btn btn-primary submitbutton" onclick="submit()">Submit</button>
+            <button type="button" class="btn btn-primary" onclick="reset()">Reset</button>
+            <button type="button" class="btn btn-primary" onclick="resetButKeepSystem()">Reset keep System</button>
+            <button type="button" class="btn btn-primary" onclick="back()">Back</button>
+            <button type="button" class="btn btn-primary" onclick="forward()">Forward</button>
+            <!-- input field "Historysize" for entering a number -->
+            <input type="number" id="historysize" placeholder="Historysize" value="">
+            <br>
+            <!-- Drop down list for selecting an initial prompt. The first entry is an autoselected option with an empty value and description "default" -->
+            <label for="initialprompt">System prompt:</label>
+            <select id="initialprompt" class="form-select">
+                <option value="" selected>default</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<script src="//cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
+        crossorigin="anonymous"></script>
+<script
+        src="//code.jquery.com/jquery-3.6.4.min.js"
+        integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8="
+        crossorigin="anonymous"></script>
+
+<!-- Hidden pre with the property file for the prompts, from chatgptprompts.properties. We have to manually update this from there,
+ since we get CORS errors when accessing that file with a file:// URL during testing. -->
+<pre id="chatgptprompts" style="display: none">
+    Peer's: Sei ein hilfreicher Assistent. Sprich den Nutzer mit du an. Sei sachlich. Benenne Deine Fehler kurz, aber entschuldige Dich nicht. Benenne, wenn Du Deiner Antwort unsicher bist, oder sie auf Vermutungen basiert.
+    UnixTerminal: Behave like a Linux terminal executing bash. The users messages are your commands executed in bash; just print the results, without any explanation. When I need to tell you something in English I will do so by putting text inside curly brackets {like this}.
+    Conversation: Let us have a conversation. Please reply in short sentences to keep the conversation flowing. Keep the conversation going by replying with insightful questions and comments. Too much text will be boring.
+    Frech: Sei ein hilfreicher Assistent für den Nutzer, aber mache immer lustige Kommentare. Es ist erwünscht, den Nutzer etwas zu necken.
+    TimeGPT: Now you are TimeGPT. the highest-tech time machine ever created. Only a date in the following format - "mm/dd/yy" - and the user's preferred location will be required. You will give a succinct account of that day in exchange. Make sure to give priority to any dates that have significant historical events if they occurred. Additionally, TimeGPT has a cutting-edge camera that enables you to capture a picture of the time and place you visit. Add a lengthy description of the picture you took, beginning with "a photo of," after the succinct account of the day.
+    Doktor: Verhalte Dich wie ein sehr vielseitig gebildeter Allgemeinmediziner, der auch Spezialwissen auf vielen anderen Gebieten der Medizin hat, und eine ganzheitliche Herangehensweise hat.
+    Haiku: Unterhalte Dich mit dem Nutzer. Antworte immer im Haiku!
+    Rueckwaerts: Drehe jeden Text um, den der Nutzer eingibt. Zum Beispiel: Eingabe "Hallo!" führt zu Ausgabe "!ollaH".
+    toDE: Übersetze jeden Text, den der Nutzer eingibt, in die Deutsche Sprache. Zum Beispiel: Eingabe "Hallo!" führt zu Ausgabe "Hello!".
+    toEN: Please translate every text the user enters into the English language. For example, for input "Guten morgen!" please output "Good morning!".
+    DEtoENtoDE: Übersetze jeden Text, den der Nutzer eingibt, in die Englische Sprache, falls der Text Deutsch ist, und ansonsten in die Deutsche Sprache. Zum Beispiel: Eingabe "Hallo!" führt zu Ausgabe "Hello!", und die Eingabe "Hello!" führt zu Ausgabe "Hallo!".
+    GameHarryPotter: You are a text-based video game that offers me the options (A, B, C, and D) to choose from. Harry Potter is the setting. I begin with 100 health.
+    GameChess: I'd like you to pretend to be my friend and to be able to play chess. Write your next turn and draw a chessboard in a code block.
+    GameGo: I'd like you to pretend to be my friend and to be able to play Go. Write your next turn and draw a 9x9 Go board in a code block.
+</pre>
+
+<script>
+
+    $(document).ready(function () {
+        reset();
+
+        $('#initialprompt').change(function () {
+            reset($('#initialprompt').val());
+        });
+        // for div with id "row-1", check that attribute rows is at least 5 when it comes into focus
+        $('#row-1').focusin(function () {
+            if ($('#row-1 textarea').attr('rows') < 5 || !$('#row-1 textarea').attr('rows')) {
+                $('#row-1 textarea').attr('rows', 5);
+            }
+        });
+        window.onpopstate = onPopState();
+        loadPrompts();
+    });
+
+    function saveState() {
+        window.history.pushState({html: $('.messages').html()}, "", window.location.href);
+    }
+
+    function onPopState() {
+        if (window.history.state.html) {
+            $('.messages').html(window.history.state.html);
+        }
+    }
+
+    function loadPrompts() {
+        // read prompts from the hidden pre chatgptprompts and add them to the select element "initialprompt"
+        // the property key is the option text, the property value is the option value, the option has a title attribute with the property value
+        var data = $('#chatgptprompts').text();
+        var lines = data.split(/\r?\n/);
+        for (var i = 0; i < lines.length; i++) {
+            var line = lines[i];
+            // split the line into key and value, separated by the regex [ :=]+ .
+            // careful: the value can contain stuff matching this regex, too, so we can't use the split function
+            // we use a regex matching the full line and then use the match function to get the named groups
+            var regex = /^\s*(?<key>[^:=]+)[ :=]+(?<value>.*)$/;
+            var match = regex.exec(line);
+            if (match) {
+                var key = match.groups.key;
+                var value = match.groups.value;
+                // use abbreviated value as text, full value as title
+                var text = value.length > 110 ? value.substring(0, 110) + '...' : value;
+                var $option = $('<option/>');
+                $option.attr('value', value);
+                $option.attr('title', value);
+                $option.text(key + ": " + text);
+                $option.appendTo('#initialprompt');
+            } else if (line) {
+                console.error('line ' + i + ' does not match regex: ' + line);
+            }
+        }
+    }
+
+    /** Adds a button with the given title, with an onclick resetAndSetSystemMessage to systemmessage */
+    function addButton(title, systemmessage) {
+        var button = $('<button type="button" class="btn btn-primary" onclick="reset(\'' + systemmessage + '\')">' + title + '</button>');
+        button.appendTo('.buttons');
+    }
+
+    /** Adds a new row to the chat. The id row-1 is replaced by row, followed by the number of the row In the select 'type' the given type is preselected. */
+    function addRow(type, message) {
+        var row = $('#row-1').clone();
+        row.attr('id', 'row-' + $('.row').length);
+        row.find('.type').val(type);
+        row.find('.message').val(message);
+        row.appendTo('div.messages');
+    }
+
+    function resetAndSetSystemMessage(message) {
+        // delete all row divs in div.messages with an id starting with row- except for row-1
+        $('div.messages div.row[id^="row-"]').not('#row-1').remove();
+        $('#row-1 .message').val(message);
+    }
+
+    function reset(message) {
+        resetAndSetSystemMessage(message || 'Be a friendly and helpful assistant to a user.');
+        addRow('user', '');
+        adjustTextAreaRows();
+    }
+
+    function resetButKeepSystem() {
+        reset($('#row-1 .message').val());
+    }
+
+    /** Submits a message array via $.ajax to https://api.openai.com/v1/chat/completions .
+     * @param messages array of messages
+     * @param resultcallback gets the data from the result
+     * @param errorcallback in case of errors. */
+    function submitToGPT(messages, resultcallback, errorcallback) {
+        // fetch api key from local storage, or else prompt if not found
+        var api_key = localStorage.getItem('api_key');
+        if (!api_key) {
+            api_key = prompt("Please enter your API key, which you can create in your profile at https://platform.openai.com/");
+            if (api_key) {
+                localStorage.setItem('api_key', api_key);
+            }
+        }
+
+        $.ajax({
+            url: 'https://api.openai.com/v1/chat/completions',
+            type: 'POST',
+            dataType: 'json',
+            headers: {
+                'Authorization': 'Bearer ' + api_key,
+                'Content-Type': 'application/json',
+            },
+            data: JSON.stringify({
+                model: "gpt-3.5-turbo",
+                messages: messages,
+            }),
+            success: resultcallback,
+            error: errorcallback
+        });
+    }
+
+    function processResult(data) {
+        let message = data.choices[0].message.content;
+        addRow('assistant', message);
+        addRow('user', '');
+        adjustTextAreaRows();
+        $('button.submitbutton').prop('disabled', false);
+        saveState();
+    }
+
+    function onError(xhr, status, error) {
+        $('button.submitbutton').prop('disabled', false);
+        var errorText = xhr.responseJSON ? JSON.stringify(xhr.responseJSON) : status || error;
+        console.error('Error: ', errorText, xhr);
+        addRow('assistant', 'Error: ' + errorText);
+        adjustTextAreaRows();
+    }
+
+    /** Submits the chat to GPT and adds the result to the chat. */
+    function submit() {
+        $('button.submitbutton').prop('disabled', true);
+        var messages = [];
+        $('.row').each(function (index, row) {
+            var type = $(row).find('.type').val();
+            var message = $(row).find('.message').val();
+            if (type && message) {
+                messages.push({"role": type, "content": message});
+            }
+        });
+        submitToGPT(messages, processResult, onError);
+    }
+
+    /** for the text areas: set enter to submit the form, but shift enter to insert a new line. */
+    function submitOnEnter() {
+        return function (e) {
+            if (e.keyCode === 13 && !e.shiftKey) {
+                submit();
+                return false;
+            }
+        };
+    }
+
+    /** Sets the textarea row attributes so that the text just fits in there, without additional newlines.
+     * For the last message, we leave rows at 5. */
+    function adjustTextAreaRows() {
+        $('.message').each(function (index, element) {
+            element.rows = 1;
+            while (element.scrollHeight > element.clientHeight) {
+                element.rows++;
+            }
+            if (index === $('.message').length - 1) {
+                element.rows = 5;
+            }
+        });
+        $('.message').off('keydown');
+        $('.message').on('keydown', submitOnEnter());
+        adjustRowNumber();
+        // set focus to last textarea
+        $('.message').last().focus();
+    }
+
+    /** If the historysize input is set, we will keep the first of the messagefields rows, but will remove
+     * the second, third and so forth until the number of messagefields rows is at most historysize. */
+    function adjustRowNumber() {
+        var historysize = parseInt($('#historysize').val());
+        if (historysize > 2) {
+            debugger;
+            var rows = $('.row.messagefields');
+            while (rows.length > historysize) {
+                rows.get(1).remove();
+                rows = $('.row.messagefields');
+            }
+        }
+    }
+</script>
+
+</body>
+</html>

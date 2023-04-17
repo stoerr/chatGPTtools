@@ -1,0 +1,22 @@
+{
+  "esversion": 2021,
+  "browser": true,
+  "node": true,
+  "globals": {
+    "module": true,
+    "require": true
+  },
+  "rules": {
+    "curly": true,
+    "eqeqeq": true,
+    "indent": 2,
+    "maxdepth": 4,
+    "maxlen": 80,
+    "maxparams": 4,
+    "maxstatements": 20,
+    "noarg": true,
+    "noempty": true,
+    "quotmark": "single",
+    "strict": "global"
+  }
+}

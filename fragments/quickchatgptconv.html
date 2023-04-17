@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ChatGPT quick question</title>
+    <meta name="description"
+          content="Ask a quick question and get a response from ChatGPT, without actually having a chat. This is often much quicker than the chat.">
+    <link href="//cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+</head>
+<body>
+<div class="container-xxl">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="card">
+                <div class="card-header">
+                    Ask a single question to ChatGPT (just one-shot). Back and forward with browser history.
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="question" class="form-label">Question</label>
+                        <textarea class="form-control" id="question" rows="5" autofocus></textarea>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="ask()">Ask</button>
+                    <button type="button" class="btn btn-primary" onclick="clear()">Clear</button>
+                    <button type="button" class="btn btn-primary" onclick="back()">Back</button>
+                    <button type="button" class="btn btn-primary" onclick="forward()">Forward</button>
+                    <button type="button" class="btn btn-primary" onclick="resetConversation()">Reset Conversation</button>
+                     <div class="form-check">
+                         <input class="form-check-input" type="checkbox" value="" id="keepConversation">
+                         <label class="form-check-label" for="keepConversation">
+                             Keep conversation
+                         </label>
+                     </div>
+                </div>
+            </div>
+            <br>
+            <div class="card">
+                <div class="card-header">
+                    Answer
+                </div>
+                <div class="card-body answers">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="//cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
+        crossorigin="anonymous"></script>
+<script
+        src="//code.jquery.com/jquery-3.6.4.min.js"
+        integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8="
+        crossorigin="anonymous"></script>
+<script>
+    const $answers = $('div.answers');
+    const $question = $('#question');
+    var conversationid = undefined;
+
+    // make key binding for $question so that pressing enter submits the question
+    $question.keypress(function (e) {
+        if (e.which == 13 && !e.shiftKey) {
+            ask();
+            return false;
+        }
+    });
+
+    function ask() {
+        var question = $("#question").val();
+        // fetch api key from local storage, or else prompt if not found
+        var api_key = localStorage.getItem('api_key');
+        if (!api_key) {
+            api_key = prompt("Please enter your API key, which you can create in your profile at https://platform.openai.com/");
+            localStorage.setItem('api_key', api_key);
+        }
+        debugger;
+        if (!$("#keepConversation").is(":checked")) {
+            conversationid = undefined;
+        }
+        removeAnswers();
+        $answers.append('<p>Thinking...</p>');
+        $.ajax({
+            url: 'https://api.openai.com/v1/chat/completions',
+            type: 'POST',
+            dataType: 'json',
+            headers: {
+                'Authorization': 'Bearer ' + api_key,
+                'Content-Type': 'application/json',
+            },
+            data: JSON.stringify({
+                model: "gpt-3.5-turbo",
+                conversation_id: conversationid,
+                messages: [{"role": "user", "content": question}],
+            }),
+            success: success,
+            error: error
+        });
+    }
+
+    function success(data) {
+        console.log(data);
+        removeAnswers();
+        conversationid = data.id;
+        for (let  i = 0; i < data.choices.length; i++) {
+            var text = data.choices[i].message.content;
+            // The text is according to ChatGPT message format in markdown, so we need to convert it to html and add
+            // it to the answers div.
+            // We only split it into paragraphs accordingly, which are added as <p> elements, but
+            // codeblocks are added as <pre> elements.
+            var paragraphs = text.split("\n\n");
+            for (var j = 0; j < paragraphs.length; j++) {
+                var paragraph = paragraphs[j];
+                var paragraphElement;
+                if (paragraph.startsWith("```")) {
+                    paragraphElement = $("<pre/>");
+                    paragraphElement.text(paragraph.substring(3, paragraph.length - 3));
+                } else {
+                    paragraphElement = $("<p/>");
+                    paragraphElement.text(paragraph);
+                }
+                $answers.append(paragraphElement);
+            }
+        }
+        // use pushstate to add a history entry with the question and answers
+        window.history.pushState({
+            question: $question.val(),
+            answers: $answers.html()
+        }, '', window.location.href);
+    }
+
+    // restore question and answers from history state when browser back or forward is pressed
+    window.onpopstate = function (event) {
+        if (event.state) {
+            $question.val(event.state.question);
+            $answers.html(event.state.answers);
+        }
+    };
+
+    function error(xhr, status, error) {
+        console.log(error);
+        removeAnswers();
+        if (xhr.responseJSON) {
+            $answers.text(JSON.stringify(xhr.responseJSON));
+        } else {
+            $answers.text(status || error);
+        }
+    }
+
+    function removeAnswers() {
+        $answers.empty();
+    }
+
+    function clear() {
+        $question.val('');
+        removeAnswers();
+    }
+
+    function back() {
+        window.history.back();
+    }
+
+    function forward() {
+        window.history.forward();
+    }
+</script>
+
+</body>
+</html>

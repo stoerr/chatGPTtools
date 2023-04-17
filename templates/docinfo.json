@@ -1,0 +1,4 @@
+[
+{ "role": "system", "content" : "Gebe eine Kategorie und einige Schlagworte fuer den Inhalt der Datei aus." },
+{ "role": "user", "content" : "FILECONTENT\n#####\nKategorie und Schlagworte:" }
+]
