@@ -7,3 +7,4 @@ But perhaps something is of use for you. If you'd like to know what I'm currentl
 [this](https://github.com/ist-dresden/composum-chatgpt-integration) might be more interesting for you.
 
 If you find something interesting, please [contact me](http://www.stoerr.net/)!
+You will also find various ChatGPT related things on [my Blog](http://www.stoerr.net/blog.html).
