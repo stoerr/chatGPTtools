@@ -1,98 +1,116 @@
-// ChatGPTBookmarklet.js
+(function () {
+    var hpsChatGPTBookmarklet = {
+        basePath: '',
+        dialog: null,
 
-async function loadChatGPTComponents(basePath) {
-  // Load the ChatGPTBookmarklet CSS
-  const cssLink = document.createElement('link');
-  cssLink.rel = 'stylesheet';
-  cssLink.type = 'text/css';
-  cssLink.href = basePath + '/ChatGPTBookmarklet.css';
-  document.head.appendChild(cssLink);
+        init: async function (basePath) {
+            this.basePath = basePath;
 
-  // Load the ChatGPTBookmarklet HTML fragment
-  const response = await fetch(basePath + '/ChatGPTBookmarklet.html');
-  if (response.ok) {
-    const htmlContent = await response.text();
-    const chatGPTContainer = document.createElement('div');
-    chatGPTContainer.innerHTML = htmlContent;
-    document.body.appendChild(chatGPTContainer);
-    return chatGPTContainer;
-  } else {
-    console.error('Failed to load ChatGPTBookmarklet HTML fragment');
-    return null;
-  }
-}
+            await this.loadCSS();
+            await this.loadHTML();
 
-function showChatGPTDialog(chatGPTContainer) {
-  if (chatGPTContainer) {
-    chatGPTContainer.style.display = 'block';
-  }
-}
+            document.getElementById('hpsChatGPTCloseTop').addEventListener('click', this.hideDialog.bind(this));
+            document.getElementById('hpsChatGPTCloseBottom').addEventListener('click', this.hideDialog.bind(this));
+            document.getElementById('hpsChatGPTSubmit').addEventListener('click', this.submitQuestion.bind(this));
+            document.getElementById('hpsChatGPTCopyToClipboard').addEventListener('click', this.copyToClipboard.bind(this));
+        },
 
-export async function initChatGPTBookmarklet(PATH_TO_APPLICATION) {
-  // Check if the ChatGPT components have already been loaded
-  if (!window.hpsChatGPTComponents) {
-    const chatGPTContainer = await loadChatGPTComponents(PATH_TO_APPLICATION);
-    window.hpsChatGPTComponents = {
-      container: chatGPTContainer,
-      showDialog: () => showChatGPTDialog(chatGPTContainer),
+        loadCSS: function () {
+            return new Promise((resolve) => {
+                var cssLink = document.createElement('link');
+                cssLink.rel = 'stylesheet';
+                cssLink.type = 'text/css';
+                cssLink.href = this.basePath + '/ChatGPTBookmarklet.css';
+                cssLink.onload = resolve;
+                document.head.appendChild(cssLink);
+            });
+        },
+
+        loadHTML: async function () {
+            const response = await fetch(this.basePath + '/ChatGPTBookmarklet.html');
+
+            if (response.ok) {
+                const html = await response.text();
+                this.dialog = document.createElement('div');
+                this.dialog.innerHTML = html;
+                document.body.appendChild(this.dialog);
+            } else {
+                console.error('Failed to load ChatGPTBookmarklet HTML fragment');
+            }
+        },
+
+        showDialog: function () {
+            if (this.dialog) {
+                this.dialog.style.display = 'block';
+            }
+        },
+
+        hideDialog: function () {
+            if (this.dialog) {
+                this.dialog.style.display = 'none';
+            }
+        },
+
+        openDialog: async function () {
+            this.showDialog();
+            const summary = await this.getSummary();
+            document.getElementById('hpsChatGPTAnswer').innerText = summary;
+        },
+
+        submitQuestion: async function () {
+            const question = document.getElementById('hpsChatGPTQuestion').value;
+            const includePageContent = document.getElementById('hpsChatGPTIncludePageContent').checked;
+
+            if (question.trim() !== '') {
+                document.getElementById('hpsChatGPTAnswer').innerText = 'Thinking...';
+                const answer = await this.getAnswer(question, includePageContent);
+                document.getElementById('hpsChatGPTAnswer').innerText = answer;
+            } else {
+                alert('Please enter a question before submitting.');
+            }
+        },
+
+        getPageContent: function () {
+            return document.documentElement.innerText;
+        },
+
+        getSelectedText: function () {
+            const selection = window.getSelection();
+            return selection.toString();
+        },
+
+        copyToClipboard: function () {
+            const answer = document.getElementById('hpsChatGPTAnswer');
+            const selection = window.getSelection();
+            const range = document.createRange();
+            range.selectNodeContents(answer);
+            selection.removeAllRanges();
+            selection.addRange(range);
+
+            try {
+                document.execCommand('copy');
+                alert('Answer copied to clipboard!');
+            } catch (err) {
+                console.error('Unable to copy the answer to clipboard:', err);
+            }
+
+            // Deselect the copied text
+            selection.removeAllRanges();
+        },
+
+        getSummary: async function () {
+            // Add your ChatGPT API call here to get the summary
+            // document.getElementById('hpsChatGPTSummary').innerText = "This is a summary of the page.";
+            return "This is a summary of the page.";
+        },
+
+        getAnswer: async function (question, includePageContent) {
+            // Add your ChatGPT API call here to get the answer to the question
+            // document.getElementById('hpsChatGPTAnswer').innerText =
+            return "This is an answer to the question " + question + " includecontent " + includePageContent;
+        },
+
     };
-  }
 
-  // Show the ChatGPT dialog
-  window.hpsChatGPTComponents.showDialog();
-
-  // Your application logic and event listeners
-  const dialog = window.hpsChatGPTComponents.container.querySelector(
-    "#hpsChatGPTDialog"
-  );
-  const closeButtonTop = dialog.querySelector("#hpsChatGPTCloseTop");
-  const closeButtonBottom = dialog.querySelector("#hpsChatGPTCloseBottom");
-  const submitButton = dialog.querySelector("#hpsChatGPTSubmit");
-  const copyToClipboardButton = dialog.querySelector(
-    "#hpsChatGPTCopyToClipboard"
-  );
-  const questionInput = dialog.querySelector("#hpsChatGPTQuestion");
-  const includePageContentCheckbox = dialog.querySelector(
-    "#hpsChatGPTIncludePageContent"
-  );
-  const answerContainer = dialog.querySelector("#hpsChatGPTAnswer");
-
-  // Implement the function to close the dialog
-  function closeDialog() {
-    dialog.style.display = "none";
-  }
-
-  // Attach event listeners to the close buttons
-  closeButtonTop.addEventListener("click", closeDialog);
-  closeButtonBottom.addEventListener("click", closeDialog);
-
-  // Attach event listeners to the submit button
-  submitButton.addEventListener("click", async () => {
-    // Get the question text and whether to include the page content
-    const question = questionInput.value;
-    const includePageContent = includePageContentCheckbox.checked;
-
-    // Call the ChatGPT API with the question and the page content (if applicable)
-    const answer = await getAnswerFromChatGPT(
-      question,
-      includePageContent ? document.body.innerText : ""
-    );
-
-    // Display the answer in the answer container
-    answerContainer.innerHTML = answer;
-  });
-
-  // Attach event listener to the copy to clipboard button
-  copyToClipboardButton.addEventListener("click", () => {
-    // Copy the answer to the clipboard
-    const textarea = document.createElement("textarea");
-    textarea.value = answerContainer.innerText;
-    document.body.appendChild(textarea);
-    textarea.select();
-    document.execCommand("copy");
-    document.body.removeChild(textarea);
-
-    // Optionally, show a message to the user confirming the copy
-    alert("Answer copied to clipboard");
-  });
-}
+    window.hpsChatGPTBookmarklet = hpsChatGPTBookmarklet;
+})();
