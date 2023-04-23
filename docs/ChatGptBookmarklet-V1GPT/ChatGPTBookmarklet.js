@@ -99,15 +99,73 @@
         },
 
         getSummary: async function () {
-            // Add your ChatGPT API call here to get the summary
-            // document.getElementById('hpsChatGPTSummary').innerText = "This is a summary of the page.";
-            return "This is a summary of the page.";
+            const content = (this.getSelectedText() || this.getPageContent()) + "\n\nTL;DR:";
+            const messages = [{role: 'user', content: content}];
+            const summary = await this.sendChatGPTRequest(messages);
+            return summary;
         },
 
         getAnswer: async function (question, includePageContent) {
-            // Add your ChatGPT API call here to get the answer to the question
-            // document.getElementById('hpsChatGPTAnswer').innerText =
-            return "This is an answer to the question " + question + " includecontent " + includePageContent;
+            const content = includePageContent ? (this.getSelectedText() || this.getPageContent()) + "\n\nPlease answer the following question with regard to the previous text: " + question : question;
+            const messages = [{role: 'user', content: content}];
+            const answer = await this.sendChatGPTRequest(messages);
+            return answer;
+        },
+
+        getAPIKey: function () {
+            let apiKey = localStorage.getItem('chatgpt_api_key');
+            if (!apiKey) {
+                apiKey = prompt('Please enter your ChatGPT API key:');
+                if (apiKey) {
+                    localStorage.setItem('chatgpt_api_key', apiKey);
+                } else {
+                    console.error('API key is required for ChatGPT');
+                }
+            }
+            return apiKey;
+        },
+
+        sendChatGPTRequest: async function (messages) {
+            const apiKey = await this.getAPIKey();
+            const requestOptions = {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`,
+                },
+                body: JSON.stringify({
+                    model: 'gpt-3.5-turbo',
+                    messages: messages,
+                }),
+            };
+
+            let retries = 0;
+            let response;
+
+            while (retries < 3) {
+                response = await fetch('https://api.openai.com/v1/chat/completions', requestOptions);
+
+                if (response.status === 429) {
+                    const retryAfterText = await response.text();
+                    const retryAfterMatch = retryAfterText.match(/Please try again in (\d+)s\./);
+                    if (retryAfterMatch) {
+                        const retryAfter = parseInt(retryAfterMatch[1], 10);
+                        await new Promise(resolve => setTimeout(resolve, (retryAfter + 1) * 1000));
+                        retries++;
+                    } else {
+                        throw new Error('API limit exceeded, but retry time not found.');
+                    }
+                } else {
+                    break;
+                }
+            }
+
+            if (response.ok) {
+                const data = await response.json();
+                return data.choices[0].message.content;
+            } else {
+                throw new Error('Error fetching data from ChatGPT API');
+            }
         },
 
     };
