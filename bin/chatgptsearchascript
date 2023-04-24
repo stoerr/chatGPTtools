@@ -1,0 +1,37 @@
+#!/bin/bash
+
+if [ "$#" -eq 0 ] || [ "$1" = "--help" ]; then
+  echo "Usage: $(basename $0) [options] [task description]"
+  echo ""
+  echo "Options:"
+  echo "  --help          Show this help message and exit"
+  echo ""
+  echo "Description:"
+  echo "  This script searches for a suitable ChatGPT related command line utility to perform a task"
+  echo "  whose description is given in the command line arguments."
+  exit 0
+fi
+
+_makeusagetxt
+
+prompt="$*"
+script_dir="$(dirname "$(realpath "$0")")"
+usages_file="${script_dir}/_usages.txt"
+
+if [ ! -f "$usages_file" ]; then
+  echo "Error: '_usages.txt' file not found in the script directory."
+  exit 1
+fi
+
+additional_prompt="\n\nThese are the usage descriptions of several command line utilities. Please tell me which script I could use to perform the following task:\n"
+
+cat "$usages_file" | chatgpt - "$additional_prompt $prompt"
+
+# This script was generated using ChatGPT with the following prompt, and then manually edited slightly:
+# Please generate a script for the command line for the following task, runnable on a MacBook Pro with Apple M1 Max, that is, arm64 architecture, and MacOS Ventura 13.3.1 . It can be either a bash script using any of the normally present MacOS command line tools or what is installable with homebrew, or a NodeJS script for version 19.5.0 . If NodeJS, it should not require installing any additional libraries. If called without arguments or with the argument
+# --help, the script should describe it's usage and exit - including what options and arguments it expects, and (important!) a short description what it does.
+
+# The name of the script is chatgptsearchscript. If the option --help wasn't given, it should collect all command line arguments into the variable prompt. Then it should take the file _usages.txt in the directory containing the script, pipe that into the program chatgpt with the arguments
+# chatgpt - $additionalprompt $prompt
+# where additionalprompt is as follows:
+# "These are the usage descriptions of several command line utilities. Please tell me which script I could use to perform the following task:"

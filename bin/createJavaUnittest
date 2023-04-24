@@ -1,0 +1,66 @@
+#!/bin/bash
+
+if [ "$#" -eq 0 ] || [ "$1" = "--help" ]; then
+  echo "Usage: $(basename $0) [options] [Java file]"
+  echo ""
+  echo "Options:"
+  echo "  --help          Show this help message and exit"
+  echo ""
+  echo "Description:"
+  echo "  This script generates a JUnit 4 test for the given Java file using ChatGPT."
+  echo "  The output test file is placed in the corresponding 'src/test/java'"
+  echo "  directory with a 'Test.java' suffix."
+  exit 0
+fi
+
+java_file="$1"
+
+if [[ ! -s "$java_file" || "${java_file##*.}" != "java" ]]; then
+  echo "Error: Please provide a non-empty Java file."
+  exit 1
+fi
+
+abs_java_file=$(realpath "$java_file")
+src_main_java_path="src/main/java"
+
+if [[ ! "$abs_java_file" =~ .*$src_main_java_path.* ]]; then
+  echo "Error: The Java file path should contain 'src/main/java'."
+  exit 1
+fi
+
+src_test_java_path="src/test/java"
+test_file="${abs_java_file//$src_main_java_path/$src_test_java_path}"
+test_file="${test_file%.java}Test.java"
+
+test_directory=$(dirname "$test_file")
+if [ ! -d "$test_directory" ]; then
+  mkdir -p "$test_directory"
+fi
+
+chatgpt_prompt=$(cat <<EOF
+End of $(basename "$java_file"). Please create unittests this Java class using JUnit 4 using an ErrorCollector rule named ec and ec.checkThat;
+you can use Mockito if mocking is needed.
+Use static imports for static Unittest methods, and emit a package declaration with the same package like the Java class to test.
+Do only print the Java code for the test, absolutely no additional text.
+EOF
+)
+
+echo "Word count of input file:"
+wc "$java_file"
+
+chatgpt_output=$(cat "$java_file" | chatgpt -v - "$chatgpt_prompt" || exit 1)
+
+echo "$chatgpt_output" > "$test_file"
+
+echo "Test file created: $test_file"
+
+# This script was generated using ChatGPT with the following prompt, and then manually edited slightly:
+# Please generate a script for the command line for the following task, runnable on a MacBook Pro with Apple M1 Max, that is, arm64 architecture, and MacOS Ventura 13.3.1 . It can be either a bash script using any of the normally present MacOS command line tools or what is installable with homebrew, or a NodeJS script for version 19.5.0 . If NodeJS, it should not require installing any additional libraries. If called without arguments or with the argument
+# --help, the script should describe it's usage and exit - including what options and arguments it expects, and (important!) a short description what it does.
+
+# The name of the script is createJavaUnittest.
+# In addition to option --help, it should take exactly one argument: a Java file for which ChatGPT is to create an unittest. The Java file should be piped to the command 'chatgpt' , which should get the following arguments:
+# chatgpt - "End of (filename). Please create unittests with JUnit 4 using an ErrorCollector
+#  rule named ec and ec.checkThat; you can use Mockito if mocking is needed. Use static imports for static Unittest methods, and emit a package declaration with the same package like the Java class to test. Do only print the Java code for the test, absolutely no additional text."
+
+# Before executing that, the file should be checked for being an non-empty file with extension .java, and the file's absolute path should be checked to contain src/main/java . If not, the script should print an error message. If it contains src/main/java, the output of the chatgpt command should be written to that filename with src/main/java  replaced by src/test/java and .java replaced by Test.java . If that directory does not exist, please create it.

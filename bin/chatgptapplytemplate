@@ -14,7 +14,7 @@ fileName=$2
 
 # if fileName ends with .pdf, we need to convert it to text
 if [[ "$fileName" == *.pdf ]]; then
-  pdf2txt.py -A -c UTF-8 "$fileName" | maskpersonaldata > "$fileName.txt"
+  pdf2txt.py -A -c UTF-8 "$fileName" | _maskpersonaldata > "$fileName.txt"
   fileName="$fileName.txt"
 fi
 
