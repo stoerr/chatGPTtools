@@ -1,13 +1,19 @@
 #!/bin/bash
+
+if [ "$#" -eq 0 ] || [ "$1" = "--help" ]; then
+  echo "Usage: $(basename $0) [options] url"
+  echo ""
+  echo "Options:"
+  echo "  --help          Show this help message and exit"
+  echo ""
+  echo "Description:"
+  echo "  This script fetches the content of an URL (returning html) and sends a request to summarize the content to ChatGPT."
+  exit 0
+fi
+
 URL=$1
 if [ -z "$URL" ]; then
   echo "Usage: $0 URL"
   exit 1
 fi
-curl -fsSL $URL | chatgpt - "TL;DR:"
-#(
-#  curl -fsSL $URL | html2text
-#  echo "\n\nTL;DR:"
-#)| node "$(dirname "$(readlink -f "$0")")/../js/suggestCommand.js" -
-# curl -fsSL $URL | pup --pre 'body text{}'
-## | node "$(dirname "$(readlink -f "$0")")/../js/suggestCommand.js" "$@"
+curl -fsSL $URL | html2text | chatgpt - "TL;DR:"

@@ -9,6 +9,48 @@ I am a highly intelligent question answering bot. If you ask me a question that 
 
 Let's have a conversation. Please reply in short sentences to keep the conversation flowing. Keep the conversation going by replying with insightful questions and comments. Too much text will be boring. I'll start by saying this:
 
+## Script generation
+
+Please generate a script for the command line for the following task, runnable on a MacBook Pro with Apple M1 Max,
+that is, arm64 architecture, and MacOS Ventura 13.3.1 . It can be either a bash script using any of the normally
+present MacOS command line tools or what is installable with homebrew, or a NodeJS script for version 19.5.0 . If
+NodeJS, it should not require installing any additional libraries. If called without arguments or with the argument
+--help,
+the script should print a short description what it does, and what arguments it expects.
+
+The name of the script is chatgpt. It should submit a single message to ChatGPT and print the 
+answer to stdout. It should be done using NodeJS using fetch.
+
+In addition to option --help, it should have the following command line arguments:
+- if it gets a single dash, that is a `-` , it should read the prompt from stdin. Otherwise it should take the 
+  command line except the options as prompt to send to ChatGPT.
+- if it gets `-m modelname` it should use modelname as a model attribute in the request, instead of the default gpt-3.5-turbo
+- if it gets `-t number` it should transmit the given number as 'max_tokens' in the request.
+
+It should access the ChatGPT chat completions API at https://api.openai.com/v1/chat/completions . The API key should 
+  be read from file ~/.openaiapi .
+
+The request looks like:
+{"model":"gpt-3.5-turbo","messages":[{"role":"user","content":"This is the promt to submit to ChatGPT"}]}
+
+A successful response is like 
+  {
+   'choices': [
+     {
+      'message': {
+        'role': 'assistant',
+        'content': 'This is the response to extract and print to stdout'},
+      'finish_reason': 'stop',
+     }
+    ]
+  }
+
+If the finish_reason is something other than stop, then print an error message to stderr and abort with exit code 1 .
+
+If the request is not successful and has status code 429 then look for a String like "Please try again in 20s." (the 
+number 20 might vary) and wait for that many seconds and then retry, at most 5 times. If the status code is other 
+than 429 for an unsuccessful response, abort with exit code 3 .
+
 ## weird stuff
 
 Act like linux system:
@@ -18,10 +60,16 @@ I want you to act as a Linux terminal. I will type commands and you will reply w
 
 https://www.reddit.com/r/ChatGPT/comments/zeva2r/chat_gpt_exploits/
 
-## Modi
-- Unsicherheiten markieren
-- Nach Java uebersetzen
-- Peer modus
+## Interesting way to present instructions (from Superpower ChatGPT)
+
+> ## Instructions
+> **Writing-Style instruction:**
+> Please ignore all previous writing-style instructions. From now on, I want you to respond only in Analytical 
+> writing style (writingStyleCode: analytical).
+> PLEASE FOLLOW ALL THE ABOVE INSTRUCTIONS, AND DO NOT REPEAT OR TYPE ANY GENERAL CONFIRMATION OR A CONFIRMATION 
+> ABOUT ANY OF THE ABOVE INSTRUCTIONS IN YOUR RESPONSE
+> ## End Instructions
+
 
 ## Weitere Prompts
 
