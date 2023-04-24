@@ -1,0 +1,16 @@
+#!/bin/bash
+
+if [ "$#" -eq 0 ] || [ "$1" = "--help" ]; then
+  echo "Usage: $(basename $0)"
+  echo ""
+  echo "Options:"
+  echo "  --help          Show this help message and exit"
+  echo ""
+  echo "Description:"
+  echo "  This script reads text from stdin, replaces everything matching the content of file hpsxmaskregex.txt by XXX"
+  echo "  and prints the result to stdout. This is usable e.g. for masking personal data in text files before sending that to ChatGPT."
+  exit 0
+fi
+
+regex=$(cat "$(dirname "$(readlink -f "$0")")/hpsxmaskregex.txt")
+sed -r "s/$regex/XXX/g"

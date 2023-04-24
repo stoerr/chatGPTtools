@@ -31,6 +31,7 @@ let maxTokens;
 let prompt = '';
 let inOptions = true;
 let readStdin = false;
+let verbose = false;
 
 process.argv.slice(2).forEach((arg, i, argv) => {
   if (inOptions) {
@@ -64,7 +65,7 @@ if (!prompt) {
 }
 
 if (verbose) {
-    console.error(prompt);
+    console.error('Prompt: ', prompt, '\n');
 }
 
 const requestData = {

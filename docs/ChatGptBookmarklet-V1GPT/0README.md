@@ -1,8 +1,8 @@
 # Bookmarklet to summarize webpage and ask questions, generated with ChatGPT
 
 This is the result an interesting attempt to create the sourcecode for a bookmarklet to summarize any webpage
-shown in the browser entirely with ChatGPT. The full story is [in my blog.]
-(http://www.stoerr.net/blog/2023-04-23-developBookmarkletWithChatGPT.html).
+shown in the browser entirely with ChatGPT. The full story is 
+[in my blog](http://www.stoerr.net/blog/2023-04-23-developBookmarkletWithChatGPT.html).
 
 Usage documentation generated with ChatGPT, too:
 
