@@ -8,22 +8,27 @@ Usage: chatgpt [options] [prompt]
 
 Options:
   -               Reads prompt from stdin, instead of as an argument
+  -f filename     Reads prompt from a file, including a frame naming the filename. Can be given multiple times.
+  -p prefix       Prefix the prompt with a string. Use this or -pf, not both.
+  -pf prefixfile  Prefix the prompt with the contents of a file
+  -s suffix       Suffix the prompt with a string. Use this or -sf, not both.
+  -sf suffixfile  Suffix the prompt with the contents of a file
   -m modelname    Use a specific model (default: gpt-3.5-turbo)
-  -t number       Set max tokens for response (default: none)
+  -t number       Set max tokens for response (default: no limit)
   -v              verbose output : print prompt to stderr and info about connection retries
   --help          Show this help message
 `;
 
 if (process.argv.length < 3 || process.argv.includes('--help')) {
-  console.log(helpMessage);
-  process.exit(0);
+    console.log(helpMessage);
+    process.exit(0);
 }
 
 const apiKeyFile = `${process.env.HOME}/.openaiapi`;
 const apiURL = 'https://api.openai.com/v1/chat/completions';
 const headers = {
-  'Content-Type': 'application/json',
-  'Authorization': `Bearer ${fs.readFileSync(apiKeyFile, 'utf8').trim()}`,
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${fs.readFileSync(apiKeyFile, 'utf8').trim()}`,
 };
 
 let model = 'gpt-3.5-turbo';
@@ -32,36 +37,75 @@ let prompt = '';
 let inOptions = true;
 let readStdin = false;
 let verbose = false;
+let prefix = '';
+let suffix = '';
+let files = [];
 
 process.argv.slice(2).forEach((arg, i, argv) => {
-  if (inOptions) {
-    if (arg === '-m' && argv[i + 1]) {
-      model = argv[i + 1];
-      i++;
-    } else if (arg === '-t' && argv[i + 1]) {
-      maxTokens = parseInt(argv[i + 1], 10);
-      i++;
-    } else if (arg === '-') {
-      readStdin = true;
-    } else if (arg === '-v') {
-      verbose = true;
-    } else if (!arg.startsWith('-')) {
-      inOptions = false;
-      prompt += arg;
+    if (inOptions) {
+        if (arg === '-m' && argv[i + 1]) {
+            model = argv[i + 1];
+            i++;
+        } else if (arg === '-t' && argv[i + 1]) {
+            maxTokens = parseInt(argv[i + 1], 10);
+            i++;
+        } else if (arg === '-') {
+            readStdin = true;
+        } else if (arg === '-v') {
+            verbose = true;
+        } else if (arg === '-p' && argv[i + 1]) {
+            prefix = argv[i + 1];
+            i++;
+        } else if (arg === '-pf' && argv[i + 1]) {
+            prefix = fs.readFileSync(argv[i + 1], 'utf8');
+            i++;
+        } else if (arg === '-s' && argv[i + 1]) {
+            suffix = argv[i + 1];
+            i++;
+        } else if (arg === '-sf' && argv[i + 1]) {
+            suffix = fs.readFileSync(argv[i + 1], 'utf8');
+            i++;
+        } else if (arg === '-f' && argv[i + 1]) {
+            files.push(argv[i + 1]);
+            i++;
+        } else if (!arg.startsWith('-')) {
+            inOptions = false;
+            prompt += arg;
+        }
+    } else {
+        prompt += ' ' + arg;
     }
-  } else {
-    prompt += ' ' + arg;
-  }
 });
 
 if (readStdin) {
-  const stdinPrompt = fs.readFileSync(0, 'utf-8');
-  prompt = stdinPrompt + '\n\n' + prompt;
+    const stdinPrompt = fs.readFileSync(0, 'utf-8');
+    prompt = stdinPrompt.trim() + '\n\n' + prompt;
+}
+
+for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    var filename = file;
+    // if filename contains users homedir, replace that by tilde
+    const homeDir = process.env.HOME;
+    filename = filename.replace(homeDir, '~');
+    const filePrompt = fs.readFileSync(file, 'utf-8');
+    prompt = '>>>>>>>> start of file ' + filename + ' >>>>>>>>\n' +
+        filePrompt.trim() +
+        '\n<<<<<<<< end of file ' + filename + ' <<<<<<<<\n\n' +
+        '\n\n' + prompt;
+}
+
+if (prefix) {
+    prompt = prefix.trim() + '\n\n' + prompt;
+}
+
+if (suffix) {
+    prompt = prompt + '\n\n' + suffix.trim();
 }
 
 if (!prompt) {
-  console.error('Error: No prompt provided');
-  process.exit(1);
+    console.error('Error: No prompt provided');
+    process.exit(1);
 }
 
 if (verbose) {
@@ -71,54 +115,55 @@ if (verbose) {
 }
 
 const requestData = {
-  model,
-  messages: [{ role: 'user', content: prompt }],
+    model: model,
+    user: 'chatgpt script',
+    messages: [{role: 'user', content: prompt}],
 };
 
 if (maxTokens) {
-  requestData.max_tokens = maxTokens;
+    requestData.max_tokens = maxTokens;
 }
 
 async function requestChatGPT(attempt = 1) {
-  try {
-    const response = await fetch(apiURL, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(requestData),
-    });
+    try {
+        const response = await fetch(apiURL, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(requestData),
+        });
 
-    if (response.status === 429) {
-      const retryMessage = await response.text();
-      const waitTime = parseInt(retryMessage.match(/(\d+)s/)[1], 10);
+        if (response.status === 429) {
+            const retryMessage = await response.text();
+            const waitTime = parseInt(retryMessage.match(/(\d+)s/)[1], 10);
 
-      if (attempt < 5) {
-        if (verbose) {
-            console.error(`Error: Rate limit exceeded, retrying in ${waitTime} seconds`);
+            if (attempt < 5) {
+                if (verbose) {
+                    console.error(`Error: Rate limit exceeded, retrying in ${waitTime} seconds`);
+                }
+                setTimeout(() => requestChatGPT(attempt + 1), waitTime * 1000);
+            } else {
+                console.error('Error: Too many retries');
+                process.exit(3);
+            }
+        } else if (!response.ok) {
+            console.error('Error: Request failed with status', response.status, 'and message', await response.text());
+            process.exit(3);
+        } else {
+            const responseData = await response.json();
+            const assistantMessage = responseData.choices[0].message;
+            const finishReason = responseData.choices[0].finish_reason;
+
+            if (finishReason === 'stop') {
+                console.log(assistantMessage.content);
+            } else {
+                console.error('Error: Unexpected finish reason');
+                process.exit(1);
+            }
         }
-        setTimeout(() => requestChatGPT(attempt + 1), waitTime * 1000);
-      } else {
-        console.error('Error: Too many retries');
+    } catch (error) {
+        console.error('Error:', error.message);
         process.exit(3);
-      }
-    } else if (!response.ok) {
-      console.error('Error: Request failed with status', response.status, 'and message', await response.text());
-      process.exit(3);
-    } else {
-      const responseData = await response.json();
-      const assistantMessage = responseData.choices[0].message;
-      const finishReason = responseData.choices[0].finish_reason;
-
-      if (finishReason === 'stop') {
-        console.log(assistantMessage.content);
-      } else {
-        console.error('Error: Unexpected finish reason');
-        process.exit(1);
-      }
     }
-  } catch (error) {
-    console.error('Error:', error.message);
-    process.exit(3);
-  }
 }
 
 requestChatGPT();

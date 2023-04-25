@@ -4,6 +4,7 @@ if [ "$#" -eq 0 ] || [ "$1" = "--help" ]; then
   echo "Usage: $(basename $0) [options] [Java file]"
   echo ""
   echo "Options:"
+  echo "  -f              Overwrite existing test file if it exists"
   echo "  --help          Show this help message and exit"
   echo ""
   echo "Description:"
@@ -13,7 +14,22 @@ if [ "$#" -eq 0 ] || [ "$1" = "--help" ]; then
   exit 0
 fi
 
-java_file="$1"
+# Parse options
+force=false
+while getopts ":f" opt; do
+  case $opt in
+    f)
+      force=true
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+  esac
+done
+
+# java_file is the first non-option argument
+java_file="${@:$OPTIND:1}"
 
 if [[ ! -s "$java_file" || "${java_file##*.}" != "java" ]]; then
   echo "Error: Please provide a non-empty Java file."
@@ -32,17 +48,24 @@ src_test_java_path="src/test/java"
 test_file="${abs_java_file//$src_main_java_path/$src_test_java_path}"
 test_file="${test_file%.java}Test.java"
 
+if [ -f "$test_file" ] && [ "$force" = false ]; then
+  echo "Error: Test file already exists: $test_file"
+  echo "Use -f to overwrite."
+  exit 1
+fi
+
 test_directory=$(dirname "$test_file")
 if [ ! -d "$test_directory" ]; then
   mkdir -p "$test_directory"
 fi
 
 chatgpt_prompt=$(cat <<EOF
-End of $(basename "$java_file"). Please create unittests this Java class using JUnit 4 using an ErrorCollector rule named ec and ec.checkThat;
-you can use Mockito if mocking is needed. But
-for mocking org.apache.sling.api.resource.Resource use org.apache.sling.testing.mock.sling.junit.SlingContext ResourceBuilder.
+End of $(basename "$java_file"). Please create unittests for the public methods of this Java class using JUnit 4 using an ErrorCollector rule named ec and ec.checkThat.
 Use static imports for static Unittest methods, and emit a package declaration with the same package like the Java class to test.
 Do only print the Java code for the test, absolutely no additional text.
+Mockito is present in the classpath, and org.apache.sling.testing.mock.sling.junit.SlingContext, but use only if really needed.
+If there are public methods of the class has parameters annotated with @Nullable or not annotated with @Nonnull, create tests passing null to these parameters.
+Try to test various cases for each method, e.g. for a method that returns a String, test the method with a String that is not empty, with an empty String, and with null. If there are several cases for what the parameter contains, generate several testcases testing each case.
 EOF
 )
 

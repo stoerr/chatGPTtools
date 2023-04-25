@@ -5,6 +5,16 @@
 - bookmarklet library
 - automatische Übersetzung
 
+### chatgpt possible additional options
+-c number Set the number of responses to generate (default: 1)
+-s number Set the temperature for response generation
+-u url read content of url and pipe it through texttohtml
+-L List available models and their capabilities
+-t template
+-tf template file
+--thelp template help
+
+user
 
 ## Interessanter "Error"
 
