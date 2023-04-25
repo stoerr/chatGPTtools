@@ -23,7 +23,7 @@ if [ ! -f "$usages_file" ]; then
   exit 1
 fi
 
-additional_prompt="\n\nThese are the usage descriptions of several command line utilities. Please tell me which script I could use to perform the following task:\n"
+additional_prompt="\n\n#Instructions\nThese are the usage descriptions of several command line utilities. Please tell me which script I could use to perform the following task and print it's usage comment:\n"
 
 cat "$usages_file" | chatgpt - "$additional_prompt $prompt"
 

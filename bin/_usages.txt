@@ -1,0 +1,77 @@
+# chatgptsearchscript
+Usage: chatgptsearchscript [options] [task description]
+
+Options:
+  --help          Show this help message and exit
+
+Description:
+  This script searches for a suitable ChatGPT related command line utility to perform a task
+  whose description is given in the command line arguments.
+
+
+# suggestbash
+Usage: suggestbash [options] [task description]
+
+Options:
+  --help          Show this help message and exit
+
+Description:
+  This script sends a task description to ChatGPT, which returns a bash
+  command line for the given task and prints it.
+
+
+# chatgptapplytemplate
+Apply a ChatGPT chat template to a file and print the result ChatGPT returns to stdou
+Usage: ./chatgptapplytemplate templateName fileName
+       argument 1 is the name of the template file
+       argument 2 is the name of the file to apply the template to
+
+
+# chatgptsummarizeurl
+Usage: chatgptsummarizeurl [options] url
+
+Options:
+  --help          Show this help message and exit
+
+Description:
+  This script fetches the content of an URL (returning html) and sends a request to summarize the content to ChatGPT.
+
+
+# suggestfish
+Usage: suggestfish [options] [task description]
+
+Options:
+  --help          Show this help message and exit
+
+Description:
+  This script sends a task description to ChatGPT, which returns a fish
+  command line for the given task and prints it.
+
+
+# chatgpt
+
+chatgpt - Submit a prompt to ChatGPT conversation and print the response to stdout. The prompt can be given on the command line or read from stdin.
+
+Usage: chatgpt [options] [prompt]
+
+Options:
+  -               Reads prompt from stdin, instead of as an argument
+  -m modelname    Use a specific model (default: gpt-3.5-turbo)
+  -t number       Set max tokens for response (default: none)
+  -v              verbose output : print prompt to stderr and info about connection retries
+  --help          Show this help message
+
+
+
+# createJavaUnittest
+Usage: createJavaUnittest [options] [Java file]
+
+Options:
+  --help          Show this help message and exit
+
+Description:
+  This script generates a JUnit 4 test for the given Java file using ChatGPT.
+  The output test file is placed in the corresponding 'src/test/java'
+  directory with a 'Test.java' suffix.
+
+

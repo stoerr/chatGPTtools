@@ -39,7 +39,8 @@ fi
 
 chatgpt_prompt=$(cat <<EOF
 End of $(basename "$java_file"). Please create unittests this Java class using JUnit 4 using an ErrorCollector rule named ec and ec.checkThat;
-you can use Mockito if mocking is needed.
+you can use Mockito if mocking is needed. But
+for mocking org.apache.sling.api.resource.Resource use org.apache.sling.testing.mock.sling.junit.SlingContext ResourceBuilder.
 Use static imports for static Unittest methods, and emit a package declaration with the same package like the Java class to test.
 Do only print the Java code for the test, absolutely no additional text.
 EOF

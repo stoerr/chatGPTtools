@@ -66,6 +66,8 @@ if (!prompt) {
 
 if (verbose) {
     console.error('Prompt: ', prompt, '\n');
+    // print word count of prompt to stderr
+    console.error('Prompt word count: ', prompt.split(/\s+/).length, '\n');
 }
 
 const requestData = {
