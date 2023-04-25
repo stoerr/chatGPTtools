@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 const fs = require('fs');
+const path = require('path');
 
 const helpMessage = `
 chatgpt - Submit a prompt to ChatGPT conversation and print the response to stdout. The prompt can be given on the command line or read from stdin.
@@ -9,6 +10,7 @@ Usage: chatgpt [options] [prompt]
 Options:
   -               Reads prompt from stdin, instead of as an argument
   -f filename     Reads prompt from a file, including a frame naming the filename. Can be given multiple times.
+  -fp filepattern Searches in the current directory and subdirectories for files matching this pattern - it's an error if there are several. Otherwise like -f.
   -p prefix       Prefix the prompt with a string. Use this or -pf, not both.
   -pf prefixfile  Prefix the prompt with the contents of a file
   -s suffix       Suffix the prompt with a string. Use this or -sf, not both.
@@ -41,32 +43,37 @@ let prefix = '';
 let suffix = '';
 let files = [];
 
-process.argv.slice(2).forEach((arg, i, argv) => {
+for (let i = 2; i < process.argv.length; i++) {
+    const arg = process.argv[i];
+
     if (inOptions) {
-        if (arg === '-m' && argv[i + 1]) {
-            model = argv[i + 1];
+        if (arg === '-m' && process.argv[i + 1]) {
+            model = process.argv[i + 1];
             i++;
-        } else if (arg === '-t' && argv[i + 1]) {
-            maxTokens = parseInt(argv[i + 1], 10);
+        } else if (arg === '-t' && process.argv[i + 1]) {
+            maxTokens = parseInt(process.argv[i + 1], 10);
             i++;
         } else if (arg === '-') {
             readStdin = true;
         } else if (arg === '-v') {
             verbose = true;
-        } else if (arg === '-p' && argv[i + 1]) {
-            prefix = argv[i + 1];
+        } else if (arg === '-p' && process.argv[i + 1]) {
+            prefix = process.argv[i + 1];
             i++;
-        } else if (arg === '-pf' && argv[i + 1]) {
-            prefix = fs.readFileSync(argv[i + 1], 'utf8');
+        } else if (arg === '-pf' && process.argv[i + 1]) {
+            prefix = fs.readFileSync(process.argv[i + 1], 'utf8');
             i++;
-        } else if (arg === '-s' && argv[i + 1]) {
-            suffix = argv[i + 1];
+        } else if (arg === '-s' && process.argv[i + 1]) {
+            suffix = process.argv[i + 1];
             i++;
-        } else if (arg === '-sf' && argv[i + 1]) {
-            suffix = fs.readFileSync(argv[i + 1], 'utf8');
+        } else if (arg === '-sf' && process.argv[i + 1]) {
+            suffix = fs.readFileSync(process.argv[i + 1], 'utf8');
             i++;
-        } else if (arg === '-f' && argv[i + 1]) {
-            files.push(argv[i + 1]);
+        } else if (arg === '-f' && process.argv[i + 1]) {
+            files.push(process.argv[i + 1]);
+            i++;
+        } else if (arg === '-fp' && process.argv[i + 1]) {
+            files.push(locateFile(process.argv[i + 1]));
             i++;
         } else if (!arg.startsWith('-')) {
             inOptions = false;
@@ -75,15 +82,66 @@ process.argv.slice(2).forEach((arg, i, argv) => {
     } else {
         prompt += ' ' + arg;
     }
-});
+}
 
 if (readStdin) {
     const stdinPrompt = fs.readFileSync(0, 'utf-8');
     prompt = stdinPrompt.trim() + '\n\n' + prompt;
 }
 
+/** If the file doesn't exist, we treat it as a glob pattern and search for it in the current directory and its subdirectories.
+ * If something like that doesn't exist, we log an error and abort. Also, if there are several files matching that pattern. */
+function locateFile(filepattern) {
+    if (fs.existsSync(filepattern)) {
+        return filepattern;
+    } else {
+        const fileregex = makeIntellijStylePattern(filepattern);
+        const files = searchFile(fileregex);
+        if (files.length === 0) {
+            console.error('Error: File ' + fileregex + ' not found');
+            process.exit(1);
+        } else if (files.length > 1) {
+            console.error('Error: File ' + fileregex + ' is ambiguous, matches ' + files.join(', '));
+            process.exit(1);
+        } else {
+            return files[0];
+        }
+    }
+}
+
+function searchFile(fileregex, dir = '.', files = []) {
+    const entries = fs.readdirSync(dir, {withFileTypes: true});
+
+    entries.forEach((entry) => {
+        if (entry.isDirectory()) {
+            searchFile(fileregex, path.join(dir, entry.name), files);
+        } else if (entry.isFile() && entry.name.match(fileregex)) {
+            files.push(path.join(dir, entry.name));
+        }
+    });
+
+    return files;
+}
+
+/**
+ * Creates a case-insensitive regular expression based on the given file pattern.
+ * The function splits the input string at lowercase-to-uppercase boundaries,
+ * alphanumeric-to-non-alphanumeric boundaries, and non-alphanumeric-to-alphanumeric
+ * boundaries. It then concatenates the segments with '.*' in between.
+ *
+ * @param {string} filepattern - The file pattern to convert into a regular expression.
+ * @returns {RegExp} - A case-insensitive regular expression based on the input file pattern.
+ */
+function makeIntellijStylePattern(filepattern) {
+  const segments = filepattern.split(/(?=[A-Z])|(?<=[a-z])(?=\d)|(?<=\d)(?=[a-z])|(?<=[a-zA-Z])(?=[^a-zA-Z\d])|(?<=[^a-zA-Z\d])(?=[a-zA-Z\d])/);
+  const regexPattern = segments.map(segment => segment.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')).join('.*');
+  return new RegExp(regexPattern, 'i');
+}
+
+
 for (let i = 0; i < files.length; i++) {
-    const file = files[i];
+    const fileraw = files[i];
+    const file = locateFile(fileraw);
     var filename = file;
     // if filename contains users homedir, replace that by tilde
     const homeDir = process.env.HOME;
