@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ "$#" -eq 0 ] || [ "$1" = "--help" ]; then
-  echo "Usage: $(basename $0) [options] [Java file]"
+  echo "Usage: $(basename $0) [options] [Java file] [optional additional instructions]"
   echo ""
   echo "Options:"
   echo "  -f              Overwrite existing test file if it exists"
@@ -13,6 +13,7 @@ if [ "$#" -eq 0 ] || [ "$1" = "--help" ]; then
   echo "  directory with a 'Test.java' suffix."
   exit 0
 fi
+# BTW: this is interesting as an external tool for IntelliJ with arguments "$FilePath$" "$Prompt$"
 
 # Parse options
 force=false
@@ -35,6 +36,9 @@ if [[ ! -s "$java_file" || "${java_file##*.}" != "java" ]]; then
   echo "Error: Please provide a non-empty Java file."
   exit 1
 fi
+
+# additional command line arguments after the java_file are put into additionalprompt.
+additionalprompt="${@:$OPTIND+1}"
 
 abs_java_file=$(realpath "$java_file")
 src_main_java_path="src/main/java"
@@ -72,7 +76,7 @@ EOF
 echo "Word count of input file:"
 wc "$java_file"
 
-chatgpt_output=$(cat "$java_file" | chatgpt -v - "$chatgpt_prompt" || exit 1)
+chatgpt_output=$(cat "$java_file" | chatgpt - "$chatgpt_prompt" "additionalprompt" || exit 1)
 
 echo "$chatgpt_output" > "$test_file"
 

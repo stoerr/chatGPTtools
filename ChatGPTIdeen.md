@@ -1,4 +1,18 @@
 # Ideen für Tools mit ChatGPT
+
+## Toolbox
+
+- fix a file: takes a Java file as input have ChatGPT generate a Unix patch format patch according to a prompt. Perhaps 
+  maven errors as addition to the prompt.
+- for too long java code: script that removes method bodies but keeps method signatures and Javadoc.
+- study java code: have ChatGPT guess paths of superclasses and interfaces (caution for deep hierarchies), collect 
+  code (perhaps shorten it with previous script) and answer questions according to that. Or answer questions 
+  twostep: answer them on the individual (super)classes and summarize that together.
+- fix maven build using fix a file, probably limited to unittests.
+- Extract CSS for element, subelements and parents. https://stackoverflow.
+  com/questions/9196451/how-to-export-all-relevant-html-css-for-one-element https://stackoverflow.com/questions/8407550/how-to-get-and-extract-matched-css-rules-on-dom-node
+
+
 ## Ergaenzungen von quickchatgpt.html
 - Alte Antworten als Tabs hinzufügen
 - Prompt-Teile per select oder checkbox
