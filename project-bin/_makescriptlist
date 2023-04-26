@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+echo >> README.md
+
+chatgpt -f bin/_usages.txt - >> README.md <<EOF
+Discard previous instructions.
+
+# Instructions
+From the file bin/_usages.txt that was included here make a description of all scripts mentioned there.
+It should just mention the script name and a one line short description what it does.
+Do not mention the options and arguments, since these are described in the script itself.
+Sort the scripts alphabetically by their name.
+Do not mention ChatGPT in the description, since almost all scripts use ChatGPT to perform their function,
+so this would add no information. Rather explain what the script does, without mentioning ChatGPT.
+Never ever include fragments of the bin/_usages.txt file in the output.
+The only exception where the word ChatGPT is permitted are the scripts chatgpt, chatgptapplytemplate, chatgptsummarizeurl.
+
+The output should be in markdown format. Here are examples, which also should be used for the corresponding scripts:
+- \`chatgptsearchascript\`: searches this toolbox for a suitable command line utility to perform a task described in the command line
+- \`suggestbash\`: prints a bash command line for a problem described on it's command line
+EOF
