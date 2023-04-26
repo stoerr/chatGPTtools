@@ -37,9 +37,9 @@
                         <div class="flex-grow-1">
                             <button type="button" class="btn btn-primary submitbutton" onclick="submit()">Abschicken
                             </button>
-                            <button type="button" class="btn btn-primary" id="speak"
+                            <!-- <button type="button" class="btn btn-primary" id="speak"
                                     title="Zum Sprechen Knopf drücken und nach dem Sprechen wieder loslassen.">Sprechen
-                            </button>
+                            </button> -->
                             <button type="button" class="btn btn-primary" onclick="reset()">Leeren</button>
                         </div>
                         <i class="fa fa-angle-down collapse" id="memorydown"
@@ -135,7 +135,7 @@
         chathistory.limitArraySize();
         chathistoryUsermsg.limitArraySize();
 
-        speechListener($('#nextmessage'), $('#speak'));
+        // speechListener($('#nextmessage'), $('#speak'));
     });
 
     function waiting(finshed) {
