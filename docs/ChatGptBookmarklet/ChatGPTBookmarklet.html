@@ -1,24 +1,28 @@
 <!-- ChatGPTBookmarklet.html -->
-<div id="hpsChatGPTDialog" class="hps-chatgpt-dialog">
-  <div class="hps-chatgpt-header">
-    <button id="hpsChatGPTCloseTop" class="hps-chatgpt-close">[X]</button>
-    <h2>Page summary and Q&A with ChatGPT</h2>
-  </div>
-  <div class="hps-chatgpt-content">
-    <textarea id="hpsChatGPTQuestion" class="hps-chatgpt-question" placeholder="Ask a question" rows="5"></textarea>
-    <div class="hps-chatgpt-controls">
-      <button id="hpsChatGPTSubmit">Submit</button>
-      <input type="checkbox" id="hpsChatGPTIncludePageContent" class="hps-chatgpt-include-page-content" checked="checked" />
-      <label for="hpsChatGPTIncludePageContent">Include page content</label>
+<div class="hpsChatGPTDialog-container">
+    <div id="hpsChatGPTDialog" class="hps-chatgpt-dialog">
+        <div class="hps-chatgpt-header">
+            <button id="hpsChatGPTCloseTop" class="hps-chatgpt-close">[X]</button>
+            <h2>Page summary and Q&A with ChatGPT</h2>
+        </div>
+        <div class="hps-chatgpt-content">
+            <textarea id="hpsChatGPTQuestion" class="hps-chatgpt-question" placeholder="Ask a question"
+                      rows="5"></textarea>
+            <div class="hps-chatgpt-controls">
+                <button id="hpsChatGPTSubmit">Submit</button>
+                <input type="checkbox" id="hpsChatGPTIncludePageContent" class="hps-chatgpt-include-page-content"
+                       checked="checked"/>
+                <label for="hpsChatGPTIncludePageContent">Include page content</label>
+            </div>
+            <div class="hps-chatgpt-response" id="hpsChatGPTResponse">
+                <div id="hpsChatGPTAnswer">
+                    Thinking...
+                </div>
+            </div>
+            <div class="hps-chatgpt-controls">
+                <button id="hpsChatGPTCopyToClipboard">Copy to clipboard</button>
+                <button id="hpsChatGPTCloseBottom">Close Dialog</button>
+            </div>
+        </div>
     </div>
-    <div class="hps-chatgpt-response" id="hpsChatGPTResponse">
-      <div id="hpsChatGPTAnswer">
-        Thinking...
-      </div>
-    </div>
-    <div class="hps-chatgpt-controls">
-      <button id="hpsChatGPTCopyToClipboard">Copy to clipboard</button>
-      <button id="hpsChatGPTCloseBottom">Close Dialog</button>
-    </div>
-  </div>
 </div>

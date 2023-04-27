@@ -1,3 +1,7 @@
+.hpsChatGPTDialog-container {
+  all: revert;
+}
+
 .hps-chatgpt-dialog {
   position: fixed;
   top: 10%;
