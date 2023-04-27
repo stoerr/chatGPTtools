@@ -204,7 +204,7 @@ async function requestChatGPT(attempt = 1) {
                 process.exit(3);
             }
         } else if (!response.ok) {
-            console.error('Error: Request failed with status', response.status, 'and message', await response.text());
+            console.error('Error: Request failed with status', response.status, 'and message', await response.statusText, 'and body', await response.text());
             process.exit(3);
         } else {
             const responseData = await response.json();
