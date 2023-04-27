@@ -16,7 +16,7 @@ javascript:/*ChatGPTBookmarklet*/(function() {
       window.hpsChatGPTBookmarklet.openDialog();
     }
   }
-  load('http://localhost:63342/chatgpt/docs/ChatGPTBookmarklet', 'XXX');
+  load('https://stoerr.github.io/chatGPTtools/ChatGptBookmarklet', 'XXX');
 })();
 
 // locally from IntelliJ: 'http://localhost:63342/chatgpt/docs/ChatGPTBookmarklet'
