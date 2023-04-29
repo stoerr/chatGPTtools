@@ -113,20 +113,24 @@
             var allCSS = "";
             const sheets = document.styleSheets;
             for (const sheet of sheets) {
-                const rules = sheet.rules || sheet.cssRules;
-                let sheetCSS = "";
-                for (const rule of rules) {
-                    if (rule.selectorText) {
-                        if (anyElementMatches(elements, rule.selectorText)) {
-                            sheetCSS += rule.cssText + "\n";
+                try {
+                    const rules = sheet.rules || sheet.cssRules;
+                    let sheetCSS = "";
+                    for (const rule of rules) {
+                        if (rule.selectorText) {
+                            if (anyElementMatches(elements, rule.selectorText)) {
+                                sheetCSS += rule.cssText + "\n";
+                            }
+                        } else { // what would that be?
+                            console.error("Rule without selectorText ", rule, " : ", JSON.stringify(rule));
                         }
-                    } else { // what would that be?
-                        console.error("Rule without selectorText ", rule, " : ", JSON.stringify(rule));
                     }
-                }
-                if (sheetCSS) {
-                    allCSS += "\n\n/* STYLESHEET: " + sheet.href + " */\n";
-                    allCSS += sheetCSS;
+                    if (sheetCSS) {
+                        allCSS += "\n\n/* STYLESHEET: " + sheet.href + " */\n";
+                        allCSS += sheetCSS;
+                    }
+                } catch (error) {
+                    console.error("Error while processing stylesheet ", sheet, " : ", error);
                 }
             }
             return allCSS;
