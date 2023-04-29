@@ -11,7 +11,7 @@ Let's have a conversation. Please reply in short sentences to keep the conversat
 
 ## Script generation
 
-Please generate a script for the command line for the following task, runnable on a MacBook Pro with Apple M1 Max, that is, arm64 architecture, and MacOS Ventura 13.3.1 . It can be either a bash script using any of the normally present MacOS command line tools or what is installable with homebrew, or a NodeJS script for version 19.5.0 . If NodeJS, it should not require installing any additional libraries. If called without arguments or with the argument --help, the script should describe it's usage and exit - including what options and arguments it expects, and (important!) a short description what it does.
+  Please generate a script for the command line for the following task, runnable on a MacBook Pro with Apple M1 Max, that is, arm64 architecture, and MacOS Ventura 13.3.1 . It can be either a bash script using any of the normally present MacOS command line tools or what is installable with homebrew, or a NodeJS script for version 19.5.0 . If NodeJS, it should not require installing any additional libraries. If called without arguments or with the argument --help, the script should describe it's usage and exit - including what options and arguments it expects, and (important!) a short description what it does. For a bash script, parse the options with getopt.
 
 The name of the script is chatgpt. It should submit a single message to ChatGPT and print the 
 answer to stdout. It should be done using NodeJS using fetch.

@@ -6,6 +6,12 @@
             this.basePath = basePath;
         },
 
+        generalHelp: function () {
+            return `
+            Highlight an element with the mouse and then click on it to get the HTML and CSS rules for it copied to the clipboard and logged to the console.
+            `;
+        },
+
         start: function () {
             try {
                 const that = this;
@@ -84,9 +90,19 @@
             }
 
             function anyElementMatches(elements, selector) {
+                if (!selector) return false;
                 for (const element of elements) {
-                    if (element.matches(selector)) {
-                        return true;
+                    try {
+                        if (element.matches(selector)) {
+                            return true;
+                        }
+                        // check whether selector with all occurrences of :before or :after replaced by the empty string matches
+                        const selectorWithoutBeforeAfter = selector.replace(/::?(before|after)/g, '');
+                        if (element.matches(selectorWithoutBeforeAfter)) {
+                            return true;
+                        }
+                    } catch (error) {
+                        // that might happen if the selector is empty , can't help but ignore this
                     }
                 }
                 return false;
@@ -100,8 +116,12 @@
                 const rules = sheet.rules || sheet.cssRules;
                 let sheetCSS = "";
                 for (const rule of rules) {
-                    if (anyElementMatches(elements, rule.selectorText)) {
-                        sheetCSS += rule.cssText + "\n";
+                    if (rule.selectorText) {
+                        if (anyElementMatches(elements, rule.selectorText)) {
+                            sheetCSS += rule.cssText + "\n";
+                        }
+                    } else { // what would that be?
+                        console.error("Rule without selectorText ", rule, " : ", JSON.stringify(rule));
                     }
                 }
                 if (sheetCSS) {
@@ -115,6 +135,7 @@
         selectElement: function (callback) {
             let selectedElement = null;
             let highlightedElement = null;
+            let that = this;
 
             function handleMouseMove(event) {
                 const elementUnderMouse = findElementUnderMouse(event.clientX, event.clientY);
@@ -137,7 +158,7 @@
                     if (highlightedElement !== null) {
                         resetElement(highlightedElement);
                     }
-                } else if (event.key === 'ArrowUp') {
+                } else if (event.key === 'ArrowUp' || event.key === 'p') {
                     event.preventDefault();
                     if (highlightedElement && highlightedElement.parentElement) {
                         resetElement(highlightedElement);
@@ -186,7 +207,7 @@
                 - D: Delete everything except the highlighted element and its ancestors and descendants
                 - ? or h: Show this help message
                 `;
-                alert(helpText);
+                alert(that.generalHelp() + helpText);
             }
 
             function handleMouseClick(event) {
