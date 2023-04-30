@@ -46,7 +46,13 @@
   margin-top: 10px;
 }
 
+.hps-chatgpt-controls::after {
+  content: "";
+  clear: both;
+}
+
 .hps-chatgpt-response {
   margin-top: 10px;
   min-height: 50px;
+  clear: both;
 }
