@@ -5,6 +5,11 @@
 - bookmarklet library
 - automatische Übersetzung
 
+https://discord.com/channels/974519864045756446/1047565374645870743/1102540385726767104 changing files
+
+- GPT talking to himself, with different system messages. :-)
+- bookmarklets to render dotty graphs and HTML from chat output
+
 ### chatgpt possible additional options
 -c number Set the number of responses to generate (default: 1)
 -s number Set the temperature for response generation

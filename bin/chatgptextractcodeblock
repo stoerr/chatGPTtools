@@ -1,0 +1,67 @@
+#!/usr/bin/env node
+
+const fs = require('fs');
+
+function printHelp() {
+    console.log(`Usage: chatgptExtractCodeblock [options]
+
+Description:
+  Extracts and prints the contents of a code block delimited by triple backticks from stdin.
+  The code block can be inline or multiline.
+
+Options:
+  -n, --invert         Print everything except the code block.
+  --help               Show this help message and exit.
+`);
+    process.exit(0);
+}
+
+function processArgs() {
+    const args = process.argv.slice(2);
+    const options = {invert: false};
+
+    for (let i = 0; i < args.length; i++) {
+        if (args[i] === '--help' || args[i] === '-h') {
+            printHelp();
+        } else if (args[i] === '-n' || args[i] === '--invert') {
+            options.invert = true;
+        } else {
+            printHelp();
+        }
+    }
+
+    return options;
+}
+
+function extractCodeBlock(fileContent, invert) {
+    // split the fileContent at triple backticks as multline regex
+    const regex = /```/gm;
+    const parts = fileContent.split(regex);
+    if (parts.length < 3 ) {
+        console.error('Error: No code block found.');
+        process.exit(0);
+    } else if (parts.length > 3) {
+        console.error('Error: Multiple code blocks found.');
+        process.exit(0);
+    }
+
+    if (invert) {
+        const result = parts[0] + parts[2];
+        console.log(result);
+    } else {
+        console.log(parts[1]);
+    }
+}
+
+function main() {
+    const options = processArgs();
+    const fileContent = fs.readFileSync(0, 'utf8');
+    extractCodeBlock(fileContent, options.invert);
+}
+
+main();
+
+/**
+ * Requirements for ChatGPT, but I gave up and fixed that myself:
+ * The script is called chatgptExtractCodeblock. It looks for a codeblock delimited with three backticks ``` - one before the codeblock, one after the codeblock, and prints the contents of that codeblock to stdout. The codeblock can be on one line, including the delimiters, or multiline. If the argument -n is given, it prints everything except that codeblock. If there is no codeblock, it returns with exit code 0 and no output, but an error message to stderr.
+ */
