@@ -1,0 +1,85 @@
+#!/bin/bash
+
+SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+PROMPTLIB="$SCRIPTDIR/../promptlib"
+
+usage() {
+  echo "Usage:"
+  echo "  chatgptpromptlib promptkey1 promptkey2 ...    output of prompt fragments with key promptkey1 promptkey2 ..."
+  echo "  chatgptpromptlib -l                           lists all promptfragments"
+  echo "  chatgptpromptlib -c category                  lists all promptfragments of category c"
+  echo "  chatgptpromptlib -s searchstring              lists all promptfragments where all words of the searchstring appear"
+  echo ""
+  echo "Description:"
+  echo "The prompt fragments are located in the directory \$SCRIPTDIR/../promptlib/"
+  echo "and are named like the key but with the extension .prompt.txt."
+  echo "The first line of the file can specify a category, e.g., CATEGORY=thecategory."
+  echo "The second line can provide a description, e.g., DESCRIPTION=a description of the file."
+  echo "These lines are not included in the output."
+}
+
+if [[ "$#" -eq 0 || "$1" == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+contains_words() {
+  local file="$1"
+  local search="$2"
+
+  for word in $search; do
+    if ! grep -q -w -i "$word" "$file"; then
+      return 1
+    fi
+  done
+
+  return 0
+}
+
+case "$1" in
+-l)
+  find "$PROMPTLIB" -type f -name '*.prompt.txt' -exec basename -s .prompt.txt {} \;
+  ;;
+-c)
+  shift
+  category="$1"
+  find "$PROMPTLIB" -type f -name '*.prompt.txt' -exec grep -l "CATEGORY=.*${category}" {} \; -exec basename -s .prompt.txt {} \;
+  ;;
+-s)
+  shift
+  searchstring="$1"
+  find "$PROMPTLIB" -type f -name '*.prompt.txt' | while read -r prompt; do
+    if contains_words "$prompt" "$searchstring"; then
+      basename -s .prompt.txt "$prompt"
+    fi
+  done
+  ;;
+*)
+  for key in "$@"; do
+    promptfile="$PROMPTLIB/$key.prompt.txt"
+    if [[ -f "$promptfile" ]]; then
+      sed -e '1,2d' "$promptfile"
+    else
+      echo "Error: Prompt fragment with key '$key' not found."
+      exit 1
+    fi
+  done
+  ;;
+esac
+
+# Generated with ChatGPT and modified very little from prompt:
+#The script is named chatgptpromptlib and should be done with bash. It has the options:
+#chatgptpromptlib promptkey1 promptkey2 ...
+#    output of prompt fragments with key promptkey1 promptkey2 ...
+#chatgptpromptlib -l
+#    lists all promptfragments
+#chatgptpromptlib -c category
+#    lists all promptfragments of category c
+#chatgptpromptlib -s searchstring
+#    lists all promptfragments where all word of the searchstring appear
+#The prompts are searched in the directory $SCRIPTDIR/../promptlib/, where SCRIPTDIR is the location of the script,
+#and are name like the key but with extension .prompt.txt . The first line can look like
+#CATEGORY=thecategory
+#where thecategory is a category name, possibly several separated with spaces, and then a line
+#DESCRIPTION=a description of the file
+#Those line is not written to stdout, only the following text.
