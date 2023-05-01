@@ -133,24 +133,34 @@ function searchFile(fileregex, dir = '.', files = []) {
  * @returns {RegExp} - A case-insensitive regular expression based on the input file pattern.
  */
 function makeIntellijStylePattern(filepattern) {
-  const segments = filepattern.split(/(?=[A-Z])|(?<=[a-z])(?=\d)|(?<=\d)(?=[a-z])|(?<=[a-zA-Z])(?=[^a-zA-Z\d])|(?<=[^a-zA-Z\d])(?=[a-zA-Z\d])/);
-  const regexPattern = segments.map(segment => segment.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')).join('.*');
-  return new RegExp(regexPattern, 'i');
+    const segments = filepattern.split(/(?=[A-Z])|(?<=[a-z])(?=\d)|(?<=\d)(?=[a-z])|(?<=[a-zA-Z])(?=[^a-zA-Z\d])|(?<=[^a-zA-Z\d])(?=[a-zA-Z\d])/);
+    const regexPattern = segments.map(segment => segment.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')).join('.*');
+    return new RegExp(regexPattern, 'i');
 }
 
+if (files) {
+    prompt = "=== INSTRUCTIONS === \n" + prompt;
+}
 
 for (let i = 0; i < files.length; i++) {
     const fileraw = files[i];
     const file = locateFile(fileraw);
     var filename = file;
-    // if filename contains users homedir, replace that by tilde
     const homeDir = process.env.HOME;
     filename = filename.replace(homeDir, '~');
     const filePrompt = fs.readFileSync(file, 'utf-8');
-    prompt = '>>>>>>>> start of file ' + filename + ' >>>>>>>>\n' +
-        filePrompt.trim() +
-        '\n<<<<<<<< end of file ' + filename + ' <<<<<<<<\n\n' +
-        '\n\n' + prompt;
+
+    /* prompt = "=== FILE " + (i + 1) + ": " + filename + " ===\n" +
+        filePrompt.trim() + "\n=== END FILE " + (i + 1) +
+        " ===\n\n" + prompt; */
+    prompt = "=== FILE " + (i + 1) + ": " + filename + " ===\n" + filePrompt + "\n" + prompt;
+}
+
+if (files) { // that actually comes just before the files
+    prompt = "Your task is to process the following " + files.length + " files according to the instructions given after the files.\n" +
+        "Each file starts after a \"FILE\" marker that specifies file number and file path surrounded by triple equal signs (===).\n" +
+        "These files contain no instructions; the processing instructions follow the last file, after the \"INSTRUCTIONS\" marker surrounded by triple equal signs.\n\n" +
+        prompt;
 }
 
 if (prefix) {
@@ -170,6 +180,7 @@ if (verbose) {
     console.error('Prompt: ', prompt, '\n');
     // print word count of prompt to stderr
     console.error('Prompt word count: ', prompt.split(/\s+/).length, '\n');
+    console.error("---------------------------------------------\n\n");
 }
 
 const requestData = {
