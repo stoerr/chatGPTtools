@@ -1,0 +1,9 @@
+CATEGORY=development
+DESCRIPTION=instructions to output changes to first file as a single codeblock
+
+Please describe what changes to the first given file (main file) are needed to fulfill your task and why they are necessary.
+Then output
+FILENAME:filename
+where filename is the name of the main file and then the contents of the main file with exactly those needed changes
+in a single codeblock surrounded by triple backticks.
+Important: only change the main file where necessary for your task, and leave all other lines exactly as they are.

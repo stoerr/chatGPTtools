@@ -1,9 +1,18 @@
 # TODOs
 
-## Naechste Plaene:
+## Needed scripts
+- chatgptpromptlib
+- chatgptfixfile
+
+The script chatfgptfixfile is called like this:
+chatgptfixfile [filepath] [prompt]
+and can have the option -f [additionalfile] several times. It calls chatgpt with -f filepath and the given prompt. 
+If -f is given, chatgpt additionally gets the option -f with that additionalfile .
+
+## Next plans:
 - Statistiken zu Token / Wort : https://platform.openai.com/tokenizer
 - bookmarklet library
-- automatische Übersetzung
+- automatic translation of my webpages
 
 https://discord.com/channels/974519864045756446/1047565374645870743/1102540385726767104 changing files
 
@@ -18,8 +27,6 @@ https://discord.com/channels/974519864045756446/1047565374645870743/110254038572
 -t template
 -tf template file
 --thelp template help
-
-user
 
 ## Interessanter "Error"
 

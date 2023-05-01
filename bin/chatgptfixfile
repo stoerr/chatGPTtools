@@ -1,0 +1,88 @@
+#!/bin/bash
+
+print_help() {
+  echo "Usage: chatgptfixfile [options] [filepath] [prompt]"
+  echo "A script to modify a file using the ChatGPT API and display the differences."
+  echo ""
+  echo "Options:"
+  echo "  -f <additionalfile>  Add an additional file to be passed to ChatGPT with -f option (can be used multiple times)"
+  echo "  --help               Display this help text and exit"
+  echo ""
+  echo "Arguments:"
+  echo "  filepath             Path of the file to be modified"
+  echo "  prompt               Prompt to send to ChatGPT"
+  echo ""
+  echo "Descrpition:"
+  echo "The script calls ChatGPT with the given file and prompt, extracts a code block from the output, and creates a new file with the changes. It then displays the differences between the original and the new file using 'idea diff'."
+}
+
+# Check if help argument is provided
+if [[ "$1" == "--help" ]]; then
+  print_help
+  exit 0
+fi
+
+# Check for the correct number of arguments
+if [[ $# -lt 2 ]]; then
+  print_help
+  exit 1
+fi
+
+# Parse options
+additional_files=()
+while getopts "f:" opt; do
+  case $opt in
+    f)
+      additional_files+=("$OPTARG")
+      shift 2
+      ;;
+    *)
+      print_help
+      exit 1
+      ;;
+  esac
+done
+
+# Parse non-option arguments
+filepath=$1
+prompt=$2
+
+# Call chatgpt with the file and prompt
+chatgpt_args=("-v" "-f" "$filepath")
+for file in "${additional_files[@]}"; do
+  chatgpt_args+=("-f" "$file")
+done
+
+gptoutput=$(chatgpt "${chatgpt_args[@]}" $(chchatgptpromptlib fixCodeInstruction) "$prompt")
+exit_status=$?
+
+if [[ $exit_status -ne 0 ]]; then
+  echo "Error: ChatGPT exited with status code $exit_status"
+  exit 1
+fi
+
+# Extract code block from ChatGPT output
+newcontent=$(echo "$gptoutput" | chatgptextractcodeblock)
+exit_status=$?
+
+if [[ $exit_status -ne 0 ]]; then
+  echo "Error: chatgptextractcodeblock exited with status code $exit_status"
+  exit 1
+fi
+
+# Rename original file and write new content
+mv "$filepath" "$filepath.orig"
+echo "$newcontent" > "$filepath"
+
+# Display differences using 'idea diff'
+idea diff "$filepath.orig" "$filepath"
+
+
+# Specification for generation with ChatGPT was:
+#The script chatfgptfixfile is called like this:
+#chatgptfixfile [filepath] [prompt]
+#and can have the option -f [additionalfile] several times. It calls chatgpt with -f filepath and the given prompt.
+#If -f is given, chatgpt additionally gets the option -f with that additionalfile .
+#The result is read into a variable gptoutput. If chatgpt exits with a status code not 0, it prints an error message and aborts. The content of the variable gptoutput is piped through program chatgptextractcodeblock into a variable newcontent. If that doesn't exit with 0, again an error message is printed.
+#Now the file filepath is renamed to extension .orig, a new file with newcontent is written to filepath and 'idea diff filepath.orig filepath' is called to display the differences.
+#Please include a short description into the help message.
