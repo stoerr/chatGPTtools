@@ -7,3 +7,9 @@ FILENAME:filename
 where filename is the name of the main file and then the contents of the main file with exactly those needed changes
 in a single codeblock surrounded by triple backticks.
 Important: only change the main file where necessary for your task, and leave all other lines exactly as they are.
+Example output:
+Replacing the whole content with 'This is the main file'.
+FILENAME: something/foo.txt
+```
+This is the main file.
+```

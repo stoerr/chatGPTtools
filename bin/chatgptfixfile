@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 print_help() {
   echo "Usage: chatgptfixfile [options] [filepath] [prompt]"
@@ -45,7 +46,11 @@ done
 
 # Parse non-option arguments
 filepath=$1
-prompt=$2
+# prompt is the rest of the arguments
+prompt="${@:2}"
+
+prompt="$prompt
+$(chatgptpromptlib fixCodeInstruction)"
 
 # Call chatgpt with the file and prompt
 chatgpt_args=("-v" "-f" "$filepath")
@@ -53,7 +58,7 @@ for file in "${additional_files[@]}"; do
   chatgpt_args+=("-f" "$file")
 done
 
-gptoutput=$(chatgpt "${chatgpt_args[@]}" $(chchatgptpromptlib fixCodeInstruction) "$prompt")
+gptoutput=$(chatgpt "${chatgpt_args[@]}" "$prompt")
 exit_status=$?
 
 if [[ $exit_status -ne 0 ]]; then
@@ -74,9 +79,12 @@ fi
 mv "$filepath" "$filepath.orig"
 echo "$newcontent" > "$filepath"
 
-# Display differences using 'idea diff'
-idea diff "$filepath.orig" "$filepath"
+echo "Moved $filepath to $filepath.orig and wrote new content to $filepath"
+echo "The response was:"
+echo "$gptoutput"
 
+# Display differences using 'idea diff'
+idea diff "$filepath.orig" "$filepath" &
 
 # Specification for generation with ChatGPT was:
 #The script chatfgptfixfile is called like this:
