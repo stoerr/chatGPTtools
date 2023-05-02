@@ -13,3 +13,6 @@ FILENAME: something/foo.txt
 ```
 This is the main file.
 ```
+Now please describe the changes necessary to the main file $mainfile and then output the codeblock that does exacly those changes.
+Important: do only output exactly one codeblock. It should contain the changes for the main file $mainfile.
+Do never output more codeblocks with changes for the other files!
