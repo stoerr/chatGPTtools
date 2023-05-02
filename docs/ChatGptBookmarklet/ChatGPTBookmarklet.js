@@ -15,6 +15,7 @@
             document.getElementById('hpsChatGPTCloseBottom').addEventListener('click', this.hideDialog.bind(this));
             document.getElementById('hpsChatGPTSubmit').addEventListener('click', this.submitQuestion.bind(this));
             document.getElementById('hpsChatGPTCopyToClipboard').addEventListener('click', this.copyToClipboard.bind(this));
+            document.getElementById('hpsChatGPTMaximize').addEventListener('click', this.toggleMaximize.bind(this));
         },
 
         loadCSS: function () {
@@ -155,6 +156,13 @@
                 throw new Error('Error fetching data from ChatGPT API');
             }
         },
+
+        toggleMaximize: function () {
+            const dialogContainer = document.querySelector('.hpsChatGPTDialog-container');
+            const maximizeButton = document.getElementById('hpsChatGPTMaximize');
+            const isMaximized = dialogContainer.classList.toggle('hps-chatgpt-maximize-maximized');
+            maximizeButton.innerText = isMaximized ? '[-]' : '[+]';
+        }
 
     };
 

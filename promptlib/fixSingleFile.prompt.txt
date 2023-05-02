@@ -1,0 +1,6 @@
+CATEGORY=development
+DESCRIPTION=instructions to output changes to first file as a single codeblock
+
+Please give a high level description in flowing text what changes to the first given file (main file) $mainfile are needed to fulfill your task and why they are necessary - e.g. what classes, identifiers, functions you need to add or modify, but absolutely no blocks.
+Then output exactly one codeblock with the new contents of the whole file $mainfile surrounded by triple backticks, changed as described.
+Important: your response must only include exactly one codeblock, not more, not less!

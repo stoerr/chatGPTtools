@@ -51,7 +51,7 @@ filepath=$1
 prompt="${@:2}"
 
 prompt="$prompt
-$(chatgptpromptlib -d "mainfile=$filepath" fixCodeInstruction)"
+$(chatgptpromptlib -d "mainfile=$filepath" fixSingleFile)"
 
 # Call chatgpt with the file and prompt
 chatgpt_args=("-v" "-f" "$filepath")
