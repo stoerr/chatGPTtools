@@ -19,8 +19,7 @@
                     var css = that.collectCSSRules(element);
                     var elementdescr = "Selected element: " + element.tagName.toLowerCase() + "#" + element.id + "." + element.className;
                     var result = elementdescr;
-                    result = result + "\n\n" + that.relevantHTML(element) + "\n\n";
-                    result = result + that.collectCSSRules(element);
+                    result = result + "\n\n" + that.relevantHTML(element, css) + "\n\n";
                     console.log(result);
                     const wordcount = result.split(/\s+/).length;
                     that.copyToClipboard(result, function () {
@@ -34,13 +33,14 @@
             }
         },
 
-        relevantHTML: function (element) {
+        relevantHTML: function (element, css) {
             var html = element.outerHTML.trim() + "\n";
             let ancestor = element.parentElement;
             while (ancestor.tagName.toUpperCase() !== 'HTML') {
                 html = `<${ancestor.tagName.toLowerCase()}${(ancestor.id ? ` id="${ancestor.id}"` : '')}${(ancestor.className ? ` class="${ancestor.className}"` : '')}>\n${html}</${ancestor.tagName.toLowerCase()}>`;
                 ancestor = ancestor.parentElement;
             }
+            html = `<${ancestor.tagName.toLowerCase()}${(ancestor.id ? ` id="${ancestor.id}"` : '')}${(ancestor.className ? ` class="${ancestor.className}"` : '')}>\n<head><style>\n${css}\n</style></head>${html}</${ancestor.tagName.toLowerCase()}>`;
             return html.replace(/<!--(.*?)-->/sg, '').replace(/\n(\s*\n)+/gm, '\n').replace(/\s+$/, ' ');
         },
 

@@ -3,7 +3,7 @@
         basePath: '',
         apikey: '',
         dialog: null,
-        helptext: 'Instructions:<br>1. Type a question in the "Ask a question" field.<br>2. Click the "Include page content" checkbox to search the page for relevant information.<br>3. Click "Submit" to get an answer.<br>4. Click "Copy to clipboard" to copy the answer to your clipboard.<br>5. Click "Close Dialog" to close the chat window.',
+        helptext: 'Usage:<br>When you open the dialog, a request to summarize the text of the whole page is automatically sent to ChatGPT. You can also ask your own questions by typing the question into the Ask a question field and submit that to get an answer. If "include page content" is selected, the page text is added.',
 
         init: async function (basePath, apikey) {
             this.basePath = basePath;
