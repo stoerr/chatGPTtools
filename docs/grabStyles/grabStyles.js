@@ -259,18 +259,27 @@
 
             function highlightElement(element) {
                 const oldstyle = element.getAttribute("style");
+                const oldtitle = element.getAttribute("title");
                 if (oldstyle) {
                     element.dataset.netStoerrGrabStylesOriginalStyle = oldstyle;
+                    element.dataset.netStoerrGrabStylesOriginalTitle = oldtitle;
                 }
                 element.style.outline = "3px solid red";
+                element.setAttribute("title", "\n    Press h for help.    \n");
             }
 
             function resetElement(element) {
                 const oldstyle = element.dataset.netStoerrGrabStylesOriginalStyle;
+                const oldtitle = element.dataset.netStoerrGrabStylesOriginalTitle;
                 if (oldstyle) {
                     element.setAttribute("style", oldstyle);
                 } else {
                     element.removeAttribute("style");
+                }
+                if (oldtitle) {
+                    element.setAttribute("title", oldtitle);
+                } else {
+                    element.removeAttribute("title");
                 }
                 delete element.dataset.netStoerrGrabStylesOriginalStyle;
             }

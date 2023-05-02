@@ -10,9 +10,12 @@ handle
   }
 }
 + cutoff light
+Ouch - even if it doesn't exceed that: we need room for the response!
 
 bookmarklets to drag to bookmarks bar
 choose element and grab text from it
+scroll the answer if too long
+show text in title of "include text", incl. prompt fragment.
 
 perhaps:
 grab text from previous element with focus
