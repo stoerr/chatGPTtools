@@ -35,7 +35,6 @@ while getopts "f:" opt; do
   case $opt in
     f)
       additional_files+=("$OPTARG")
-      shift 2
       ;;
     *)
       print_help
@@ -44,13 +43,15 @@ while getopts "f:" opt; do
   esac
 done
 
+shift $((OPTIND-1))
+
 # Parse non-option arguments
 filepath=$1
 # prompt is the rest of the arguments
 prompt="${@:2}"
 
 prompt="$prompt
-$(chatgptpromptlib fixCodeInstruction)"
+$(chatgptpromptlib -d "mainfile=$filepath" fixCodeInstruction)"
 
 # Call chatgpt with the file and prompt
 chatgpt_args=("-v" "-f" "$filepath")

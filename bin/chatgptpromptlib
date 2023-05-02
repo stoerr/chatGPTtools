@@ -5,7 +5,7 @@ PROMPTLIB="$SCRIPTDIR/../promptlib"
 
 usage() {
   echo "Usage:"
-  echo "  chatgptpromptlib promptkey1 promptkey2 ...    output of prompt fragments with key promptkey1 promptkey2 ..."
+  echo "  chatgptpromptlib [-d variable=value] ... promptkey1 promptkey2 ...    output of prompt fragments with key promptkey1 promptkey2 ..."
   echo "  chatgptpromptlib -l                           lists all promptfragments"
   echo "  chatgptpromptlib -c category                  lists all promptfragments of category c"
   echo "  chatgptpromptlib -s searchstring              lists all promptfragments where all words of the searchstring appear"
@@ -36,6 +36,20 @@ contains_words() {
   return 0
 }
 
+replacements=()
+
+while getopts ":d:" opt; do
+  case $opt in
+    d)
+      replacements+=("$OPTARG")
+      shift 2
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
 case "$1" in
 -l)
   find "$PROMPTLIB" -type f -name '*.prompt.txt' -exec basename -s .prompt.txt {} \;
@@ -58,7 +72,13 @@ case "$1" in
   for key in "$@"; do
     promptfile="$PROMPTLIB/$key.prompt.txt"
     if [[ -f "$promptfile" ]]; then
-      sed -e '1,2d' "$promptfile"
+      prompt_text="$(sed -e '1,2d' "$promptfile")"
+      for replacement in "${replacements[@]}"; do
+        variable="${replacement%%=*}"
+        value="${replacement#*=}"
+        prompt_text="${prompt_text//\$$variable/$value}"
+      done
+      echo "$prompt_text"
     else
       echo "Error: Prompt fragment with key '$key' not found."
       exit 1
@@ -67,7 +87,8 @@ case "$1" in
   ;;
 esac
 
-# Generated with ChatGPT and modified very little from prompt:
+
+# Generated with ChatGPT and modified from prompt:
 #The script is named chatgptpromptlib and should be done with bash. It has the options:
 #chatgptpromptlib promptkey1 promptkey2 ...
 #    output of prompt fragments with key promptkey1 promptkey2 ...
@@ -83,3 +104,7 @@ esac
 #where thecategory is a category name, possibly several separated with spaces, and then a line
 #DESCRIPTION=a description of the file
 #Those line is not written to stdout, only the following text.
+
+#Please extend the following script so that it also takes arguments like -d variable=value and replaces occurrences of
+#$variable in the prompt by value before printing it.
+#That applies only to the first case, where promptkey1 promptkey2 and so forth are given, not others, and is optional.
