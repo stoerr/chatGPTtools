@@ -3,6 +3,7 @@
         basePath: '',
         apikey: '',
         dialog: null,
+        helptext: 'Instructions:<br>1. Type a question in the "Ask a question" field.<br>2. Click the "Include page content" checkbox to search the page for relevant information.<br>3. Click "Submit" to get an answer.<br>4. Click "Copy to clipboard" to copy the answer to your clipboard.<br>5. Click "Close Dialog" to close the chat window.',
 
         init: async function (basePath, apikey) {
             this.basePath = basePath;
@@ -16,6 +17,7 @@
             document.getElementById('hpsChatGPTSubmit').addEventListener('click', this.submitQuestion.bind(this));
             document.getElementById('hpsChatGPTCopyToClipboard').addEventListener('click', this.copyToClipboard.bind(this));
             document.getElementById('hpsChatGPTMaximize').addEventListener('click', this.toggleMaximize.bind(this));
+            document.getElementById('hpsChatGPTHelp').addEventListener('click', this.showHelp.bind(this));
         },
 
         loadCSS: function () {
@@ -162,6 +164,10 @@
             const maximizeButton = document.getElementById('hpsChatGPTMaximize');
             const isMaximized = dialogContainer.classList.toggle('hps-chatgpt-maximize-maximized');
             maximizeButton.innerText = isMaximized ? '[-]' : '[+]';
+        },
+
+        showHelp: function() {
+            document.getElementById('hpsChatGPTAnswer').innerHTML = hpsChatGPTBookmarklet.helptext;
         }
 
     };

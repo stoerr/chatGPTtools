@@ -224,7 +224,7 @@ async function requestChatGPT(attempt = 1) {
             if (finishReason === 'stop') {
                 console.log(assistantMessage.content);
             } else {
-                console.error('Error: Unexpected finish reason');
+                console.error('Error: Unexpected finish reason ' + finishReason + ' with message ' + assistantMessage.content);
                 process.exit(1);
             }
         }
