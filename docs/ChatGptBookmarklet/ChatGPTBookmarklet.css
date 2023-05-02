@@ -25,21 +25,30 @@
 .hps-chatgpt-close {
   position: absolute;
   top: 0;
-  right: 25px; /* modified to make space for maximize button */
+  right: 0;
   font-size: 18px;
   background: none;
   border: none;
   padding: 2px 5px;
 }
 
-.hps-chatgpt-maximize { /* new class for the maximize button */
+.hps-chatgpt-maximize {
   position: absolute;
   top: 0;
-  right: 0;
+  right: 25px;
   font-size: 18px;
   background: none;
   border: none;
   padding: 2px 5px;
+}
+
+.hps-chatgpt-help {
+  background-color: #f7f7f7;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  color: #333;
+  margin-left: 10px;
+  padding: 5px 10px;
 }
 
 .hps-chatgpt-content {
@@ -88,6 +97,6 @@
 }
 
 .hps-chatgpt-maximize-maximized .hps-chatgpt-content {
-  height: calc(100% - 50px); /* Adjust this value according to the header height */
+  height: calc(100% - 50px);
   overflow-y: auto;
 }

@@ -9,14 +9,12 @@ handle
     "code": "context_length_exceeded"
   }
 }
++ cutoff light
 
-help button
 bookmarklets to drag to bookmarks bar
-insert into previous element with focus
 choose element and grab text from it
-prompt library
-thinking spinner
-cutoff light
 
 perhaps:
 grab text from previous element with focus
+thinking spinner
+insert into previous element with focus
