@@ -1,5 +1,6 @@
 
-/* Create actual bookmarklet e.g. using https://www.shareprogress.org/bookmarklet/ */
+/* To create actual bookmarklet use e.g. https://www.shareprogress.org/bookmarklet/, or,
+even better, open https://stoerr.github.io/chatGPTtools/ in the browser and grab it from there. */
 
 javascript:/*ChatGPTBookmarklet*/(function() {
   function load(basePath, apikey) {
