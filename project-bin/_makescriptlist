@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 
-echo >> README.md
+tmp_result=$(mktemp)
+tmp_script=$(mktemp)
 
-chatgpt -f bin/_usages.txt - >> README.md <<EOF
+trap "rm $tmp_result; rm $tmp_script" EXIT
+
+chatgpt -f bin/_usages.txt - > $tmp_script <<EOF
 Discard previous instructions.
 
 # Instructions
@@ -19,3 +22,6 @@ The output should be in markdown format. Here are examples, which also should be
 - \`chatgptsearchascript\`: searches this toolbox for a suitable command line utility to perform a task described in the command line
 - \`suggestbash\`: prints a bash command line for a problem described on it's command line
 EOF
+
+sed -e '/Start of scriptlist/,/End of scriptlist/!b' -e "/End of scriptlist/r $tmp_script" -e 'd' README.md > $tmp_result
+cat $tmp_result > README.md
