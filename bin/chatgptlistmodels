@@ -1,0 +1,13 @@
+#!/bin/bash
+
+if [[ "$1" == "--help" ]]; then
+  echo "chatgptlistmodels lists all models available for chatgpt"
+  exit 0
+fi
+
+# read OPENAI_API_KEY from file $HOME/.openaiapi
+OPENAI_API_KEY=$(cat $HOME/.openaiapi)
+
+curl -s https://api.openai.com/v1/models -H "Authorization: Bearer $OPENAI_API_KEY"
+
+# curl -s https://api.openai.com/v1/models/gpt-3.5-turboq -H "Authorization: Bearer $OPENAI_API_KEY"

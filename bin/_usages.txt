@@ -1,14 +1,3 @@
-# chatgptsearchscript
-Usage: chatgptsearchscript [options] [task description]
-
-Options:
-  --help          Show this help message and exit
-
-Description:
-  This script searches for a suitable ChatGPT related command line utility to perform a task
-  whose description is given in the command line arguments.
-
-
 # suggestbash
 Usage: suggestbash [options] [task description]
 
@@ -25,6 +14,10 @@ Apply a ChatGPT chat template to a file and print the result ChatGPT returns to 
 Usage: ./chatgptapplytemplate templateName fileName
        argument 1 is the name of the template file
        argument 2 is the name of the file to apply the template to
+
+
+# chatgptlistmodels
+chatgptlistmodels lists all models available for chatgpt
 
 
 # chatgptsummarizeurl
@@ -48,6 +41,50 @@ Description:
   command line for the given task and prints it.
 
 
+# chatgptextractcodeblock
+Usage: chatgptExtractCodeblock [options]
+
+Description:
+  Extracts and prints the contents of a code block delimited by triple backticks from stdin.
+  The code block can be inline or multiline.
+
+Options:
+  -n, --invert         Print everything except the code block.
+  --help               Show this help message and exit.
+
+
+
+# chatgptfixfile
+Usage: chatgptfixfile [options] [filepath] [prompt]
+A script to modify a file using the ChatGPT API and display the differences.
+
+Options:
+  -f <additionalfile>  Add an additional file to be passed to ChatGPT with -f option (can be used multiple times)
+  --help               Display this help text and exit
+
+Arguments:
+  filepath             Path of the file to be modified
+  prompt               Prompt to send to ChatGPT
+
+Descrpition:
+The script calls ChatGPT with the given file and prompt, extracts a code block from the output, and creates a new file with the changes. It then displays the differences between the original and the new file using 'idea diff'.
+
+
+# chatgptpromptlib
+Usage:
+  chatgptpromptlib [-d variable=value] ... promptkey1 promptkey2 ...    output of prompt fragments with key promptkey1 promptkey2 ...
+  chatgptpromptlib -l                           lists all promptfragments
+  chatgptpromptlib -c category                  lists all promptfragments of category c
+  chatgptpromptlib -s searchstring              lists all promptfragments where all words of the searchstring appear
+
+Description:
+The prompt fragments are located in the directory $SCRIPTDIR/../promptlib/
+and are named like the key but with the extension .prompt.txt.
+The first line of the file can specify a category, e.g., CATEGORY=thecategory.
+The second line can provide a description, e.g., DESCRIPTION=a description of the file.
+These lines are not included in the output.
+
+
 # chatgpt
 
 chatgpt - Submit a prompt to ChatGPT conversation and print the response to stdout. The prompt can be given on the command line or read from stdin.
@@ -56,17 +93,35 @@ Usage: chatgpt [options] [prompt]
 
 Options:
   -               Reads prompt from stdin, instead of as an argument
+  -f filename     Reads prompt from a file, including a frame naming the filename. Can be given multiple times.
+  -fp filepattern Searches in the current directory and subdirectories for files matching this pattern - it's an error if there are several. Otherwise like -f.
+  -p prefix       Prefix the prompt with a string. Use this or -pf, not both.
+  -pf prefixfile  Prefix the prompt with the contents of a file
+  -s suffix       Suffix the prompt with a string. Use this or -sf, not both.
+  -sf suffixfile  Suffix the prompt with the contents of a file
   -m modelname    Use a specific model (default: gpt-3.5-turbo)
-  -t number       Set max tokens for response (default: none)
+  -t number       Set max tokens for response (default: no limit)
   -v              verbose output : print prompt to stderr and info about connection retries
   --help          Show this help message
 
 
 
-# createJavaUnittest
-Usage: createJavaUnittest [options] [Java file]
+# chatgptsearchascript
+Usage: chatgptsearchascript [options] [task description]
 
 Options:
+  --help          Show this help message and exit
+
+Description:
+  This script searches for a suitable ChatGPT related command line utility to perform a task
+  whose description is given in the command line arguments.
+
+
+# createJavaUnittest
+Usage: createJavaUnittest [options] [Java file] [optional additional instructions]
+
+Options:
+  -f              Overwrite existing test file if it exists
   --help          Show this help message and exit
 
 Description:

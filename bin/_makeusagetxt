@@ -14,7 +14,7 @@ if [ "$#" -gt 0 ] && [ "$1" = "--help" ]; then
 fi
 
 script_dir="$(dirname "$(realpath "$0")")"
-usage_file="${script_dir}/_usages.txt"_
+usage_file="${script_dir}/_usages.txt"
 
 # if the file does not exist or is empty, create it
 if [ ! -s "$usage_file" ]; then

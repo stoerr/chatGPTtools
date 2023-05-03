@@ -21,3 +21,7 @@ perhaps:
 grab text from previous element with focus
 thinking spinner
 insert into previous element with focus
+
+Make CSS robust:
+https://www.manager-magazin.de/unternehmen/kuenstliche-intelligenz-ibm-will-weniger-menschen-einstellen-a-9caf55e7-56de-4d63-9cc8-89b2acf36f21?xing_share=news
+breaks it.
