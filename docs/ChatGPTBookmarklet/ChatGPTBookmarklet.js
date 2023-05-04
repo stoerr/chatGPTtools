@@ -22,6 +22,13 @@
             document.getElementById('hpsChatGPTCopyToClipboard').addEventListener('click', this.copyToClipboard.bind(this));
             document.getElementById('hpsChatGPTMaximize').addEventListener('click', this.toggleMaximize.bind(this));
             document.getElementById('hpsChatGPTHelp').addEventListener('click', this.showHelp.bind(this));
+
+            // if the user types escape, the dialog is closed (hideDialog is called)
+            document.getElementById('hpsChatGPTDialog').addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') {
+                    this.hideDialog();
+                }
+            });
         },
 
         loadCSS: function () {
@@ -43,9 +50,12 @@
                 this.dialog = document.createElement('div');
                 this.dialog.innerHTML = html;
                 document.body.appendChild(this.dialog);
+                this.answerfield = document.getElementById('hpsChatGPTAnswer');
                 if (this.clipped) {
                     document.getElementById('clipped').classList.remove('hidden');
                 }
+                // set the focus on the textarea
+                document.getElementById('hpsChatGPTQuestion').focus();
             } else {
                 console.error('Failed to load ChatGPTBookmarklet HTML fragment');
             }
@@ -65,8 +75,12 @@
 
         openDialog: async function () {
             this.showDialog();
-            const summary = await this.getSummary();
-            document.getElementById('hpsChatGPTAnswer').innerText = summary;
+            try {
+                const summary = await this.getSummary();
+                this.answerfield.innerText = summary;
+            } catch (e) {
+                this.answerfield.innerText = 'Error: ' + e;
+            }
         },
 
         submitQuestion: async function () {
@@ -74,9 +88,13 @@
             const includePageContent = document.getElementById('hpsChatGPTIncludePageContent').checked;
 
             if (question.trim() !== '') {
-                document.getElementById('hpsChatGPTAnswer').innerText = 'Thinking...';
-                const answer = await this.getAnswer(question, includePageContent);
-                document.getElementById('hpsChatGPTAnswer').innerText = answer;
+                this.answerfield.innerText = 'Thinking...';
+                try {
+                    const answer = await this.getAnswer(question, includePageContent);
+                    this.answerfield.innerText = answer;
+                } catch (e) {
+                    this.answerfield.innerText = 'Error: ' + e;
+                }
             } else {
                 alert('Please enter a question before submitting.');
             }
@@ -108,7 +126,7 @@
         },
 
         copyToClipboard: function () {
-            const answer = document.getElementById('hpsChatGPTAnswer');
+            const answer = this.answerfield;
             const selection = window.getSelection();
             const range = document.createRange();
             range.selectNodeContents(answer);
@@ -178,7 +196,7 @@
                 const data = await response.json();
                 return data.choices[0].message.content;
             } else {
-                throw new Error('Error fetching data from ChatGPT API');
+                throw new Error('Problem fetching data from ChatGPT API: ' + response.status + ' ' + response.statusText + ' ' + await response.text());
             }
         },
 
@@ -190,7 +208,7 @@
         },
 
         showHelp: function () {
-            document.getElementById('hpsChatGPTAnswer').innerHTML = hpsChatGPTBookmarklet.helptext;
+            this.answerfield.innerHTML = hpsChatGPTBookmarklet.helptext;
         }
 
     };
