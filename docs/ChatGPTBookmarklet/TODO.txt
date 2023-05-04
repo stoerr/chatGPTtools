@@ -1,27 +1,9 @@
 
-handle
-
-{
-  "error": {
-    "message": "This model's maximum context length is 4097 tokens. However, your messages resulted in 4946 tokens. Please reduce the length of the messages.",
-    "type": "invalid_request_error",
-    "param": "messages",
-    "code": "context_length_exceeded"
-  }
-}
-+ cutoff light
-Ouch - even if it doesn't exceed that: we need room for the response!
-
-bookmarklets to drag to bookmarks bar
 choose element and grab text from it
-scroll the answer if too long
 show text in title of "include text", incl. prompt fragment.
 
 perhaps:
+scroll the answer if too long (didn't work, no idea why.)
 grab text from previous element with focus
 thinking spinner
 insert into previous element with focus
-
-Make CSS robust:
-https://www.manager-magazin.de/unternehmen/kuenstliche-intelligenz-ibm-will-weniger-menschen-einstellen-a-9caf55e7-56de-4d63-9cc8-89b2acf36f21?xing_share=news
-breaks it.

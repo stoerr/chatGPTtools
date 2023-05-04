@@ -3,11 +3,15 @@
         basePath: '',
         apikey: '',
         dialog: null,
-        helptext: 'Usage:<br>When you open the dialog, a request to summarize the text of the whole page is automatically sent to ChatGPT. You can also ask your own questions by typing the question into the Ask a question field and submit that to get an answer. If "include page content" is selected, the page text is added.',
+        helptext: 'Usage:<br>When you open the dialog, a request to summarize the text of the whole page is automatically sent to ChatGPT. You can also ask your own questions by typing the question into the Ask a question field and submit that to get an answer. If "include page content" is selected, the page text is added. If text was selected before calling this bookmarklet, we take the selected text instead. If the text is more than 2000 words, we replace the middle of the text by ... to avoid hitting ChatGPT limits. You can also copy the answer to the clipboard.',
 
         init: async function (basePath, apikey) {
             this.basePath = basePath;
             this.apikey = apikey;
+
+            this.selectedText = this.getSelectedText();
+            this.pageContent = this.getPageContent();
+            this.clipped = false;
 
             await this.loadCSS();
             await this.loadHTML();
@@ -39,6 +43,9 @@
                 this.dialog = document.createElement('div');
                 this.dialog.innerHTML = html;
                 document.body.appendChild(this.dialog);
+                if (this.clipped) {
+                    document.getElementById('clipped').classList.remove('hidden');
+                }
             } else {
                 console.error('Failed to load ChatGPTBookmarklet HTML fragment');
             }
@@ -84,6 +91,22 @@
             return selection.toString();
         },
 
+        getIncludedText: function () {
+            let thetext = this.selectedText || this.pageContent;
+            // if thetext contains more than 2000 words, we remove the middle so that it's now 2000 words
+            // this is to avoid hitting the API limit of 2048 tokens
+            const whitespaceregex = /\s+/gm;
+            if (thetext.split(whitespaceregex).length > 2000) {
+                const words = thetext.trim().split(whitespaceregex);
+                thetext = words.slice(0, 1000).join(" ") + "\n...\n" + words.slice(words.length - 1000).join(" ");
+                this.clipped = true;
+                if (document.getElementById('clipped')) {
+                    document.getElementById('clipped').classList.remove('hidden');
+                }
+            }
+            return thetext;
+        },
+
         copyToClipboard: function () {
             const answer = document.getElementById('hpsChatGPTAnswer');
             const selection = window.getSelection();
@@ -104,14 +127,14 @@
         },
 
         getSummary: async function () {
-            const content = (this.getSelectedText() || this.getPageContent()) + "\n\nTL;DR:";
+            const content = this.getIncludedText() + "\n\nInstructions: please summarize this text in the language the text was written, while focusing on new information:";
             const messages = [{role: 'user', content: content}];
             const summary = await this.sendChatGPTRequest(messages);
             return summary;
         },
 
         getAnswer: async function (question, includePageContent) {
-            const content = includePageContent ? (this.getSelectedText() || this.getPageContent()) + "\n\nPlease answer the following question with regard to the previous text: " + question : question;
+            const content = includePageContent ? this.getIncludedText() + "\n\nPlease answer the following question with regard to the previous text, in the language the question is asked: " + question : question;
             const messages = [{role: 'user', content: content}];
             const answer = await this.sendChatGPTRequest(messages);
             return answer;
@@ -166,7 +189,7 @@
             maximizeButton.innerText = isMaximized ? '[-]' : '[+]';
         },
 
-        showHelp: function() {
+        showHelp: function () {
             document.getElementById('hpsChatGPTAnswer').innerHTML = hpsChatGPTBookmarklet.helptext;
         }
 
