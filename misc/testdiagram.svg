@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400">
+	<rect width="100%" height="100%" fill="white"/>
+	<text x="20" y="30" font-size="20">Translation Assistance (Diagram in separate SVG)</text>
+	<line x1="0" y1="50" x2="600" y2="50" stroke="black"/>
+	<text x="20" y="80" font-size="14">Source Language:</text>
+	<text x="40" y="110" font-size="12">(o) EN - English Text</text>
+	<text x="40" y="130" font-size="12">( ) DE - German Text</text>
+	<text x="40" y="150" font-size="12">( ) FR - French Text</text>
+	<text x="40" y="170" font-size="12">( ) ES - Spanish Text</text>
+	<line x1="0" y1="200" x2="600" y2="200" stroke="black"/>
+	<text x="20" y="230" font-size="14">Translated Text:</text>
+	<rect x="20" y="240" width="560" height="80" stroke="black" fill="none"/>
+	<text x="30" y="270" font-size="12">Translated text from the selected language will</text>
+	<text x="30" y="290" font-size="12">be displayed here.</text>
+	<line x1="0" y1="330" x2="600" y2="330" stroke="black"/>
+	<text x="200" y="370" font-size="14">Accept</text>
+	<text x="300" y="370" font-size="14">Cancel</text>
+	<rect x="195" y="350" width="80" height="30" stroke="black" fill="none"/>
+	<rect x="295" y="350" width="80" height="30" stroke="black" fill="none"/>
+</svg>
