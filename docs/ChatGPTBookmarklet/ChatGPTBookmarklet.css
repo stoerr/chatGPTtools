@@ -156,3 +156,7 @@
 .hps-chatgpt-answer {
     overflow-y: auto;
 }
+
+.hps-chatgpt-dialog .hidden {
+    display: none;
+}
