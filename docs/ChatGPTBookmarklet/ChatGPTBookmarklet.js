@@ -76,6 +76,7 @@
         openDialog: async function () {
             this.showDialog();
             try {
+                this.answerfield.innerText = 'Thinking...';
                 const summary = await this.getSummary();
                 this.answerfield.innerText = summary;
             } catch (e) {
