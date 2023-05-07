@@ -264,7 +264,7 @@
                     element.dataset.netStoerrGrabStylesOriginalStyle = oldstyle;
                     element.dataset.netStoerrGrabStylesOriginalTitle = oldtitle;
                 }
-                element.style.outline = "3px solid red";
+                element.style.setProperty('outline', "3px solid red", "important");
                 element.setAttribute("title", "\n    Press h for help.    \n");
             }
 
