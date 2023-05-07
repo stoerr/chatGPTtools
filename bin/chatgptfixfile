@@ -87,7 +87,7 @@ echo "$gptoutput"
 # Display differences using 'idea diff'
 idea diff "$filepath.orig" "$filepath" &
 
-# Specification for generation with ChatGPT was:
+# Specification for generation with ChatGPT was originally:
 #The script chatfgptfixfile is called like this:
 #chatgptfixfile [filepath] [prompt]
 #and can have the option -f [additionalfile] several times. It calls chatgpt with -f filepath and the given prompt.
