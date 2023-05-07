@@ -1,0 +1,62 @@
+#!/usr/bin/env node
+const fs = require('fs');
+const path = require('path');
+
+const helpMessage = `
+findfilewithpattern - searches for files with IntelliJ style pattern.
+
+Usage: findfilewithpattern [pattern]
+
+Options:
+  --help          Show this help message and exit
+`;
+
+if (process.argv.length < 3 || process.argv.includes('--help')) {
+    console.log(helpMessage);
+    process.exit(0);
+}
+
+for (let i = 2; i < process.argv.length; i++) {
+    const arg = process.argv[i];
+    locateFile(arg).forEach(f => console.log(f));
+}
+
+/** If the file doesn't exist, we treat it as a glob pattern and search for it in the current directory and its subdirectories.
+ * If something like that doesn't exist, we log an error and abort. Also, if there are several files matching that pattern. */
+function locateFile(filepattern) {
+    const fileregex = makeIntellijStylePattern(filepattern);
+    const files = searchFile(fileregex);
+    return files;
+
+}
+
+function searchFile(fileregex, dir = '.', files = []) {
+    const entries = fs.readdirSync(dir, {withFileTypes: true});
+
+    entries.forEach((entry) => {
+        if (entry.isDirectory()) {
+            searchFile(fileregex, path.join(dir, entry.name), files);
+        } else if (entry.isFile() && entry.name.match(fileregex)) {
+            files.push(path.join(dir, entry.name));
+        }
+    });
+
+    return files;
+}
+
+/**
+ * Creates a case-insensitive regular expression based on the given file pattern.
+ * The function splits the input string at the boundary before uppercase letters,
+ * the boundary before and after a block of digits,
+ * alphanumeric-to-non-alphanumeric boundaries, and non-alphanumeric-to-alphanumeric
+ * boundaries. It then concatenates the segments with '.*' in between.
+ * Example: for 'ab-cFX23qwerX' it returns /ab.*-.*c.*F.*X.*23.*qwer.*X/i
+ *
+ * @param {string} filepattern - The file pattern to convert into a regular expression.
+ * @returns {RegExp} - A case-insensitive regular expression based on the input file pattern.
+ */
+function makeIntellijStylePattern(filepattern) {
+    const segments = filepattern.split(/(?=[A-Z])|(?<=[^0-9])(?=[0-9])|(?<=[0-9])(?=[^0-9])|(?<=[0-9a-zA-Z])(?=[^0-9a-zA-Z])|(?<=[^0-9a-zA-Z])(?=[0-9a-zA-Z])/);
+    const regexPattern = segments.map(segment => segment.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')).join('.*');
+    return new RegExp(regexPattern, 'i');
+}
