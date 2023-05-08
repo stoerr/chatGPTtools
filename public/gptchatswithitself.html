@@ -38,6 +38,17 @@
             padding: 10px;
             float: left;
         }
+
+        .form-control-sm {
+            display: inline-block;
+            width: 50px;
+            vertical-align: middle;
+        }
+
+        .form-label-inline {
+            display: inline-block;
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body>
@@ -60,8 +71,8 @@
             <button type="button" class="btn btn-primary" id="start">Start</button>
             <button type="button" class="btn btn-primary" id="stop">Stop</button>
             <button type="button" class="btn btn-primary" id="help">Help</button>
-            <label for="turns">Turns:</label>
-            <input type="number" class="form-control" id="turns" value="10" size="10">
+            <label for="turns" class="form-label-inline">Turns:</label>
+            <input type="number" class="form-control form-control-sm" id="turns" value="10" size="10">
         </div>
         <!-- help text what this does -->
         <div class="col-12">
