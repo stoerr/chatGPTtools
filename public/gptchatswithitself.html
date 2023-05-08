@@ -11,10 +11,32 @@
     <style>
         #sysmsg1, .chat1 {
             padding-right: 100px;
+            color: blue;
         }
 
         #sysmsg2, .chat2 {
             padding-left: 100px;
+            color: red;
+        }
+
+        .chat-wrapper {
+            padding: 10px;
+        }
+
+        .chat1 {
+            background-color: #f2f2f2;
+            border-radius: 5px;
+            margin-right: 10%;
+            padding: 10px;
+            float: right;
+        }
+
+        .chat2 {
+            background-color: #e8e8e8;
+            border-radius: 5px;
+            margin-left: 10%;
+            padding: 10px;
+            float: left;
         }
     </style>
 </head>
@@ -22,13 +44,17 @@
 <div class="container-xxl">
     <h1>ChatGPT chatting with itself</h1>
     <div class="row">
-        <div class="col-12">
+        <div class="col-6">
             <label for="sysmsg1">System prompt for first instance:</label>
-            <textarea id="sysmsg1" class="form-control" rows="3"></textarea>
+            <div class="chat-wrapper">
+                <textarea id="sysmsg1" class="form-control" rows="3"></textarea>
+            </div>
         </div>
-        <div class="col-12">
+        <div class="col-6">
             <label for="sysmsg2">System prompt for second instance:</label>
-            <textarea id="sysmsg2" class="form-control" rows="3"></textarea>
+            <div class="chat-wrapper">
+                <textarea id="sysmsg2" class="form-control" rows="3"></textarea>
+            </div>
         </div>
         <div class="col-12">
             <button type="button" class="btn btn-primary" id="start">Start</button>
@@ -45,22 +71,34 @@
         </div>
         <!-- chat area -->
         <div class="col-12">
-            <div class="chat1">This is the message of ChatGPT 1.</div>
+            <div class="chat-wrapper">
+                <div class="chat1">This is the message of ChatGPT 1.</div>
+            </div>
         </div>
         <div class="col-12">
-            <div class="chat2">This is the message of ChatGPT 2.</div>
+            <div class="chat-wrapper">
+                <div class="chat2">This is the message of ChatGPT 2.</div>
+            </div>
         </div>
         <div class="col-12">
-            <div class="chat1">This is the message of ChatGPT 1.</div>
+            <div class="chat-wrapper">
+                <div class="chat1">This is the message of ChatGPT 1.</div>
+            </div>
         </div>
         <div class="col-12">
-            <div class="chat2">This is the message of ChatGPT 2.</div>
+            <div class="chat-wrapper">
+                <div class="chat2">This is the message of ChatGPT 2.</div>
+            </div>
         </div>
         <div class="col-12">
-            <div class="chat1">This is the message of ChatGPT 1.</div>
+            <div class="chat-wrapper">
+                <div class="chat1">This is the message of ChatGPT 1.</div>
+            </div>
         </div>
         <div class="col-12">
-            <div class="chat2">This is the message of ChatGPT 2.</div>
+            <div class="chat-wrapper">
+                <div class="chat2">This is the message of ChatGPT 2.</div>
+            </div>
         </div>
     </div>
 </div>
