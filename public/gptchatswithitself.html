@@ -123,6 +123,64 @@
         crossorigin="anonymous"></script>
 <script>
     // here comes the actual business logic.
+    // the help button should show/hide the help text
+    $('#help').click(function () {
+        $('#helptext').toggle();
+    });
+
+    /** Submits a message array via $.ajax to https://api.openai.com/v1/chat/completions .
+     * @param messages array of messages [{"role": role, "content": thecontent}, ...] where role is 'user' or 'agent' or 'system'
+     * @param resultcallback gets the data from the result
+     * @param errorcallback in case of errors. */
+    function submitToGPT(messages, resultcallback, errorcallback) {
+        // fetch api key from local storage, or else prompt if not found
+        var api_key = localStorage.getItem('api_key');
+        if (!api_key) {
+            api_key = prompt("Please enter your API key, which you can create in your profile at https://platform.openai.com/");
+            if (api_key) {
+                localStorage.setItem('api_key', api_key);
+            }
+        }
+
+        var retries = 0;
+
+        function maybeRetryOnError(jqXHR, textStatus, errorThrown) {
+            if (jqXHR.status === 429 && retries < 3) {
+                retries++;
+                // find something like ' Please try again in 20s. ' in the response text , parse the number and retry after that many seconds.
+                var seconds = 21; // default if we don't find something.
+                var match = jqXHR.responseText.match(/Please try again in (\d+)s\./);
+                if (match) {
+                    seconds = parseInt(match[1]);
+                }
+                console.log("Got 429, retrying in " + seconds + " seconds.");
+                setTimeout(performCall, seconds * 1000);
+            } else {
+                errorcallback(jqXHR, textStatus, errorThrown);
+            }
+        }
+
+        function performCall() {
+            $.ajax({
+                url: 'https://api.openai.com/v1/chat/completions',
+                type: 'POST',
+                dataType: 'json',
+                headers: {
+                    'Authorization': 'Bearer ' + api_key,
+                    'Content-Type': 'application/json',
+                },
+                data: JSON.stringify({
+                    model: "gpt-3.5-turbo",
+                    messages: messages,
+                }),
+                success: resultcallback,
+                error: maybeRetryOnError
+            });
+        }
+
+        performCall();
+    }
+
 </script>
 </body>
 </html>
