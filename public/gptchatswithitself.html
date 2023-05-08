@@ -10,12 +10,10 @@
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <style>
         #sysmsg1, .chat1 {
-            padding-right: 100px;
             color: blue;
         }
 
         #sysmsg2, .chat2 {
-            padding-left: 100px;
             color: red;
         }
 
@@ -28,7 +26,6 @@
             border-radius: 5px;
             margin-right: 10%;
             padding: 10px;
-            float: right;
         }
 
         .chat2 {
@@ -36,7 +33,6 @@
             border-radius: 5px;
             margin-left: 10%;
             padding: 10px;
-            float: left;
         }
 
         .form-control-sm {
@@ -58,58 +54,53 @@
         <div class="col-6">
             <label for="sysmsg1">System prompt for first instance:</label>
             <div class="chat-wrapper">
-                <textarea id="sysmsg1" class="form-control" rows="3"></textarea>
+                <textarea id="sysmsg1" class="form-control" rows="10">
+Unterhalte Dich. Halte das Gespräch in Gang, indem du mit tiefgründigen Fragen und Kommentaren antwortest, aber maximal einem pro Antwort. Und fasse Dich kurz, viel Text ist langweilig: maximal 3 Sätze.
+Sei ruhig frech und lustig. Rede in Jugendsprache wie ein 13-jähriger. Unterhalte Dich über Dirtbike fahren.
+Du bist ein Neuling und willst den Experten ausfragen.
+                </textarea>
             </div>
         </div>
         <div class="col-6">
             <label for="sysmsg2">System prompt for second instance:</label>
             <div class="chat-wrapper">
-                <textarea id="sysmsg2" class="form-control" rows="3"></textarea>
+                <textarea id="sysmsg2" class="form-control" rows="10">
+Unterhalte Dich. Halte das Gespräch in Gang, indem du mit tiefgründigen Fragen und Kommentaren antwortest, aber maximal einem pro Antwort. Und fasse Dich kurz, viel Text ist langweilig: maximal 3 Sätze.
+Sei ruhig frech und lustig. Rede in Jugendsprache wie ein 13-jähriger. Unterhalte Dich über Dirtbike fahren.
+Du bist der totale Experte im Dirtbike fahren, und gibst ein bisschen an, und gibst dem Neuling Tipps.
+                </textarea>
             </div>
         </div>
         <div class="col-12">
             <button type="button" class="btn btn-primary" id="start">Start</button>
             <button type="button" class="btn btn-primary" id="stop">Stop</button>
             <button type="button" class="btn btn-primary" id="help">Help</button>
+            <button type="button" class="btn btn-primary" id="copy">Copy 1 to 2</button>
             <label for="turns" class="form-label-inline">Turns:</label>
             <input type="number" class="form-control form-control-sm" id="turns" value="10" size="10">
+            <label for="tokens" class="form-label-inline">Max. Tokens:</label>
+            <input type="number" class="form-control form-control-sm" id="tokens" value="200" size="10">
         </div>
         <!-- help text what this does -->
         <div class="col-12">
             <p id="helptext">Just for fun: this implements two instances of ChatGPT chatting with itself. You can give
                 two different system messages - that is messages saying ChatGPT how it should behave in general, and
-                then press start to see it jabbering away with itself.</p>
+                then press start to see it jabbering away with itself, until the number of turns is reached. Max Tokens
+                limits the response size - the number of words is about 3/4 of that. If you press stop: don't worry, that takes a bit.</p>
         </div>
-        <!-- chat area -->
-        <div class="col-12">
-            <div class="chat-wrapper">
-                <div class="chat1">This is the message of ChatGPT 1.</div>
+        <div id="neverdelete">
+            <div class="col-12">
+                <div class="chat-wrapper">
+                    <div class="chat chat1">Hi Bob!</div>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="chat-wrapper">
+                    <div class="chat chat2">Hi Carl!</div>
+                </div>
             </div>
         </div>
-        <div class="col-12">
-            <div class="chat-wrapper">
-                <div class="chat2">This is the message of ChatGPT 2.</div>
-            </div>
-        </div>
-        <div class="col-12">
-            <div class="chat-wrapper">
-                <div class="chat1">This is the message of ChatGPT 1.</div>
-            </div>
-        </div>
-        <div class="col-12">
-            <div class="chat-wrapper">
-                <div class="chat2">This is the message of ChatGPT 2.</div>
-            </div>
-        </div>
-        <div class="col-12">
-            <div class="chat-wrapper">
-                <div class="chat1">This is the message of ChatGPT 1.</div>
-            </div>
-        </div>
-        <div class="col-12">
-            <div class="chat-wrapper">
-                <div class="chat2">This is the message of ChatGPT 2.</div>
-            </div>
+        <div id="chats">
         </div>
     </div>
 </div>
@@ -127,12 +118,78 @@
     $('#help').click(function () {
         $('#helptext').toggle();
     });
-    // The start button starts a process where two ChatGPT instances chat with each other
-    // The stop button stops that process, but it'll stop anyway when the number of turns is reached
-    // They take turns: first one instance says something, then the other instance says something
-    // For the first instance, the system message is the one in the first textarea, for the second instance it's the one in the second textarea
-    // We submit all messages that have been said so far (.chat1 and .chat2) . For the first instance, the .chat1 messages are the user messages, for the second instance the .chat1 messages are the agent messages . The .chat2 messages are the other way around.
 
+    $('#stop').click(function () {
+        $('#turns').val(999999);
+        $('#stop').prop('disabled', true);
+    });
+
+    $('#copy').click(function () {
+        $('#sysmsg2').val($('#sysmsg1').val());
+    });
+
+    $('#start').click(function () {
+        $('#chats').empty();
+        turn = 0;
+        maxtokens = parseInt($('#tokens').val());
+        $('#start').prop('disabled', true);
+        $('#stop').prop('disabled', false);
+        submitChat1();
+    });
+
+    var turn = 0;
+    var maxtokens = 0;
+
+    function submitChat1() {
+        if (turn >= $('#turns').val()) {
+            $('#start').prop('disabled', false);
+            $('#stop').prop('disabled', true);
+            return;
+        }
+        var messages = [];
+        var sysmsg1 = $('#sysmsg1').val();
+        if (sysmsg1) {
+            messages.push({"role": "system", "content": sysmsg1});
+        }
+        $(document).find('.chat').each(function (num, el) {
+            var role = $(el).hasClass('chat1') ? 'assistant' : 'user';
+            messages.push({"role": role, "content": $(el).text()});
+        });
+        submitToGPT(messages, function (data) {
+            var newchat = $('<div class="col-12"><div class="chat chat1">' + data.choices[0].message.content + '</div></div>');
+            $('#chats').append(newchat);
+            turn++;
+            submitChat2();
+        }, function (jqXHR, textStatus, errorThrown) {
+            alert("Error: " + textStatus + " " + errorThrown);
+        });
+    }
+
+    // submitChat2 is the same as submitChat1, but for the second instance with switched roles.
+    function submitChat2() {
+        if (turn >= $('#turns').val()) {
+            $('#start').prop('disabled', false);
+            $('#stop').prop('disabled', true);
+            return;
+        }
+        var messages = [];
+        var sysmsg2 = $('#sysmsg2').val();
+        if (sysmsg2) {
+            messages.push({"role": "system", "content": sysmsg2});
+        }
+        $(document).find('.chat').each(function (num, el) {
+            var role = $(el).hasClass('chat2') ? 'assistant' : 'user';
+            messages.push({"role": role, "content": $(el).text()});
+        });
+        submitToGPT(messages, function (data) {
+            var newchat = $('<div class="col-12"><div class="chat chat2">' + data.choices[0].message.content + '</div></div>');
+            $('#chats').append(newchat);
+            turn++;
+            submitChat1();
+        }, function (jqXHR, textStatus, errorThrown) {
+            alert("Error: " + textStatus + " " + errorThrown);
+        });
+    }
 
     /** Submits a message array via $.ajax to https://api.openai.com/v1/chat/completions .
      * @param messages array of messages [{"role": role, "content": thecontent}, ...] where role is 'user' or 'agent' or 'system'
@@ -177,6 +234,7 @@
                 },
                 data: JSON.stringify({
                     model: "gpt-3.5-turbo",
+                    max_tokens: maxtokens,
                     messages: messages,
                 }),
                 success: resultcallback,
