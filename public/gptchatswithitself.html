@@ -127,6 +127,12 @@
     $('#help').click(function () {
         $('#helptext').toggle();
     });
+    // The start button starts a process where two ChatGPT instances chat with each other
+    // The stop button stops that process, but it'll stop anyway when the number of turns is reached
+    // They take turns: first one instance says something, then the other instance says something
+    // For the first instance, the system message is the one in the first textarea, for the second instance it's the one in the second textarea
+    // We submit all messages that have been said so far (.chat1 and .chat2) . For the first instance, the .chat1 messages are the user messages, for the second instance the .chat1 messages are the agent messages . The .chat2 messages are the other way around.
+
 
     /** Submits a message array via $.ajax to https://api.openai.com/v1/chat/completions .
      * @param messages array of messages [{"role": role, "content": thecontent}, ...] where role is 'user' or 'agent' or 'system'
