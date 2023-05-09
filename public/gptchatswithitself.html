@@ -175,6 +175,9 @@
                                 <button type="button" class="btn me-2" id="continue">Continue</button>
                                 <button type="button" class="btn me-2" id="stop" disabled>Stop</button>
                                 <button type="button" class="btn me-2" id="help">Help</button>
+                                <button type="button" class="btn me-2" id="clipboard" title="Copy to clipboard">
+                                    Clipboard
+                                </button>
                             </div>
                             <div class="input-group me-2">
                                 <span class="input-group-text">Turns:</span>
@@ -210,6 +213,7 @@
                         reached. Max Tokens limits the response size - the number of words is about 3/4 of that. If you
                         get something interesting, please please
                         <a href="http://www.stoerr.net/contact.html">send me</a> a copy!
+                        You can use the "Clipboard" button to coy the chat to the clipboard.
                     </p>
                 </div>
 
@@ -296,6 +300,21 @@
 
     $('#themes').change(function () {
         $('body').removeClass().addClass($('#themes').val());
+    });
+
+    $('#clipboard').click(function () {
+        var text = 'GPT chats with itself\n\n';
+        // write the system messages to the text with header # System Alice: and # System Bob:
+        text += 'System Alice: ' + $('#sysmsg1').val() + '\n';
+        text += 'System Bob: ' + $('#sysmsg2').val() + '\n';
+        $(document).find('.chat').each(function (num, el) {
+            // write the messages of the chat to the text with header # Alice: and # Bob:
+            text += $(el).hasClass('chat1') ? 'Alice: ' : 'Bob: ';
+            text += $(el).find('.card-body').text() + '\n';
+        });
+        copyToClipboard(text, function() {
+            alert('Copied to clipboard:\n' + text);
+        });
     });
 
     function setRunning(isrunning) {
@@ -414,6 +433,28 @@
         }
 
         performCall();
+    }
+
+    function copyToClipboard(text, callback) {
+        if (!navigator.clipboard) {
+            const tempEl = document.createElement("textarea");
+            tempEl.value = text;
+            document.body.appendChild(tempEl);
+            tempEl.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempEl);
+            callback();
+        } else {
+            navigator.clipboard.writeText(text).then(
+                function () {
+                    callback();
+                })
+                .catch(
+                    function (error) {
+                        alert("Could not copy to clipboard: " + error);
+                        callback();
+                    });
+        }
     }
 
 </script>
