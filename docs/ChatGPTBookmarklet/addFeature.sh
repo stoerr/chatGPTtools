@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
-echo adding a new feature to the bookmarklet
+echo Attempt to add a new feature to the bookmarklet directly from the specification using ChatGPT.
+# That was only semi successful - there was mostly something wrong that needed to be fixed.
 
 mainname=ChatGPTBookmarklet
 
