@@ -36,7 +36,7 @@
         }
 
         .theme2 {
-            --primary-color: MediumPurple;
+            --primary-color: DarkSlateBlue;
             --secondary-color: DarkOrange;
             --tertiary-color: LightSkyBlue;
             --sysmsg1-color: AliceBlue; /* pale version of tertiary-color */
@@ -144,7 +144,10 @@
                             <label for="sysmsg1" class="form-label">System prompt for first instance:</label>
                         </div>
                         <div class="card-body">
-                            <textarea id="sysmsg1" class="form-control" rows="7">This contains some instructions for chat1.</textarea>
+                            <textarea id="sysmsg1" class="form-control" rows="7">Unterhalte Dich. Halte das Gespräch in Gang, indem du mit tiefgründigen Fragen und Kommentaren antwortest, aber maximal einem pro Antwort. Und fasse Dich kurz, viel Text ist langweilig: maximal 3 Sätze.
+                            Sei ruhig frech und lustig. Rede in Jugendsprache wie ein 13-jähriger. Unterhalte Dich über Dirtbike fahren.
+                            Du bist ein Neuling und willst den Experten ausfragen.  Lange Texte sind langweilig - bitte maximal 2 Sätze.
+                            </textarea>
                         </div>
                     </div>
                 </div>
@@ -154,7 +157,10 @@
                             <label for="sysmsg2" class="form-label">System prompt for second instance:</label>
                         </div>
                         <div class="card-body">
-                            <textarea id="sysmsg2" class="form-control" rows="7">This contains some instructions for chat2.</textarea>
+                            <textarea id="sysmsg2" class="form-control" rows="7">
+                                Unterhalte Dich. Halte das Gespräch in Gang, indem du mit tiefgründigen Fragen und Kommentaren antwortest, aber maximal einem pro Antwort. Und fasse Dich kurz, viel Text ist langweilig: maximal 3 Sätze.
+                                Sei ruhig frech und lustig. Rede in Jugendsprache wie ein 13-jähriger. Unterhalte Dich über Dirtbike fahren.
+                                Du bist der totale Experte im Dirtbike fahren, und gibst ein bisschen an, und gibst dem Neuling Tipps.  Lange Texte sind langweilig - bitte maximal 2 Sätze.</textarea>
                         </div>
                     </div>
                 </div>
@@ -165,7 +171,7 @@
                             <div class="d-flex align-items-center me-2">
                                 <button type="button" class="btn me-2" id="start">Start</button>
                                 <button type="button" class="btn me-2" id="continue">Continue</button>
-                                <button type="button" class="btn me-2" id="stop">Stop</button>
+                                <button type="button" class="btn me-2" id="stop" disabled>Stop</button>
                                 <button type="button" class="btn me-2" id="help">Help</button>
                                 <button type="button" class="btn me-2" id="copy">Copy 1 to 2</button>
                             </div>
@@ -195,6 +201,16 @@
                             </div>
                         </div>
                     </form>
+                </div>
+
+                <div class="col-12">
+                    <p id="helptext">Just for fun: this implements two instances of ChatGPT chatting with itself. You
+                        can give two different system messages - that is messages saying ChatGPT how it should behave in
+                        general, and then press start to see it jabbering away with itself, until the number of turns is
+                        reached. Max Tokens limits the response size - the number of words is about 3/4 of that. If you
+                        get something interesting, please please
+                        <a href="http://www.stoerr.net/contact.html">send me</a> a copy!
+                    </p>
                 </div>
 
                 <div id="chats" class="mt-3">
@@ -228,8 +244,12 @@
     });
 
     $('#stop').click(function () {
-        $('#turns').val(999999);
+        turn = parseInt($('#turns').val()) + 999999;
         $('#stop').prop('disabled', true);
+        if (xhq) {
+            xhq.abort();
+            xhq = null;
+        }
     });
 
     $('#copy').click(function () {
@@ -259,6 +279,7 @@
         $('#start').prop('disabled', isrunning);
         $('#continue').prop('disabled', isrunning);
         $('#stop').prop('disabled', !isrunning);
+        $('#help').hide();
     }
 
     var turn = 0;
@@ -283,9 +304,14 @@
             $('#chats').append(newchat);
             turn++;
             submitChat2();
-        }, function (jqXHR, textStatus, errorThrown) {
-            alert("Error: " + textStatus + " " + errorThrown);
-        });
+        }, onError);
+    }
+
+    function onError(jqXHR, textStatus, errorThrown) {
+        setRunning(false);
+        if (textStatus !== 'abort') {
+            alert("Error: " + jqXHR.status + " " + jqXHR.responseText);
+        }
     }
 
     // submitChat2 is the same as submitChat1, but for the second instance with switched roles.
@@ -308,10 +334,10 @@
             $('#chats').append(newchat);
             turn++;
             submitChat1();
-        }, function (jqXHR, textStatus, errorThrown) {
-            alert("Error: " + textStatus + " " + errorThrown);
-        });
+        }, onError);
     }
+
+    var xhq;
 
     /** Submits a message array via $.ajax to https://api.openai.com/v1/chat/completions .
      * @param messages array of messages [{"role": role, "content": thecontent}, ...] where role is 'user' or 'agent' or 'system'
@@ -346,7 +372,7 @@
         }
 
         function performCall() {
-            $.ajax({
+            xhq = $.ajax({
                 url: 'https://api.openai.com/v1/chat/completions',
                 type: 'POST',
                 dataType: 'json',
