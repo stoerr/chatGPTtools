@@ -187,8 +187,10 @@
                             <div class="input-group">
                                 <label class="input-group-text" for="themes">Theme:</label>
                                 <select class="form-select" id="themes">
-                                    <option value="0" selected>None</option>
-                                    <option value="1">asdaskjnse fiuhweiuwe</option>
+                                    <option value="theme1">Theme 1</option>
+                                    <option value="theme2" selected>Theme 2</option>
+                                    <option value="theme3">Theme 3</option>
+                                    <option value="theme4">Theme 4</option>
                                 </select>
                             </div>
                         </div>
@@ -196,12 +198,12 @@
                 </div>
 
                 <div id="chats" class="mt-3">
-                    <div class="col-12 chat1">
+                    <div class="col-12 chat chat1">
                         <div class="card msg mb-3">
                             <div class="card-body">Hi Alice!</div>
                         </div>
                     </div>
-                    <div class="col-12 chat2">
+                    <div class="col-12 chat chat2">
                         <div class="card msg mb-3">
                             <div class="card-body">Hi Bob!</div>
                         </div>
@@ -235,21 +237,36 @@
     });
 
     $('#start').click(function () {
-        $('#chats').empty();
+        $('.chats .chat').slice(2).remove();
         turn = 0;
         maxtokens = parseInt($('#tokens').val());
-        $('#start').prop('disabled', true);
-        $('#stop').prop('disabled', false);
+        setRunning(true);
         submitChat1();
     });
+
+    $('#continue').click(function () {
+        turn = 0;
+        maxtokens = parseInt($('#tokens').val());
+        setRunning(true);
+        submitChat1();
+    });
+
+    $('#themes').change(function () {
+        $('body').removeClass().addClass($('#themes').val());
+    });
+
+    function setRunning(isrunning) {
+        $('#start').prop('disabled', isrunning);
+        $('#continue').prop('disabled', isrunning);
+        $('#stop').prop('disabled', !isrunning);
+    }
 
     var turn = 0;
     var maxtokens = 0;
 
     function submitChat1() {
         if (turn >= $('#turns').val()) {
-            $('#start').prop('disabled', false);
-            $('#stop').prop('disabled', true);
+            setRunning(false);
             return;
         }
         var messages = [];
@@ -257,12 +274,12 @@
         if (sysmsg1) {
             messages.push({"role": "system", "content": sysmsg1});
         }
-        $(document).find('.chat').each(function (num, el) {
+        $(document).find('.chats .chat').each(function (num, el) {
             var role = $(el).hasClass('chat1') ? 'assistant' : 'user';
-            messages.push({"role": role, "content": $(el).text()});
+            messages.push({"role": role, "content": $(el).find('.card-body').text()});
         });
         submitToGPT(messages, function (data) {
-            var newchat = $('<div class="col-12"><div class="chat chat1">' + data.choices[0].message.content + '</div></div>');
+            var newchat = $('<div class="col-12 chat chat1"><div class="card msg mb-3"><div class="card-body">' + data.choices[0].message.content + '</div></div></div>');
             $('#chats').append(newchat);
             turn++;
             submitChat2();
@@ -274,8 +291,7 @@
     // submitChat2 is the same as submitChat1, but for the second instance with switched roles.
     function submitChat2() {
         if (turn >= $('#turns').val()) {
-            $('#start').prop('disabled', false);
-            $('#stop').prop('disabled', true);
+            setRunning(false);
             return;
         }
         var messages = [];
@@ -285,10 +301,10 @@
         }
         $(document).find('.chat').each(function (num, el) {
             var role = $(el).hasClass('chat2') ? 'assistant' : 'user';
-            messages.push({"role": role, "content": $(el).text()});
+            messages.push({"role": role, "content": $(el).find('.card-body').text()});
         });
         submitToGPT(messages, function (data) {
-            var newchat = $('<div class="col-12"><div class="chat chat2">' + data.choices[0].message.content + '</div></div>');
+            var newchat = $('<div class="col-12 chat chat2"><div class="card msg mb-3"><div class="card-body">' + data.choices[0].message.content + '</div></div></div>');
             $('#chats').append(newchat);
             turn++;
             submitChat1();
