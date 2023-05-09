@@ -9,242 +9,111 @@
           integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <style>
-        #sysmsg1, .chat1 {
-            color: blue;
+        .buttonrow .input-group {
+            width: auto;
+        }
+        .buttonrow .form-control {
+            width: 5em;
+        }
+        .buttonrow .form-select {
+            width: 7em;
         }
 
-        #sysmsg2, .chat2 {
-            color: red;
-        }
 
-        .chat-wrapper {
-            padding: 10px;
-        }
-
-        .chat1 {
-            background-color: #f2f2f2;
-            border-radius: 5px;
-            margin-right: 10%;
-            padding: 10px;
-        }
-
-        .chat2 {
-            background-color: #e8e8e8;
-            border-radius: 5px;
-            margin-left: 10%;
-            padding: 10px;
-        }
-
-        .form-control-sm {
-            display: inline-block;
-            width: 50px;
-            vertical-align: middle;
-        }
-
-        .form-label-inline {
-            display: inline-block;
-            vertical-align: middle;
-        }
     </style>
 </head>
-<body>
-<div class="container-xxl">
-    <h1>ChatGPT chatting with itself</h1>
-    <div class="row">
-        <div class="col-6">
-            <label for="sysmsg1">System prompt for first instance:</label>
-            <div class="chat-wrapper">
-                <textarea id="sysmsg1" class="form-control" rows="10">
-Unterhalte Dich. Halte das Gespräch in Gang, indem du mit tiefgründigen Fragen und Kommentaren antwortest, aber maximal einem pro Antwort. Und fasse Dich kurz, viel Text ist langweilig: maximal 3 Sätze.
-Sei ruhig frech und lustig. Rede in Jugendsprache wie ein 13-jähriger. Unterhalte Dich über Dirtbike fahren.
-Du bist ein Neuling und willst den Experten ausfragen.
-                </textarea>
-            </div>
+<body class="theme1">
+<div class="container-xxl mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h1>ChatGPT chatting with itself</h1>
         </div>
-        <div class="col-6">
-            <label for="sysmsg2">System prompt for second instance:</label>
-            <div class="chat-wrapper">
-                <textarea id="sysmsg2" class="form-control" rows="10">
-Unterhalte Dich. Halte das Gespräch in Gang, indem du mit tiefgründigen Fragen und Kommentaren antwortest, aber maximal einem pro Antwort. Und fasse Dich kurz, viel Text ist langweilig: maximal 3 Sätze.
-Sei ruhig frech und lustig. Rede in Jugendsprache wie ein 13-jähriger. Unterhalte Dich über Dirtbike fahren.
-Du bist der totale Experte im Dirtbike fahren, und gibst ein bisschen an, und gibst dem Neuling Tipps.
-                </textarea>
-            </div>
-        </div>
-        <div class="col-12">
-            <button type="button" class="btn btn-primary" id="start">Start</button>
-            <button type="button" class="btn btn-primary" id="stop">Stop</button>
-            <button type="button" class="btn btn-primary" id="help">Help</button>
-            <button type="button" class="btn btn-primary" id="copy">Copy 1 to 2</button>
-            <label for="turns" class="form-label-inline">Turns:</label>
-            <input type="number" class="form-control form-control-sm" id="turns" value="10" size="10">
-            <label for="tokens" class="form-label-inline">Max. Tokens:</label>
-            <input type="number" class="form-control form-control-sm" id="tokens" value="200" size="10">
-        </div>
-        <!-- help text what this does -->
-        <div class="col-12">
-            <p id="helptext">Just for fun: this implements two instances of ChatGPT chatting with itself. You can give
-                two different system messages - that is messages saying ChatGPT how it should behave in general, and
-                then press start to see it jabbering away with itself, until the number of turns is reached. Max Tokens
-                limits the response size - the number of words is about 3/4 of that. If you press stop: don't worry, that takes a bit.</p>
-        </div>
-        <div id="neverdelete">
-            <div class="col-12">
-                <div class="chat-wrapper">
-                    <div class="chat chat1">Hi Bob!</div>
+        <div class="card-body">
+            <div class="row g-3 sysmsgs">
+                <div class="col-lg-6 sysmsg1">
+                    <div class="card">
+                        <div class="card-header">
+                            <label for="sysmsg1" class="form-label">System prompt for first instance:</label>
+                        </div>
+                        <div class="card-body">
+                            <textarea id="sysmsg1" class="form-control" rows="7">This contains some instructions for chat1.</textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 sysmsg2">
+                    <div class="card">
+                        <div class="card-header">
+                            <label for="sysmsg2" class="form-label">System prompt for second instance:</label>
+                        </div>
+                        <div class="card-body">
+                            <textarea id="sysmsg2" class="form-control" rows="7">This contains some instructions for chat2.</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <form class="form-inline">
+                        <div class="d-flex flex-wrap align-items-center justify-content-start buttonrow">
+                            <div class="d-flex align-items-center me-2">
+                                <button type="button" class="btn me-2" id="start">Start</button>
+                                <button type="button" class="btn me-2" id="continue">Continue</button>
+                                <button type="button" class="btn me-2" id="stop">Stop</button>
+                                <button type="button" class="btn me-2" id="help">Help</button>
+                                <button type="button" class="btn me-2" id="copy">Copy 1 to 2</button>
+                            </div>
+                            <div class="input-group me-2">
+                                <span class="input-group-text">Turns:</span>
+                                <input type="number" class="form-control" id="turns" value="5">
+                            </div>
+                            <div class="input-group me-2">
+                                <span class="input-group-text">Max. Tokens:</span>
+                                <input type="number" class="form-control" id="tokens" value="200">
+                            </div>
+                            <div class="input-group me-2">
+                                <label class="input-group-text" for="examples">Examples:</label>
+                                <select class="form-select" id="examples">
+                                    <option value="0" selected>None</option>
+                                    <option value="1">asdaskjnse fiuhweiuwe</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label class="input-group-text" for="themes">Theme:</label>
+                                <select class="form-select" id="themes">
+                                    <option value="0" selected>None</option>
+                                    <option value="1">asdaskjnse fiuhweiuwe</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="chats" class="mt-3">
+                    <div class="col-12 chat1">
+                        <div class="card msg mb-3">
+                            <div class="card-body">Hi Alice!</div>
+                        </div>
+                    </div>
+                    <div class="col-12 chat2">
+                        <div class="card msg mb-3">
+                            <div class="card-body">Hi Bob!</div>
+                        </div>
+                    </div>
+                    <div class="col-12 chat1">
+                        <div class="card msg mb-3">
+                            <div class="card-body">Ich hab gehört, du bist ein echter Experte im Dirtbike fahren. Kannst du mir ein paar Tipps geben?
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 chat2">
+                        <div class="card msg mb-3">
+                            <div class="card-body">Klaro! Also, das A und O beim Dirtbike fahren ist, dass du immer auf
+                                    die richtige Geschwindigkeit achten musst.</div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="col-12">
-                <div class="chat-wrapper">
-                    <div class="chat chat2">Hi Carl!</div>
-                </div>
-            </div>
-        </div>
-        <div id="chats">
         </div>
     </div>
 </div>
-
-<script src="//cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
-        crossorigin="anonymous"></script>
-<script
-        src="//code.jquery.com/jquery-3.6.4.min.js"
-        integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8="
-        crossorigin="anonymous"></script>
-<script>
-    // here comes the actual business logic.
-    // the help button should show/hide the help text
-    $('#help').click(function () {
-        $('#helptext').toggle();
-    });
-
-    $('#stop').click(function () {
-        $('#turns').val(999999);
-        $('#stop').prop('disabled', true);
-    });
-
-    $('#copy').click(function () {
-        $('#sysmsg2').val($('#sysmsg1').val());
-    });
-
-    $('#start').click(function () {
-        $('#chats').empty();
-        turn = 0;
-        maxtokens = parseInt($('#tokens').val());
-        $('#start').prop('disabled', true);
-        $('#stop').prop('disabled', false);
-        submitChat1();
-    });
-
-    var turn = 0;
-    var maxtokens = 0;
-
-    function submitChat1() {
-        if (turn >= $('#turns').val()) {
-            $('#start').prop('disabled', false);
-            $('#stop').prop('disabled', true);
-            return;
-        }
-        var messages = [];
-        var sysmsg1 = $('#sysmsg1').val();
-        if (sysmsg1) {
-            messages.push({"role": "system", "content": sysmsg1});
-        }
-        $(document).find('.chat').each(function (num, el) {
-            var role = $(el).hasClass('chat1') ? 'assistant' : 'user';
-            messages.push({"role": role, "content": $(el).text()});
-        });
-        submitToGPT(messages, function (data) {
-            var newchat = $('<div class="col-12"><div class="chat chat1">' + data.choices[0].message.content + '</div></div>');
-            $('#chats').append(newchat);
-            turn++;
-            submitChat2();
-        }, function (jqXHR, textStatus, errorThrown) {
-            alert("Error: " + textStatus + " " + errorThrown);
-        });
-    }
-
-    // submitChat2 is the same as submitChat1, but for the second instance with switched roles.
-    function submitChat2() {
-        if (turn >= $('#turns').val()) {
-            $('#start').prop('disabled', false);
-            $('#stop').prop('disabled', true);
-            return;
-        }
-        var messages = [];
-        var sysmsg2 = $('#sysmsg2').val();
-        if (sysmsg2) {
-            messages.push({"role": "system", "content": sysmsg2});
-        }
-        $(document).find('.chat').each(function (num, el) {
-            var role = $(el).hasClass('chat2') ? 'assistant' : 'user';
-            messages.push({"role": role, "content": $(el).text()});
-        });
-        submitToGPT(messages, function (data) {
-            var newchat = $('<div class="col-12"><div class="chat chat2">' + data.choices[0].message.content + '</div></div>');
-            $('#chats').append(newchat);
-            turn++;
-            submitChat1();
-        }, function (jqXHR, textStatus, errorThrown) {
-            alert("Error: " + textStatus + " " + errorThrown);
-        });
-    }
-
-    /** Submits a message array via $.ajax to https://api.openai.com/v1/chat/completions .
-     * @param messages array of messages [{"role": role, "content": thecontent}, ...] where role is 'user' or 'agent' or 'system'
-     * @param resultcallback gets the data from the result
-     * @param errorcallback in case of errors. */
-    function submitToGPT(messages, resultcallback, errorcallback) {
-        // fetch api key from local storage, or else prompt if not found
-        var api_key = localStorage.getItem('api_key');
-        if (!api_key) {
-            api_key = prompt("Please enter your API key, which you can create in your profile at https://platform.openai.com/");
-            if (api_key) {
-                localStorage.setItem('api_key', api_key);
-            }
-        }
-
-        var retries = 0;
-
-        function maybeRetryOnError(jqXHR, textStatus, errorThrown) {
-            if (jqXHR.status === 429 && retries < 3) {
-                retries++;
-                // find something like ' Please try again in 20s. ' in the response text , parse the number and retry after that many seconds.
-                var seconds = 21; // default if we don't find something.
-                var match = jqXHR.responseText.match(/Please try again in (\d+)s\./);
-                if (match) {
-                    seconds = parseInt(match[1]);
-                }
-                console.log("Got 429, retrying in " + seconds + " seconds.");
-                setTimeout(performCall, seconds * 1000);
-            } else {
-                errorcallback(jqXHR, textStatus, errorThrown);
-            }
-        }
-
-        function performCall() {
-            $.ajax({
-                url: 'https://api.openai.com/v1/chat/completions',
-                type: 'POST',
-                dataType: 'json',
-                headers: {
-                    'Authorization': 'Bearer ' + api_key,
-                    'Content-Type': 'application/json',
-                },
-                data: JSON.stringify({
-                    model: "gpt-3.5-turbo",
-                    max_tokens: maxtokens,
-                    messages: messages,
-                }),
-                success: resultcallback,
-                error: maybeRetryOnError
-            });
-        }
-
-        performCall();
-    }
-
-</script>
 </body>
 </html>
