@@ -69,7 +69,7 @@
             --tertiary-color: SkyBlue;
             --sysmsg1-color: Azure; /* pale version of tertiary-color */
             --quaternary-color: LightCoral;
-            --sysmsg2-color: Linen; /* pale version of quaternary-color */
+            --sysmsg2-color: linen; /* pale version of quaternary-color */
             --background-color: Ivory;
             --header-color: Snow;
             --header-bg-color: DarkSlateBlue;
@@ -131,6 +131,14 @@
     </style>
 </head>
 <body class="theme2">
+<pre style="display: none" id="examplelist">
+    1.name=Self-Interview
+    1.sys1=Ask the user interview questions about world view, but only one question at a time.
+    1.sys2=Be helpful and chatty, but not too chatty - no more than 90 words per message.
+    2.name=Dirtbiking
+    2.sys1=Unterhalte Dich. Halte das Gespräch in Gang, indem du mit tiefgründigen Fragen und Kommentaren antwortest, aber maximal einem pro Antwort. Und fasse Dich kurz, viel Text ist langweilig: maximal 3 Sätze. Sei ruhig frech und lustig. Rede in Jugendsprache wie ein 13-jähriger. Unterhalte Dich über Dirtbike fahren.Du bist ein Neuling und willst den Experten ausfragen.  Lange Texte sind langweilig - bitte maximal 40 Worte.
+    2.sys2=Unterhalte Dich. Halte das Gespräch in Gang, indem du mit tiefgründigen Fragen und Kommentaren antwortest, aber maximal einem pro Antwort. Und fasse Dich kurz, viel Text ist langweilig: maximal 3 Sätze. Sei ruhig frech und lustig. Rede in Jugendsprache wie ein 13-jähriger. Unterhalte Dich über Dirtbike fahren.Du bist der totale Experte im Dirtbike fahren, und gibst ein bisschen an, und gibst dem Neuling Tipps. Lange Texte sind langweilig - bitte maximal 80 Worte.
+</pre>
 <div class="container-xxl mt-4">
     <div class="card">
         <div class="card-header">
@@ -144,10 +152,7 @@
                             <label for="sysmsg1" class="form-label">System prompt for first instance:</label>
                         </div>
                         <div class="card-body">
-                            <textarea id="sysmsg1" class="form-control" rows="7">Unterhalte Dich. Halte das Gespräch in Gang, indem du mit tiefgründigen Fragen und Kommentaren antwortest, aber maximal einem pro Antwort. Und fasse Dich kurz, viel Text ist langweilig: maximal 3 Sätze.
-                            Sei ruhig frech und lustig. Rede in Jugendsprache wie ein 13-jähriger. Unterhalte Dich über Dirtbike fahren.
-                            Du bist ein Neuling und willst den Experten ausfragen.  Lange Texte sind langweilig - bitte maximal 2 Sätze.
-                            </textarea>
+                            <textarea id="sysmsg1" class="form-control" rows="7">Ask the user interview questions about world view, but only one question at a time.</textarea>
                         </div>
                     </div>
                 </div>
@@ -157,10 +162,7 @@
                             <label for="sysmsg2" class="form-label">System prompt for second instance:</label>
                         </div>
                         <div class="card-body">
-                            <textarea id="sysmsg2" class="form-control" rows="7">
-                                Unterhalte Dich. Halte das Gespräch in Gang, indem du mit tiefgründigen Fragen und Kommentaren antwortest, aber maximal einem pro Antwort. Und fasse Dich kurz, viel Text ist langweilig: maximal 3 Sätze.
-                                Sei ruhig frech und lustig. Rede in Jugendsprache wie ein 13-jähriger. Unterhalte Dich über Dirtbike fahren.
-                                Du bist der totale Experte im Dirtbike fahren, und gibst ein bisschen an, und gibst dem Neuling Tipps.  Lange Texte sind langweilig - bitte maximal 2 Sätze.</textarea>
+                            <textarea id="sysmsg2" class="form-control" rows="7">Be helpful and chatty, but not too chatty - no more than 90 words per message.</textarea>
                         </div>
                     </div>
                 </div>
@@ -173,7 +175,6 @@
                                 <button type="button" class="btn me-2" id="continue">Continue</button>
                                 <button type="button" class="btn me-2" id="stop" disabled>Stop</button>
                                 <button type="button" class="btn me-2" id="help">Help</button>
-                                <button type="button" class="btn me-2" id="copy">Copy 1 to 2</button>
                             </div>
                             <div class="input-group me-2">
                                 <span class="input-group-text">Turns:</span>
@@ -187,7 +188,6 @@
                                 <label class="input-group-text" for="examples">Examples:</label>
                                 <select class="form-select" id="examples">
                                     <option value="0" selected>None</option>
-                                    <option value="1">asdaskjnse fiuhweiuwe</option>
                                 </select>
                             </div>
                             <div class="input-group">
@@ -237,8 +237,35 @@
         integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8="
         crossorigin="anonymous"></script>
 <script>
-    // here comes the actual business logic.
-    // the help button should show/hide the help text
+    // parse the #examplelist and add it to the examples select. The format is:
+    // number.name=name of the example
+    // number.sys1=system prompt for first instance
+    // number.sys2=system prompt for second instance
+    const examples = $('#examplelist').text().split('\n').map(line => line.trim());
+    // first, collect the .name lines and add the number as value and the name as text for the select options of #examples
+    const exampleoptions = examples.filter(line => line.indexOf('name=') > 0).map(line => {
+        // number is what's before = and name what's after
+        const number = line.split('=')[0].split('.')[0];
+        const name = line.split('=')[1];
+        return `<option value="${number}">${name}</option>`;
+    });
+    // add exampleoptions to #examples
+    $('#examples').append(exampleoptions);
+
+    // change handler for #examples
+    $('#examples').change(function () {
+        // get the number of the selected example
+        const number = $('#examples').val();
+        // get the lines of the example
+        const examplelines = examples.filter(line => line.indexOf(number + '.') === 0);
+        // get the sys1 and sys2 s
+        const sys1 = examplelines.filter(line => line.indexOf('sys1=') > 0)[0].split('=')[1];
+        const sys2 = examplelines.filter(line => line.indexOf('sys2=') > 0)[0].split('=')[1];
+        // set the values of #sysmsg1 and #sysmsg2
+        $('#sysmsg1').val(sys1);
+        $('#sysmsg2').val(sys2);
+    });
+
     $('#help').click(function () {
         $('#helptext').toggle();
     });
@@ -252,12 +279,8 @@
         }
     });
 
-    $('#copy').click(function () {
-        $('#sysmsg2').val($('#sysmsg1').val());
-    });
-
     $('#start').click(function () {
-        $('.chats .chat').slice(2).remove();
+        $('#chats').children().slice(2).remove();
         turn = 0;
         maxtokens = parseInt($('#tokens').val());
         setRunning(true);
@@ -295,7 +318,7 @@
         if (sysmsg1) {
             messages.push({"role": "system", "content": sysmsg1});
         }
-        $(document).find('.chats .chat').each(function (num, el) {
+        $(document).find('.chat').each(function (num, el) {
             var role = $(el).hasClass('chat1') ? 'assistant' : 'user';
             messages.push({"role": role, "content": $(el).find('.card-body').text()});
         });
