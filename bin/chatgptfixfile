@@ -77,15 +77,15 @@ if [[ $exit_status -ne 0 ]]; then
 fi
 
 # Rename original file and write new content
-mv "$filepath" "$filepath.orig"
+mv "$filepath" "$filepath.gptfix.orig"
 echo "$newcontent" > "$filepath"
 
-echo "Moved $filepath to $filepath.orig and wrote new content to $filepath"
+echo "Moved $filepath to $filepath.gptfix.orig and wrote new content to $filepath"
 echo "The response was:"
 echo "$gptoutput"
 
 # Display differences using 'idea diff'
-idea diff "$filepath.orig" "$filepath" &
+idea diff "$filepath.gptfix.orig" "$filepath" &
 
 # Specification for generation with ChatGPT was originally:
 #The script chatfgptfixfile is called like this:
@@ -93,5 +93,5 @@ idea diff "$filepath.orig" "$filepath" &
 #and can have the option -f [additionalfile] several times. It calls chatgpt with -f filepath and the given prompt.
 #If -f is given, chatgpt additionally gets the option -f with that additionalfile .
 #The result is read into a variable gptoutput. If chatgpt exits with a status code not 0, it prints an error message and aborts. The content of the variable gptoutput is piped through program chatgptextractcodeblock into a variable newcontent. If that doesn't exit with 0, again an error message is printed.
-#Now the file filepath is renamed to extension .orig, a new file with newcontent is written to filepath and 'idea diff filepath.orig filepath' is called to display the differences.
+#Now the file filepath is renamed to extension .gptfix.orig, a new file with newcontent is written to filepath and 'idea diff filepath.gptfix.orig filepath' is called to display the differences.
 #Please include a short description into the help message.
