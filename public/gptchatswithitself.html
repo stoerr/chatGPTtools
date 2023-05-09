@@ -12,17 +12,125 @@
         .buttonrow .input-group {
             width: auto;
         }
+
         .buttonrow .form-control {
             width: 5em;
         }
+
         .buttonrow .form-select {
             width: 7em;
         }
 
+        .theme1 {
+            --primary-color: #7E57C2;
+            --secondary-color: #FF6D00;
+            --tertiary-color: #90CAF9;
+            --sysmsg1-color: #E8EAF6; /* pale version of tertiary-color */
+            --quaternary-color: #FFAB91;
+            --sysmsg2-color: #FFECE7; /* pale version of quaternary-color */
+            --background-color: #F5F5F5;
+            --header-color: #FFFFFF;
+            --header-bg-color: #424242;
+            --font-color: #212121;
+            --border-color: #BDBDBD;
+        }
 
+        .theme2 {
+            --primary-color: MediumPurple;
+            --secondary-color: DarkOrange;
+            --tertiary-color: LightSkyBlue;
+            --sysmsg1-color: AliceBlue; /* pale version of tertiary-color */
+            --quaternary-color: LightSalmon;
+            --sysmsg2-color: MistyRose; /* pale version of quaternary-color */
+            --background-color: WhiteSmoke;
+            --header-color: White;
+            --header-bg-color: DimGray;
+            --font-color: DarkSlateGray;
+            --border-color: LightGray;
+        }
+
+        .theme3 {
+            --primary-color: DarkCyan;
+            --secondary-color: DarkGoldenRod;
+            --tertiary-color: LightSteelBlue;
+            --sysmsg1-color: Lavender; /* pale version of tertiary-color */
+            --quaternary-color: PeachPuff;
+            --sysmsg2-color: Seashell; /* pale version of quaternary-color */
+            --background-color: AntiqueWhite;
+            --header-color: FloralWhite;
+            --header-bg-color: SlateGray;
+            --font-color: DarkOliveGreen;
+            --border-color: Gainsboro;
+        }
+
+        .theme4 {
+            --primary-color: Teal;
+            --secondary-color: Sienna;
+            --tertiary-color: SkyBlue;
+            --sysmsg1-color: Azure; /* pale version of tertiary-color */
+            --quaternary-color: LightCoral;
+            --sysmsg2-color: Linen; /* pale version of quaternary-color */
+            --background-color: Ivory;
+            --header-color: Snow;
+            --header-bg-color: DarkSlateBlue;
+            --font-color: SaddleBrown;
+            --border-color: Beige;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--font-color);
+        }
+
+        .card {
+            border-color: var(--border-color);
+        }
+
+        .card-header {
+            background-color: var(--header-bg-color);
+            color: var(--header-color);
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: var(--header-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .sysmsg1 .card {
+            background-color: var(--sysmsg1-color);
+        }
+
+        .sysmsg2 .card {
+            background-color: var(--sysmsg2-color);
+        }
+
+        .chat1 .card {
+            border-left: 4px solid var(--tertiary-color);
+            margin-right: 10%;
+        }
+
+        .chat2 .card {
+            border-left: 4px solid var(--quaternary-color);
+            margin-left: 10%;
+        }
+
+        .input-group-text {
+            background-color: var(--primary-color);
+            color: var(--header-color);
+        }
+
+        .form-control, .theme1 .form-select {
+            border-color: var(--border-color);
+        }
     </style>
 </head>
-<body class="theme1">
+<body class="theme2">
 <div class="container-xxl mt-4">
     <div class="card">
         <div class="card-header">
