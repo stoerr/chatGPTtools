@@ -206,22 +206,151 @@
                             <div class="card-body">Hi Bob!</div>
                         </div>
                     </div>
-                    <div class="col-12 chat1">
-                        <div class="card msg mb-3">
-                            <div class="card-body">Ich hab gehört, du bist ein echter Experte im Dirtbike fahren. Kannst du mir ein paar Tipps geben?
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-12 chat2">
-                        <div class="card msg mb-3">
-                            <div class="card-body">Klaro! Also, das A und O beim Dirtbike fahren ist, dass du immer auf
-                                    die richtige Geschwindigkeit achten musst.</div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+<script src="//cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
+        crossorigin="anonymous"></script>
+<script
+        src="//code.jquery.com/jquery-3.6.4.min.js"
+        integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8="
+        crossorigin="anonymous"></script>
+<script>
+    // here comes the actual business logic.
+    // the help button should show/hide the help text
+    $('#help').click(function () {
+        $('#helptext').toggle();
+    });
+
+    $('#stop').click(function () {
+        $('#turns').val(999999);
+        $('#stop').prop('disabled', true);
+    });
+
+    $('#copy').click(function () {
+        $('#sysmsg2').val($('#sysmsg1').val());
+    });
+
+    $('#start').click(function () {
+        $('#chats').empty();
+        turn = 0;
+        maxtokens = parseInt($('#tokens').val());
+        $('#start').prop('disabled', true);
+        $('#stop').prop('disabled', false);
+        submitChat1();
+    });
+
+    var turn = 0;
+    var maxtokens = 0;
+
+    function submitChat1() {
+        if (turn >= $('#turns').val()) {
+            $('#start').prop('disabled', false);
+            $('#stop').prop('disabled', true);
+            return;
+        }
+        var messages = [];
+        var sysmsg1 = $('#sysmsg1').val();
+        if (sysmsg1) {
+            messages.push({"role": "system", "content": sysmsg1});
+        }
+        $(document).find('.chat').each(function (num, el) {
+            var role = $(el).hasClass('chat1') ? 'assistant' : 'user';
+            messages.push({"role": role, "content": $(el).text()});
+        });
+        submitToGPT(messages, function (data) {
+            var newchat = $('<div class="col-12"><div class="chat chat1">' + data.choices[0].message.content + '</div></div>');
+            $('#chats').append(newchat);
+            turn++;
+            submitChat2();
+        }, function (jqXHR, textStatus, errorThrown) {
+            alert("Error: " + textStatus + " " + errorThrown);
+        });
+    }
+
+    // submitChat2 is the same as submitChat1, but for the second instance with switched roles.
+    function submitChat2() {
+        if (turn >= $('#turns').val()) {
+            $('#start').prop('disabled', false);
+            $('#stop').prop('disabled', true);
+            return;
+        }
+        var messages = [];
+        var sysmsg2 = $('#sysmsg2').val();
+        if (sysmsg2) {
+            messages.push({"role": "system", "content": sysmsg2});
+        }
+        $(document).find('.chat').each(function (num, el) {
+            var role = $(el).hasClass('chat2') ? 'assistant' : 'user';
+            messages.push({"role": role, "content": $(el).text()});
+        });
+        submitToGPT(messages, function (data) {
+            var newchat = $('<div class="col-12"><div class="chat chat2">' + data.choices[0].message.content + '</div></div>');
+            $('#chats').append(newchat);
+            turn++;
+            submitChat1();
+        }, function (jqXHR, textStatus, errorThrown) {
+            alert("Error: " + textStatus + " " + errorThrown);
+        });
+    }
+
+    /** Submits a message array via $.ajax to https://api.openai.com/v1/chat/completions .
+     * @param messages array of messages [{"role": role, "content": thecontent}, ...] where role is 'user' or 'agent' or 'system'
+     * @param resultcallback gets the data from the result
+     * @param errorcallback in case of errors. */
+    function submitToGPT(messages, resultcallback, errorcallback) {
+        // fetch api key from local storage, or else prompt if not found
+        var api_key = localStorage.getItem('api_key');
+        if (!api_key) {
+            api_key = prompt("Please enter your API key, which you can create in your profile at https://platform.openai.com/");
+            if (api_key) {
+                localStorage.setItem('api_key', api_key);
+            }
+        }
+
+        var retries = 0;
+
+        function maybeRetryOnError(jqXHR, textStatus, errorThrown) {
+            if (jqXHR.status === 429 && retries < 3) {
+                retries++;
+                // find something like ' Please try again in 20s. ' in the response text , parse the number and retry after that many seconds.
+                var seconds = 21; // default if we don't find something.
+                var match = jqXHR.responseText.match(/Please try again in (\d+)s\./);
+                if (match) {
+                    seconds = parseInt(match[1]);
+                }
+                console.log("Got 429, retrying in " + seconds + " seconds.");
+                setTimeout(performCall, seconds * 1000);
+            } else {
+                errorcallback(jqXHR, textStatus, errorThrown);
+            }
+        }
+
+        function performCall() {
+            $.ajax({
+                url: 'https://api.openai.com/v1/chat/completions',
+                type: 'POST',
+                dataType: 'json',
+                headers: {
+                    'Authorization': 'Bearer ' + api_key,
+                    'Content-Type': 'application/json',
+                },
+                data: JSON.stringify({
+                    model: "gpt-3.5-turbo",
+                    max_tokens: maxtokens,
+                    messages: messages,
+                }),
+                success: resultcallback,
+                error: maybeRetryOnError
+            });
+        }
+
+        performCall();
+    }
+
+</script>
 </body>
 </html>
