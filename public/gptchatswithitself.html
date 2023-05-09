@@ -132,6 +132,9 @@
 </head>
 <body class="theme2">
 <pre style="display: none" id="examplelist">
+    3.name=Empty
+    3.sys1=
+    3.sys2=
     1.name=Self-Interview
     1.sys1=Ask the user interview questions about world view, but only one question at a time.
     1.sys2=Be helpful and chatty, but not too chatty - no more than 90 words per message.
@@ -188,9 +191,9 @@
                                 <input type="number" class="form-control" id="tokens" value="200">
                             </div>
                             <div class="input-group me-2">
-                                <label class="input-group-text" for="examples">Examples:</label>
+                                <label class="input-group-text" for="examples">Example:</label>
                                 <select class="form-select" id="examples">
-                                    <option value="0" selected>None</option>
+                                    <option value="0" selected>--</option>
                                 </select>
                             </div>
                             <div class="input-group">
@@ -206,14 +209,29 @@
                     </form>
                 </div>
 
-                <div class="col-12">
-                    <p id="helptext">Just for fun: this implements two instances of ChatGPT chatting with itself. You
+                <div class="col-12" id="helptext">
+                    <p>Just for fun: this implements two instances of ChatGPT chatting with itself. You
                         can give two different system messages - that is messages saying ChatGPT how it should behave in
                         general, and then press start to see it jabbering away with itself, until the number of turns is
-                        reached. Max Tokens limits the response size - the number of words is about 3/4 of that. If you
+                        reached. If you
                         get something interesting, please please
                         <a href="http://www.stoerr.net/contact.html">send me</a> a copy!
                         You can use the "Clipboard" button to coy the chat to the clipboard.
+                    </p>
+                    <p>
+                        You can either type out your own system messages, or use one of the examples to get some ideas.
+                        The maxtokens parameter is a hard limit of the number of tokens that ChatGPT is allowed to
+                        generate, which is usually something like half to 3/4 of a word.
+                    </p>
+                    <p>
+                        You will need a <a href="https://platform.openai.com/">OpenAI API key</a> to use this. If you
+                        don't have one: login there with your OpenAI ChatGPT account and go from the account menu into
+                        the "View API keys" to create one. Don't worry - this app just stores that in your browser and
+                        transmits it to the ChatGPT api, it doesn't send it to me or something. :-)
+                    </p>
+                    <p>
+                        Have fun! :-) <br/>
+                        <a href="http://www.stoerr.net/">Hans-Peter</a>
                     </p>
                 </div>
 
@@ -276,7 +294,7 @@
 
     $('#stop').click(function () {
         turn = parseInt($('#turns').val()) + 999999;
-        $('#stop').prop('disabled', true);
+        setRunning(false);
         if (xhq) {
             xhq.abort();
             xhq = null;
@@ -288,14 +306,14 @@
         turn = 0;
         maxtokens = parseInt($('#tokens').val());
         setRunning(true);
-        submitChat1();
+        chatTurn('sysmsg1', 'chat1');
     });
 
     $('#continue').click(function () {
         turn = 0;
         maxtokens = parseInt($('#tokens').val());
         setRunning(true);
-        submitChat1();
+        chatTurn('sysmsg1', 'chat1');
     });
 
     $('#themes').change(function () {
@@ -312,7 +330,7 @@
             text += $(el).hasClass('chat1') ? 'Alice: ' : 'Bob: ';
             text += $(el).find('.card-body').text() + '\n';
         });
-        copyToClipboard(text, function() {
+        copyToClipboard(text, function () {
             alert('Copied to clipboard:\n' + text);
         });
     });
@@ -321,33 +339,11 @@
         $('#start').prop('disabled', isrunning);
         $('#continue').prop('disabled', isrunning);
         $('#stop').prop('disabled', !isrunning);
-        $('#help').hide();
+        $('#helptext').hide();
     }
 
     var turn = 0;
     var maxtokens = 0;
-
-    function submitChat1() {
-        if (turn >= $('#turns').val()) {
-            setRunning(false);
-            return;
-        }
-        var messages = [];
-        var sysmsg1 = $('#sysmsg1').val();
-        if (sysmsg1) {
-            messages.push({"role": "system", "content": sysmsg1});
-        }
-        $(document).find('.chat').each(function (num, el) {
-            var role = $(el).hasClass('chat1') ? 'assistant' : 'user';
-            messages.push({"role": role, "content": $(el).find('.card-body').text()});
-        });
-        submitToGPT(messages, function (data) {
-            var newchat = $('<div class="col-12 chat chat1"><div class="card msg mb-3"><div class="card-body">' + data.choices[0].message.content + '</div></div></div>');
-            $('#chats').append(newchat);
-            turn++;
-            submitChat2();
-        }, onError);
-    }
 
     function onError(jqXHR, textStatus, errorThrown) {
         setRunning(false);
@@ -356,26 +352,30 @@
         }
     }
 
-    // submitChat2 is the same as submitChat1, but for the second instance with switched roles.
-    function submitChat2() {
-        if (turn >= $('#turns').val()) {
+    function chatTurn(sysmsgkey, chatclass) {
+        if (turn >= $('#turns').val() * 2) {
             setRunning(false);
             return;
         }
         var messages = [];
-        var sysmsg2 = $('#sysmsg2').val();
-        if (sysmsg2) {
-            messages.push({"role": "system", "content": sysmsg2});
+        var sysmsg = $('#' + sysmsgkey).val();
+        if (sysmsg) {
+            messages.push({"role": "system", "content": sysmsg});
         }
         $(document).find('.chat').each(function (num, el) {
-            var role = $(el).hasClass('chat2') ? 'assistant' : 'user';
+            var role = $(el).hasClass(chatclass) ? 'assistant' : 'user';
             messages.push({"role": role, "content": $(el).find('.card-body').text()});
         });
+        // if the last and next to last message contain the word bye (case-insensitive), stop
+        if (messages.length > 1 && messages[messages.length - 1].content.toLowerCase().indexOf('bye') >= 0 && messages[messages.length - 2].content.toLowerCase().indexOf('bye') >= 0) {
+            setRunning(false);
+            return;
+        }
         submitToGPT(messages, function (data) {
-            var newchat = $('<div class="col-12 chat chat2"><div class="card msg mb-3"><div class="card-body">' + data.choices[0].message.content + '</div></div></div>');
+            var newchat = $('<div class="col-12 chat ' + chatclass + '"><div class="card msg mb-3"><div class="card-body">' + data.choices[0].message.content + '</div></div></div>');
             $('#chats').append(newchat);
             turn++;
-            submitChat1();
+            chatTurn(sysmsgkey === 'sysmsg1' ? 'sysmsg2' : 'sysmsg1', chatclass === 'chat1' ? 'chat2' : 'chat1');
         }, onError);
     }
 
