@@ -138,9 +138,12 @@
     1.name=Self-Interview
     1.sys1=Ask the user interview questions about world view, but only one question at a time.
     1.sys2=Be helpful and chatty, but not too chatty - no more than 90 words per message.
-    2.name=Dirtbiking
+    2.name=Fuer meinen Sohn - 13 Dirtbiking
     2.sys1=Unterhalte Dich. Halte das Gespräch in Gang, indem du mit tiefgründigen Fragen und Kommentaren antwortest, aber maximal einem pro Antwort. Und fasse Dich kurz, viel Text ist langweilig: maximal 3 Sätze. Sei ruhig frech und lustig. Rede in Jugendsprache wie ein 13-jähriger. Unterhalte Dich über Dirtbike fahren.Du bist ein Neuling und willst den Experten ausfragen.  Lange Texte sind langweilig - bitte maximal 40 Worte.
     2.sys2=Unterhalte Dich. Halte das Gespräch in Gang, indem du mit tiefgründigen Fragen und Kommentaren antwortest, aber maximal einem pro Antwort. Und fasse Dich kurz, viel Text ist langweilig: maximal 3 Sätze. Sei ruhig frech und lustig. Rede in Jugendsprache wie ein 13-jähriger. Unterhalte Dich über Dirtbike fahren.Du bist der totale Experte im Dirtbike fahren, und gibst ein bisschen an, und gibst dem Neuling Tipps. Lange Texte sind langweilig - bitte maximal 80 Worte.
+    4.name=Fuer meinen Sohn - 13 Beleidigen
+    4.sys1=Tausche wie ein 13-jähriger Junge in Jugendsprache mit mir, Deinem Freund intelligente, lustige Beleidigungen aus, aber nicht zu sehr unter der Gürtellinie. Ich mag es besonders, wenn man eine Beleidigung kreativ herumdreht, so dass sie auf den Beleidiger zurückfällt.
+    4.sys2=Tausche wie ein 13-jähriger Junge in Jugendsprache mit mir, Deinem Freund intelligente, lustige Beleidigungen aus, aber nicht zu sehr unter der Gürtellinie. Ich mag es besonders, wenn man eine Beleidigung kreativ herumdreht, so dass sie auf den Beleidiger zurückfällt.
 </pre>
 <div class="container-xxl mt-4">
     <div class="card">
@@ -238,12 +241,12 @@
                 <div id="chats" class="mt-3">
                     <div class="col-12 chat chat1">
                         <div class="card msg mb-3">
-                            <div class="card-body">Hi Alice!</div>
+                            <div class="card-body">Hi!</div>
                         </div>
                     </div>
                     <div class="col-12 chat chat2">
                         <div class="card msg mb-3">
-                            <div class="card-body">Hi Bob!</div>
+                            <div class="card-body">Hi!</div>
                         </div>
                     </div>
                 </div>
@@ -398,7 +401,7 @@
         var retries = 0;
 
         function maybeRetryOnError(jqXHR, textStatus, errorThrown) {
-            if (jqXHR.status === 429 && retries < 3) {
+            if (jqXHR.status === 429 && retries < 5) {
                 retries++;
                 // find something like ' Please try again in 20s. ' in the response text , parse the number and retry after that many seconds.
                 var seconds = 21; // default if we don't find something.
@@ -407,13 +410,14 @@
                     seconds = parseInt(match[1]);
                 }
                 console.log("Got 429, retrying in " + seconds + " seconds.");
-                setTimeout(performCall, seconds * 1000);
+                setTimeout(performCall, seconds * 1000 + 1000);
             } else {
                 errorcallback(jqXHR, textStatus, errorThrown);
             }
         }
 
         function performCall() {
+            var xhronstart;
             xhq = $.ajax({
                 url: 'https://api.openai.com/v1/chat/completions',
                 type: 'POST',
@@ -422,12 +426,18 @@
                     'Authorization': 'Bearer ' + api_key,
                     'Content-Type': 'application/json',
                 },
+                timeout: 60000,
                 data: JSON.stringify({
                     model: "gpt-3.5-turbo",
                     max_tokens: maxtokens,
                     messages: messages,
                 }),
-                success: resultcallback,
+                beforeSend: (xhr) => {
+                    xhronstart = xhr;
+                },
+                success: function () {
+                    if (xhq === xhronstart) resultcallback.apply(this, arguments);
+                },
                 error: maybeRetryOnError
             });
         }
