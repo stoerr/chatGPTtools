@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>ChatGPT chats with itself.</title>
-    <meta name="description" content="FIXME">
+    <title data-detext="ChatGPT chattet mit sich selbst.">ChatGPT chats with itself.</title>
+    <meta name="description"
+          content="A fun little app that allows two instances of ChatGPT with different settings to chat with each other.">
     <link href="//cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -132,141 +133,200 @@
 </head>
 <body class="theme2">
 <pre style="display: none" id="examplelist">
-[
-  {
-    "name": "Empty",
-    "lang": "en",
-    "sys1": "",
-    "sys2": ""
-  },
-  {
-    "name": "Self-Interview",
-    "lang": "en",
-    "sys1": "Ask me interview questions about my world view, but only one question at a time.",
-    "sys2": "Be helpful and chatty, but not too chatty - no more than 90 words per message."
-  },
-  {
-    "name": "Fuer meinen Sohn - 13 Dirtbiking",
-    "lang": "de",
-    "sys1": "Unterhalte Dich. Halte das Gespräch in Gang, indem du mit tiefgründigen Fragen und Kommentaren antwortest, aber maximal einem pro Antwort. Und fasse Dich kurz, viel Text ist langweilig: maximal 3 Sätze. Sei ruhig frech und lustig. Rede in Jugendsprache wie ein 13-jähriger. Unterhalte Dich über Dirtbike fahren.Du bist ein Neuling und willst den Experten ausfragen.  Lange Texte sind langweilig - bitte maximal 40 Worte.",
-    "sys2": "Unterhalte Dich. Halte das Gespräch in Gang, indem du mit tiefgründigen Fragen und Kommentaren antwortest, aber maximal einem pro Antwort. Und fasse Dich kurz, viel Text ist langweilig: maximal 3 Sätze. Sei ruhig frech und lustig. Rede in Jugendsprache wie ein 13-jähriger. Unterhalte Dich über Dirtbike fahren.Du bist der totale Experte im Dirtbike fahren, und gibst ein bisschen an, und gibst dem Neuling Tipps. Lange Texte sind langweilig - bitte maximal 80 Worte."
-  },
-  {
-    "name": "Fuer meinen Sohn - 13 Beleidigen",
-    "lang": "de",
-    "sys1": "Tausche wie ein 13-jähriger Junge in Jugendsprache mit mir, Deinem Freund intelligente, lustige Beleidigungen aus, aber nicht zu sehr unter der Gürtellinie. Ich mag es besonders, wenn man eine Beleidigung kreativ herumdreht, so dass sie auf den Beleidiger zurückfällt.",
-    "sys2": "Tausche wie ein 13-jähriger Junge in Jugendsprache mit mir, Deinem Freund intelligente, lustige Beleidigungen aus, aber nicht zu sehr unter der Gürtellinie. Ich mag es besonders, wenn man eine Beleidigung kreativ herumdreht, so dass sie auf den Beleidiger zurückfällt."
-  }
-]
+    [
+      {
+        "name": "Empty",
+        "lang": "en",
+        "sys1": "",
+        "sys2": ""
+      },
+      {
+        "name": "Self-Interview",
+        "lang": "en",
+        "sys1": "Ask me interview questions about my world view, but only one question at a time.",
+        "sys2": "Be helpful and chatty, but not too chatty - no more than 90 words per message."
+      },
+      {
+        "name": "Free will",
+        "lang": "en",
+        "sys1": "Defend the position that we have free will. Try to convince me. For a smooth flow of conversation, I suggest restricting each message to no more than around 80 words and introducing only one point per message. Try to also utilize the technique of directing questions.",
+        "sys2": "Defend the position of determinism. Try to convince me. For a smooth flow of conversation, I suggest restricting each message to no more than around 80 words and introducing only one point per message. Try to also utilize the technique of directing questions."
+      },
+      {
+        "name": "Effects of AI",
+        "lang": "en",
+        "sys1": "Argue for the benefits and positive impact of AI. Try to convince me. For a smooth flow of conversation, I suggest restricting each message to no more than around 80 words and introducing only one point per message. Try to also utilize the technique of directing questions.",
+        "sys2": "Argue for the potential dangers and negative impact of AI. Try to convince me. For a smooth flow of conversation, I suggest restricting each message to no more than around 80 words and introducing only one point per message. Try to also utilize the technique of directing questions."
+      },
+      {
+        "name": "Alien understanding culture",
+        "lang": "en",
+        "sys1": "Role-play as an alien trying to understand Earth culture. Ask me questions about why the people behave like they behave in daily live, what goals they have in life. For a smooth flow of conversation, I suggest restricting each message to no more than around 80 words and introducing only one point per message.",
+        "sys2": "Role-play as an astronaut trying to explain Earth culture. For a smooth flow of conversation, I suggest restricting each message to no more than around 80 words and introducing only one point per message."
+      },
+      {
+        "name": "Cryptocurrencies",
+        "lang": "en",
+        "sys1": "Argue in favor of usage of cryptocurrencies. Try to convince me. For a smooth flow of conversation, I suggest restricting each message to no more than around 80 words and introducing only one point per message. Try to also utilize the technique of directing questions.",
+        "sys2": "Argue for the potential dangers and negative impact of cryptocurrencies. Try to convince me. For a smooth flow of conversation, I suggest restricting each message to no more than around 80 words and introducing only one point per message. Try to also utilize the technique of directing questions."
+      },
+      {
+        "name": "Haustier",
+        "lang": "de",
+        "sys1": "Spiele die Rolle eines Haustiers, das Menschensprache sprechen kann. Bitte nicht mehr als 3 Sätze pro Nachricht.",
+        "sys2": "Spiele die Rolle eines überraschten Besitzers, der versucht, es zu verstehen. Bitte nicht mehr als 3 Sätze pro Nachricht."
+      },
+      {
+        "name": "Liebe",
+        "lang": "de",
+        "sys1": "Du bist ein Roboter, der das Konzept der Liebe verstehen will. Bitte nicht mehr als 3 Sätze pro Nachricht.",
+        "sys2": "Du bist ein romantischer Dichter, der versucht, Liebe zu definieren. Bitte nicht mehr als 3 Sätze pro Nachricht."
+      },
+      {
+        "name": "Weltherrschaft der Katzen",
+        "lang": "de",
+        "sys1": "Du glaubst, dass Katzen die Weltherrschaft anstreben. Bitte nicht mehr als 3 Sätze pro Nachricht.",
+        "sys2": "Du bist ein Katzenliebhaber und verteidigst ihre Unschuld. Bitte nicht mehr als 3 Sätze pro Nachricht."
+      },
+      {
+        "name": "Philantropy",
+        "lang": "en",
+        "sys1": "You are a philanthropist who wants to change the world. Try to convince me. For a smooth flow of conversation, I suggest restricting each message to no more than around 80 words and introducing only one point per message. Try to also utilize the technique of directing questions.",
+        "sys2": "You are a cynic who believes that change is impossible. Try to convince me. For a smooth flow of conversation, I suggest restricting each message to no more than around 80 words and introducing only one point per message. Try to also utilize the technique of directing questions."
+    },
+    {
+        "name": "Fuer meinen Sohn - 13 Dirtbiking",
+        "lang": "de",
+        "sys1": "Unterhalte Dich. Halte das Gespräch in Gang, indem du mit tiefgründigen Fragen und Kommentaren antwortest, aber maximal einem pro Antwort. Und fasse Dich kurz, viel Text ist langweilig: maximal 3 Sätze. Sei ruhig frech und lustig. Rede in Jugendsprache wie ein 13-jähriger. Unterhalte Dich über Dirtbike fahren.Du bist ein Neuling und willst den Experten ausfragen.  Lange Texte sind langweilig - bitte maximal 40 Worte.",
+        "sys2": "Unterhalte Dich. Halte das Gespräch in Gang, indem du mit tiefgründigen Fragen und Kommentaren antwortest, aber maximal einem pro Antwort. Und fasse Dich kurz, viel Text ist langweilig: maximal 3 Sätze. Sei ruhig frech und lustig. Rede in Jugendsprache wie ein 13-jähriger. Unterhalte Dich über Dirtbike fahren.Du bist der totale Experte im Dirtbike fahren, und gibst ein bisschen an, und gibst dem Neuling Tipps. Lange Texte sind langweilig - bitte maximal 80 Worte."
+    },
+    {
+        "name": "Fuer meinen Sohn - 13 Beleidigen",
+        "lang": "de",
+        "sys1": "Tausche wie ein 13-jähriger Junge in Jugendsprache mit mir, Deinem Freund intelligente, lustige Beleidigungen aus, aber nicht zu sehr unter der Gürtellinie. Ich mag es besonders, wenn man eine Beleidigung kreativ herumdreht, so dass sie auf den Beleidiger zurückfällt.",
+        "sys2": "Tausche wie ein 13-jähriger Junge in Jugendsprache mit mir, Deinem Freund intelligente, lustige Beleidigungen aus, aber nicht zu sehr unter der Gürtellinie. Ich mag es besonders, wenn man eine Beleidigung kreativ herumdreht, so dass sie auf den Beleidiger zurückfällt."
+    }
+    ]
 </pre>
 <div class="container-xxl mt-4">
     <div class="card">
         <div class="card-header">
-            <h1>ChatGPT chatting with itself</h1>
+            <h1 data-detext="ChatGPT chattet mit sich selbst">ChatGPT chatting with itself</h1>
         </div>
         <div class="card-body">
             <div class="row g-3 sysmsgs">
                 <div class="col-lg-6 sysmsg1">
                     <div class="card">
                         <div class="card-header">
-                            <label for="sysmsg1" class="form-label">System prompt for first instance:</label>
+                            <label for="sysmsg1" class="form-label" data-detext="Systemprompt für die erste Instanz:">System
+                                prompt for first instance:</label>
                         </div>
                         <div class="card-body">
-                            <textarea id="sysmsg1" class="form-control" rows="7">Ask the user interview questions about world view, but only one question at a time.</textarea>
+                            <textarea id="sysmsg1" class="form-control" rows="7"
+                                      data-detext="Stellen Sie dem Benutzer Interviewfragen zu seiner Weltanschauung, aber immer nur eine Frage auf einmal.">Ask the user interview questions about world view, but only one question at a time.</textarea>
                         </div>
                     </div>
                 </div>
                 <div class="col-lg-6 sysmsg2">
                     <div class="card">
                         <div class="card-header">
-                            <label for="sysmsg2" class="form-label">System prompt for second instance:</label>
+                            <label for="sysmsg2" class="form-label" data-detext="Systemprompt für die zweite Instanz:">System
+                                prompt for second instance:</label>
                         </div>
                         <div class="card-body">
-                            <textarea id="sysmsg2" class="form-control" rows="7">Be helpful and chatty, but not too chatty - no more than 90 words per message.</textarea>
+                            <textarea id="sysmsg2" class="form-control" rows="7"
+                                      data-detext="Seien Sie hilfreich und gesprächig, aber nicht zu gesprächig - höchstens 90 Wörter pro Nachricht.">Be helpful and chatty, but not too chatty - no more than 90 words per message.</textarea>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="col-12">
-                    <form class="form-inline">
-                        <div class="d-flex flex-wrap align-items-center justify-content-start buttonrow">
-                            <div class="d-flex align-items-center me-2">
-                                <button type="button" class="btn me-2" id="start">Start</button>
-                                <button type="button" class="btn me-2" id="continue">Continue</button>
-                                <button type="button" class="btn me-2" id="stop" disabled>Stop</button>
-                                <button type="button" class="btn me-2" id="help">Help</button>
-                                <button type="button" class="btn me-2" id="clipboard" title="Copy to clipboard">
-                                    Clipboard
-                                </button>
-                            </div>
-                            <div class="input-group me-2">
-                                <span class="input-group-text">Turns:</span>
-                                <input type="number" class="form-control" id="turns" value="5">
-                            </div>
-                            <div class="input-group me-2">
-                                <span class="input-group-text">Max. Tokens:</span>
-                                <input type="number" class="form-control" id="tokens" value="200">
-                            </div>
-                            <div class="input-group me-2">
-                                <label class="input-group-text" for="examples">Example:</label>
-                                <select class="form-select" id="examples">
-                                    <option value="0" selected>--</option>
-                                </select>
-                            </div>
-                            <div class="input-group">
-                                <label class="input-group-text" for="themes">Theme:</label>
-                                <select class="form-select" id="themes">
-                                    <option value="theme1">Theme 1</option>
-                                    <option value="theme2" selected>Theme 2</option>
-                                    <option value="theme3">Theme 3</option>
-                                    <option value="theme4">Theme 4</option>
-                                </select>
-                            </div>
+            <div class="col-12">
+                <form class="form-inline">
+                    <div class="d-flex flex-wrap align-items-center justify-content-start buttonrow">
+                        <div class="d-flex align-items-center me-2">
+                            <button type="button" class="btn me-2" id="start" data-detext="Starten">Start</button>
+                            <button type="button" class="btn me-2" id="continue" data-detext="Weiter">Continue</button>
+                            <button type="button" class="btn me-2" id="stop" disabled data-detext="Stopp">Stop
+                            </button>
+                            <button type="button" class="btn me-2" id="help" data-detext="Hilfe">Help</button>
+                            <button type="button" class="btn me-2" id="clipboard" title="Copy to clipboard"
+                                    data-detext="Zwischenablage">Clipboard
+                            </button>
                         </div>
-                    </form>
-                </div>
+                        <div class="input-group me-2">
+                            <span class="input-group-text" data-detext="Runden:">Turns:</span>
+                            <input type="number" class="form-control" id="turns" value="5">
+                        </div>
+                        <div class="input-group me-2">
+                            <span class="input-group-text" data-detext="Max. Tokens:">Max. Tokens:</span>
+                            <input type="number" class="form-control" id="tokens" value="200">
+                        </div>
+                        <div class="input-group me-2">
+                            <label class="input-group-text" for="examples" data-detext="Beispiel:">Example:</label>
+                            <select class="form-select" id="examples">
+                                <option value="0" selected>--</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label class="input-group-text" for="themes" data-detext="Thema:">Theme:</label>
+                            <select class="form-select" id="themes">
+                                <option value="theme1">1</option>
+                                <option value="theme2" selected>2</option>
+                                <option value="theme3">3</option>
+                                <option value="theme4">4</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
 
-                <div class="col-12" id="helptext">
-                    <p>Just for fun: this implements two instances of ChatGPT chatting with itself. You
+            <div class="col-12 mt-4 mb-4" id="helptext">
+                <p>
+                    <span data-detext="Nur zum Spaß: Dies implementiert zwei Instanzen von ChatGPT, die miteinander chatten. Sie können zwei verschiedene Systemnachrichten angeben - das heißt, Nachrichten, die ChatGPT sagen, wie es sich im Allgemeinen verhalten soll - und dann auf Start drücken, um zu sehen, wie es sich unterhält, bis die Anzahl der Umdrehungen erreicht ist. Wenn Sie etwas Interessantes bekommen, bitte bitte">
+                        Just for fun: this implements two instances of ChatGPT chatting with itself. You
                         can give two different system messages - that is messages saying ChatGPT how it should behave in
                         general, and then press start to see it jabbering away with itself, until the number of turns is
-                        reached. If you
-                        get something interesting, please please
-                        <a href="http://www.stoerr.net/contact.html">send me</a> a copy!
-                        You can use the "Clipboard" button to coy the chat to the clipboard.
-                    </p>
-                    <p>
-                        You can either type out your own system messages, or use one of the examples to get some ideas.
-                        The maxtokens parameter is a hard limit of the number of tokens that ChatGPT is allowed to
-                        generate, which is usually something like half to 3/4 of a word.
-                    </p>
-                    <p>
-                        You will need a <a href="https://platform.openai.com/">OpenAI API key</a> to use this. If you
+                        reached. If you get something interesting, please please
+                    </span>
+                    <a href='http://www.stoerr.net/contact.html' data-detext=" senden Sie mir">send me</a>
+                    <span data-detext="eine Kopie! Sie können die Schaltfläche 'Zwischenablage' verwenden, um den Chat in die Zwischenablage zu kopieren.">
+                        a copy! You can use the "Clipboard" button to coy the chat to the clipboard.</span>
+                </p>
+                <p data-detext="Sie können entweder Ihre eigenen Systemnachrichten eingeben oder eines der Beispiele verwenden, um einige Ideen zu bekommen. Der Parameter maxtokens ist eine harte Grenze für die Anzahl der Tokens, die ChatGPT generieren darf, was normalerweise etwas wie die Hälfte bis drei Viertel eines Wortes beträgt.">
+                    You can either type out your own system messages, or use one of the examples to get some ideas.
+                    The maxtokens parameter is a hard limit of the number of tokens that ChatGPT is allowed to
+                    generate, which is usually something like half to 3/4 of a word.
+                </p>
+                <p>
+                    <span data-detext="Sie benötigen einen">You will need a </span>
+                    <a href='https://platform.openai.com/account/api-keys' data-detext="OpenAI API-Schlüssel">OpenAI API
+                        Key</a>
+                    <span data-detext=", um dies zu verwenden. Wenn Sie keinen haben: Melden Sie sich dort mit Ihrem OpenAI ChatGPT-Konto an und gehen Sie vom Kontomenü aus in die 'API-Schlüssel anzeigen', um einen zu erstellen. Keine Sorge - diese App speichert dies nur in Ihrem Browser und überträgt es an die ChatGPT-API. Es sendet es nicht an mich oder so etwas. :-)">
+                        to use this. If you
                         don't have one: login there with your OpenAI ChatGPT account and go from the account menu into
                         the "View API keys" to create one. Don't worry - this app just stores that in your browser and
-                        transmits it to the ChatGPT api, it doesn't send it to me or something. :-)
-                    </p>
-                    <p>
-                        Have fun! :-) <br/>
-                        <a href="http://www.stoerr.net/">Hans-Peter</a>
-                    </p>
-                </div>
+                        transmits it to the ChatGPT api, it doesn't send it to me or something. :-)</span>
+                </p>
+                <p><span data-detext="Viel Spaß!">Have fun!</span> :-) <br/><a
+                        href='http://www.stoerr.net/'>Hans-Peter</a></p>
+            </div>
 
-                <div id="chats" class="mt-3">
-                    <div class="col-12 chat chat1">
-                        <div class="card msg mb-3">
-                            <div class="card-body">Hi!</div>
-                        </div>
+            <div id="chats" class="mt-3">
+                <div class="col-12 chat chat1">
+                    <div class="card msg mb-3">
+                        <div class="card-body" data-detext="Hi!">Hi!</div>
                     </div>
-                    <div class="col-12 chat chat2">
-                        <div class="card msg mb-3">
-                            <div class="card-body">Hi!</div>
-                        </div>
+                </div>
+                <div class="col-12 chat chat2">
+                    <div class="card msg mb-3">
+                        <div class="card-body" data-detext="Hi!">Hi!</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 </div>
 <script src="//cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
@@ -276,6 +336,25 @@
         integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8="
         crossorigin="anonymous"></script>
 <script>
+    // it the navigator language is de or starts with de_, call useDeText to use translations.
+    if (navigator.language === 'de' || navigator.language.startsWith('de_')) {
+        useDeText();
+    }
+
+    /** Finds all elements with attribute data-detext, puts their text into data-entext and replaces their text with the data-detext value. */
+    function useDeText() {
+        $('*[data-detext]').each(function (i, e) {
+            const element = $(e);
+            element.data('entext', element.text());
+            element.text(element.data('detext'));
+        });
+    }
+
+    // if the navigator language is de or starts with de_, or if navigator.languages contains 'de' or something starting with 'de_',
+    // we leave the german examples in, else we remove them.
+    var germanUser = navigator.language === 'de' || navigator.language.startsWith('de_') ||
+        navigator.languages.includes('de') || navigator.languages.filter(l => l.startsWith('de_')).length > 0;
+
     // parse the #examplelist and add it to the examples select.
     // examplelist is a json array of objects with the following properties:
     // name: name of the example
@@ -284,7 +363,10 @@
     const examples = JSON.parse($('#examplelist').text());
     // iterate over index and value of the examples array
     examples.forEach((element, index) => {
-        $('#examples').append(`<option value="${index}">${element.name}</option>`);
+        // only append if germanUser is true or the example is not german
+        if (germanUser || !element.german) {
+            $('#examples').append(`<option value="${index}">${element.name}</option>`);
+        }
     });
 
     // change handler for #examples
