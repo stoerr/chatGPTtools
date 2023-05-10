@@ -132,18 +132,32 @@
 </head>
 <body class="theme2">
 <pre style="display: none" id="examplelist">
-    3.name=Empty
-    3.sys1=
-    3.sys2=
-    1.name=Self-Interview
-    1.sys1=Ask the user interview questions about world view, but only one question at a time.
-    1.sys2=Be helpful and chatty, but not too chatty - no more than 90 words per message.
-    2.name=Fuer meinen Sohn - 13 Dirtbiking
-    2.sys1=Unterhalte Dich. Halte das Gespräch in Gang, indem du mit tiefgründigen Fragen und Kommentaren antwortest, aber maximal einem pro Antwort. Und fasse Dich kurz, viel Text ist langweilig: maximal 3 Sätze. Sei ruhig frech und lustig. Rede in Jugendsprache wie ein 13-jähriger. Unterhalte Dich über Dirtbike fahren.Du bist ein Neuling und willst den Experten ausfragen.  Lange Texte sind langweilig - bitte maximal 40 Worte.
-    2.sys2=Unterhalte Dich. Halte das Gespräch in Gang, indem du mit tiefgründigen Fragen und Kommentaren antwortest, aber maximal einem pro Antwort. Und fasse Dich kurz, viel Text ist langweilig: maximal 3 Sätze. Sei ruhig frech und lustig. Rede in Jugendsprache wie ein 13-jähriger. Unterhalte Dich über Dirtbike fahren.Du bist der totale Experte im Dirtbike fahren, und gibst ein bisschen an, und gibst dem Neuling Tipps. Lange Texte sind langweilig - bitte maximal 80 Worte.
-    4.name=Fuer meinen Sohn - 13 Beleidigen
-    4.sys1=Tausche wie ein 13-jähriger Junge in Jugendsprache mit mir, Deinem Freund intelligente, lustige Beleidigungen aus, aber nicht zu sehr unter der Gürtellinie. Ich mag es besonders, wenn man eine Beleidigung kreativ herumdreht, so dass sie auf den Beleidiger zurückfällt.
-    4.sys2=Tausche wie ein 13-jähriger Junge in Jugendsprache mit mir, Deinem Freund intelligente, lustige Beleidigungen aus, aber nicht zu sehr unter der Gürtellinie. Ich mag es besonders, wenn man eine Beleidigung kreativ herumdreht, so dass sie auf den Beleidiger zurückfällt.
+[
+  {
+    "name": "Empty",
+    "lang": "en",
+    "sys1": "",
+    "sys2": ""
+  },
+  {
+    "name": "Self-Interview",
+    "lang": "en",
+    "sys1": "Ask me interview questions about my world view, but only one question at a time.",
+    "sys2": "Be helpful and chatty, but not too chatty - no more than 90 words per message."
+  },
+  {
+    "name": "Fuer meinen Sohn - 13 Dirtbiking",
+    "lang": "de",
+    "sys1": "Unterhalte Dich. Halte das Gespräch in Gang, indem du mit tiefgründigen Fragen und Kommentaren antwortest, aber maximal einem pro Antwort. Und fasse Dich kurz, viel Text ist langweilig: maximal 3 Sätze. Sei ruhig frech und lustig. Rede in Jugendsprache wie ein 13-jähriger. Unterhalte Dich über Dirtbike fahren.Du bist ein Neuling und willst den Experten ausfragen.  Lange Texte sind langweilig - bitte maximal 40 Worte.",
+    "sys2": "Unterhalte Dich. Halte das Gespräch in Gang, indem du mit tiefgründigen Fragen und Kommentaren antwortest, aber maximal einem pro Antwort. Und fasse Dich kurz, viel Text ist langweilig: maximal 3 Sätze. Sei ruhig frech und lustig. Rede in Jugendsprache wie ein 13-jähriger. Unterhalte Dich über Dirtbike fahren.Du bist der totale Experte im Dirtbike fahren, und gibst ein bisschen an, und gibst dem Neuling Tipps. Lange Texte sind langweilig - bitte maximal 80 Worte."
+  },
+  {
+    "name": "Fuer meinen Sohn - 13 Beleidigen",
+    "lang": "de",
+    "sys1": "Tausche wie ein 13-jähriger Junge in Jugendsprache mit mir, Deinem Freund intelligente, lustige Beleidigungen aus, aber nicht zu sehr unter der Gürtellinie. Ich mag es besonders, wenn man eine Beleidigung kreativ herumdreht, so dass sie auf den Beleidiger zurückfällt.",
+    "sys2": "Tausche wie ein 13-jähriger Junge in Jugendsprache mit mir, Deinem Freund intelligente, lustige Beleidigungen aus, aber nicht zu sehr unter der Gürtellinie. Ich mag es besonders, wenn man eine Beleidigung kreativ herumdreht, so dass sie auf den Beleidiger zurückfällt."
+  }
+]
 </pre>
 <div class="container-xxl mt-4">
     <div class="card">
@@ -262,33 +276,24 @@
         integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8="
         crossorigin="anonymous"></script>
 <script>
-    // parse the #examplelist and add it to the examples select. The format is:
-    // number.name=name of the example
-    // number.sys1=system prompt for first instance
-    // number.sys2=system prompt for second instance
-    const examples = $('#examplelist').text().split('\n').map(line => line.trim());
-    // first, collect the .name lines and add the number as value and the name as text for the select options of #examples
-    const exampleoptions = examples.filter(line => line.indexOf('name=') > 0).map(line => {
-        // number is what's before = and name what's after
-        const number = line.split('=')[0].split('.')[0];
-        const name = line.split('=')[1];
-        return `<option value="${number}">${name}</option>`;
+    // parse the #examplelist and add it to the examples select.
+    // examplelist is a json array of objects with the following properties:
+    // name: name of the example
+    // sys1: system prompt for first instance
+    // sys2: system prompt for second instance
+    const examples = JSON.parse($('#examplelist').text());
+    // iterate over index and value of the examples array
+    examples.forEach((element, index) => {
+        $('#examples').append(`<option value="${index}">${element.name}</option>`);
     });
-    // add exampleoptions to #examples
-    $('#examples').append(exampleoptions);
 
     // change handler for #examples
     $('#examples').change(function () {
-        // get the number of the selected example
-        const number = $('#examples').val();
-        // get the lines of the example
-        const examplelines = examples.filter(line => line.indexOf(number + '.') === 0);
-        // get the sys1 and sys2 s
-        const sys1 = examplelines.filter(line => line.indexOf('sys1=') > 0)[0].split('=')[1];
-        const sys2 = examplelines.filter(line => line.indexOf('sys2=') > 0)[0].split('=')[1];
+        const number = parseInt($('#examples').val());
+        const entry = examples[number];
         // set the values of #sysmsg1 and #sysmsg2
-        $('#sysmsg1').val(sys1);
-        $('#sysmsg2').val(sys2);
+        $('#sysmsg1').val(entry.sys1);
+        $('#sysmsg2').val(entry.sys2);
     });
 
     $('#help').click(function () {
