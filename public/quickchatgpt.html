@@ -27,6 +27,9 @@
                     <button type="button" class="btn btn-primary" onclick="resetForm()">Clear</button>
                     <button type="button" class="btn btn-primary" onclick="window.history.back();">Back</button>
                     <button type="button" class="btn btn-primary" onclick="window.history.forward();">Forward</button>
+                    <span style="width: 1em; display: inline-block;"></span>
+                    <button type="button" class="btn btn-primary" onclick="displayAsMarkdown()">Markdown</button>
+                    <button type="button" class="btn btn-primary" onclick="displayAsPreformatted()">Raw text</button>
                 </div>
             </div>
             <br>
@@ -132,6 +135,8 @@
             html = html.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1">$1</a>');
             if (html) {
                 $answers.append("<div class='answer'>" + html + "</div>");
+                $answers.data("rawanswer", text);
+                $answers.data("htmlanswer", html);
             }
         }
         // use pushstate to add a history entry with the question and answers
@@ -141,11 +146,25 @@
         }, '', window.location.href);
     }
 
+    function displayAsMarkdown() {
+        if ($answers.data("rawanswer")) {
+            $answers.append("<pre>" + $answers.data("rawanswer") + "</pre>");
+        }
+    }
+
+    function displayAsPreformatted() {
+        if ($answers.data("rawanswer")) {
+            $answers.html("<pre>" + $answers.data("rawanswer") + "</pre>");
+        }
+    }
+
     // restore question and answers from history state when browser back or forward is pressed
     window.onpopstate = function (event) {
         if (event.state) {
             $question.val(event.state.question);
             $answers.html(event.state.answers);
+            $answers.data("rawanswer");
+            $answers.data("htmlanswer");
         }
     };
 

@@ -79,7 +79,7 @@
         openDialog: async function () {
             this.showDialog();
             try {
-                this.answerfield.innerText = 'Thinking...';
+                this.answerfield.innerText = 'Contacting ChatGPT...';
                 const summary = await this.getSummary();
                 this.answerfield.innerText = summary;
             } catch (e) {
