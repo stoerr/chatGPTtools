@@ -5,7 +5,7 @@
         dialog: null,
         helptext: 'Usage:<br>When you open the dialog, a request to summarize the text of the whole page is automatically sent to ChatGPT. You can also ask your own questions by typing the question into the Ask a question field and submit that to get an answer. If "include page content" is selected, the page text is added. If text was selected before calling this bookmarklet, we take the selected text instead. If the text is more than 2000 words, we replace the middle of the text by ... to avoid hitting ChatGPT limits. You can also copy the answer to the clipboard.',
 
-        init: async function (basePath, apikey) {
+        init: async function (basePath, apikey, callbackWhenHTMLLoaded) {
             this.basePath = basePath;
             this.apikey = apikey;
 
@@ -14,7 +14,7 @@
             this.clipped = false;
 
             await this.loadCSS();
-            await this.loadHTML();
+            await this.loadHTML(callbackWhenHTMLLoaded);
 
             document.getElementById('hpsChatGPTCloseTop').addEventListener('click', this.hideDialog.bind(this));
             document.getElementById('hpsChatGPTCloseBottom').addEventListener('click', this.hideDialog.bind(this));
@@ -42,7 +42,7 @@
             });
         },
 
-        loadHTML: async function () {
+        loadHTML: async function (callbackWhenHTMLLoaded) {
             const response = await fetch(this.basePath + '/ChatGPTBookmarklet.html');
 
             if (response.ok) {
@@ -56,6 +56,9 @@
                 }
                 // set the focus on the textarea
                 document.getElementById('hpsChatGPTQuestion').focus();
+                if (callbackWhenHTMLLoaded) {
+                    callbackWhenHTMLLoaded.bind(hpsChatGPTBookmarklet)();
+                }
             } else {
                 console.error('Failed to load ChatGPTBookmarklet HTML fragment');
             }
