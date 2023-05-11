@@ -7,3 +7,16 @@ scroll the answer if too long (didn't work, no idea why.)
 grab text from previous element with focus
 thinking spinner
 insert into previous element with focus
+
+
+Bugs:
+
+https://www.faz.net/aktuell/wirtschaft/chatgpt-in-italien-wieder-online-was-die-sperrung-gebracht-hat-18860877.html
+Error: Error: Problem fetching data from ChatGPT API: 400 {
+"error": {
+"message": "This model's maximum context length is 4097 tokens. However, your messages resulted in 4148 tokens. Please reduce the length of the messages.",
+"type": "invalid_request_error",
+"param": "messages",
+"code": "context_length_exceeded"
+}
+}
