@@ -118,9 +118,9 @@
             // if thetext contains more than 2000 words, we remove the middle so that it's now 2000 words
             // this is to avoid hitting the API limit of 2048 tokens
             const whitespaceregex = /\s+/gm;
-            if (thetext.split(whitespaceregex).length > 2000) {
+            if (thetext.split(whitespaceregex).length > 1800) {
                 const words = thetext.trim().split(whitespaceregex);
-                thetext = words.slice(0, 1000).join(" ") + "\n...\n" + words.slice(words.length - 1000).join(" ");
+                thetext = words.slice(0, 900).join(" ") + "\n...\n" + words.slice(words.length - 900).join(" ");
                 this.clipped = true;
                 if (document.getElementById('clipped')) {
                     document.getElementById('clipped').classList.remove('hidden');
@@ -149,7 +149,7 @@
         },
 
         getSummary: async function () {
-            const content = this.getIncludedText() + "\n\nInstructions: please summarize this text in the language the text was written, while focusing on new information:";
+            const content = this.getIncludedText() + "\n\nTL;DR:";
             const messages = [{role: 'user', content: content}];
             const summary = await this.sendChatGPTRequest(messages);
             return summary;
