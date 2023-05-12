@@ -79,7 +79,7 @@
         openDialog: async function () {
             this.showDialog();
             try {
-                this.answerfield.innerText = 'Contacting ChatGPT...';
+                this.answerfield.innerText = 'Contacting ChatGPT for summary...';
                 const summary = await this.getSummary();
                 this.answerfield.innerText = summary;
             } catch (e) {
@@ -149,14 +149,17 @@
         },
 
         getSummary: async function () {
-            const content = this.getIncludedText() + "\n\nTL;DR:";
+            const content = "Language X is the language the following text is written in.\n" +
+                "Please create a summary of this text in language X. Focus on new or surprising information. Very important: use language X for your answer!\n" +
+                "The text starts now:\n" +
+                "\n" + this.getIncludedText();
             const messages = [{role: 'user', content: content}];
             const summary = await this.sendChatGPTRequest(messages);
             return summary;
         },
 
         getAnswer: async function (question, includePageContent) {
-            const content = includePageContent ? this.getIncludedText() + "\n\nPlease answer the following question with regard to the previous text, in the language the question is asked: " + question : question;
+            const content = includePageContent ? this.getIncludedText() + "\n\nPlease answer the following question with regard to the previous text using the language the question is asked:\n" + question : question;
             const messages = [{role: 'user', content: content}];
             const answer = await this.sendChatGPTRequest(messages);
             return answer;
