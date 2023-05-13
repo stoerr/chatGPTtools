@@ -2,8 +2,6 @@
 
 ## Toolbox
 
-- fix a file: takes a Java file as input have ChatGPT generate a Unix patch format patch according to a prompt. Perhaps 
-  maven errors as addition to the prompt.
 - for too long java code: script that removes method bodies but keeps method signatures and Javadoc.
 - study java code: have ChatGPT guess paths of superclasses and interfaces (caution for deep hierarchies), collect 
   code (perhaps shorten it with previous script) and answer questions according to that. Or answer questions 
@@ -14,13 +12,8 @@
 
 
 ## Ergaenzungen von quickchatgpt.html
-- Alte Antworten als Tabs hinzufügen
 - Prompt-Teile per select oder checkbox
-- Lese URL ein / noch ein Input-Field für Dokument einfügen
-- Spracheingabe mit ChatGPT Service
-- Miniatur-Bewusstsein : er soll seinen Bewusstseinsinhalt separat zusammenfassen.
 - Kann er irgend etwas steuern? Man kann ihm ein Kommando "gib mir Fragment soundso vom Inhalt der Webseite" zur Verfügung stellen. Kann er dann einen Plan entwickeln, die Webseite zusammenzufassen? Kann er eine Website erkunden / zusammenfassen, indem er Links folgt?
-- intelligenter 3-way merge.
 - Prompts für korrekte Dotty-Graphen entwickeln, und Bookmarklet zum Rendern und Instruktionen zum fixen von 
   Syntaxfehlern.
 
