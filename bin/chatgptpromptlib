@@ -72,7 +72,7 @@ case "$1" in
   for key in "$@"; do
     promptfile="$PROMPTLIB/$key.prompt.txt"
     if [[ -f "$promptfile" ]]; then
-      prompt_text="$(sed -e '1,2d' "$promptfile")"
+      prompt_text="$(sed -e '1,2d' "$promptfile" | awk 'BEGIN{RS=ORS="\n\n"} NF{print $0}')"
       for replacement in "${replacements[@]}"; do
         variable="${replacement%%=*}"
         value="${replacement#*=}"

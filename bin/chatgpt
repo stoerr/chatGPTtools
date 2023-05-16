@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 const fs = require('fs');
 const path = require('path');
+const execSync = require('child_process').execSync;
+const spawnSync = require('child_process').spawnSync;
 
 const helpMessage = `
 chatgpt - Submit a prompt to ChatGPT conversation and print the response to stdout. The prompt can be given on the command line or read from stdin.
@@ -12,12 +14,14 @@ Options:
   -f filename     Reads prompt from a file, including a frame naming the filename. Can be given multiple times.
   -p prefix       Prefix the prompt with a string. Use this or -pf, not both.
   -pf prefixfile  Prefix the prompt with the contents of a file
+  -pl key         Add a prompt from the ChatGPT prompt library using the given key (see script chatgptpromptlib)
   -s suffix       Suffix the prompt with a string. Use this or -sf, not both.
   -sf suffixfile  Suffix the prompt with the contents of a file
   -m modelname    Use a specific model (default: gpt-3.5-turbo)
   -t number       Set max tokens for response (default: no limit)
   -v              verbose output : print prompt to stderr and info about connection retries
-  --help          Show this help message
+  -w column       Word wrap the response to a specified column width using fmt.
+  -h, --help      Show this help message
 `;
 
 if (process.argv.length < 3 || process.argv.includes('--help')) {
@@ -41,6 +45,7 @@ let verbose = false;
 let prefix = '';
 let suffix = '';
 let files = [];
+let wordWrapColumn;
 
 for (let i = 2; i < process.argv.length; i++) {
     const arg = process.argv[i];
@@ -62,6 +67,16 @@ for (let i = 2; i < process.argv.length; i++) {
         } else if (arg === '-pf' && process.argv[i + 1]) {
             prefix = fs.readFileSync(process.argv[i + 1], 'utf8');
             i++;
+        } else if (arg === '-pl' && process.argv[i + 1]) {
+            const promptlibkey = process.argv[i + 1];
+            try {
+                const promptlibOutput = execSync(`chatgptpromptlib ${promptlibkey}`, {encoding: 'utf8'});
+                prompt += '\n' + promptlibOutput + '\n';
+            } catch (e) {
+                console.error('Error: Prompt library key not found: ' + promptlibkey);
+                process.exit(1);
+            }
+            i++;
         } else if (arg === '-s' && process.argv[i + 1]) {
             suffix = process.argv[i + 1];
             i++;
@@ -70,6 +85,9 @@ for (let i = 2; i < process.argv.length; i++) {
             i++;
         } else if (arg === '-f' && process.argv[i + 1]) {
             files.push(process.argv[i + 1]);
+            i++;
+        } else if (arg === '-w' && process.argv[i + 1]) {
+            wordWrapColumn = parseInt(process.argv[i + 1], 10);
             i++;
         } else if (!arg.startsWith('-')) {
             inOptions = false;
@@ -170,7 +188,16 @@ async function requestChatGPT(attempt = 1) {
             const finishReason = responseData.choices[0].finish_reason;
 
             if (finishReason === 'stop') {
-                console.log(assistantMessage.content);
+                let output = assistantMessage.content;
+                if (wordWrapColumn) {
+                    const fmt = spawnSync('fmt', ['-w', wordWrapColumn, '-p'], { input: output, encoding: 'utf8' });
+                    if (fmt.error) {
+                        console.error(`Error: fmt command failed with error ${fmt.error.message}`);
+                        process.exit(1);
+                    }
+                    output = fmt.stdout;
+                }
+                console.log(output);
             } else {
                 console.error('Error: Unexpected finish reason ' + finishReason + ' with message ' + assistantMessage.content);
                 process.exit(1);
