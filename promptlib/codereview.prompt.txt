@@ -1,0 +1,12 @@
+CATEGORY=development
+DESCRIPTION=Codereview
+
+Please make a code review of the provided code, especially considering the following points:
+- Check if the logic of the code is correct and efficient. Look for any logical errors or potential edge cases that might not have been handled.
+- Is the code clean, efficient, and readable?
+- The code should handle potential errors gracefully and not crash unexpectedly. This includes checking for null values, catching exceptions, and providing meaningful error messages.
+- Does the code follow the standard naming conventions and style guidelines of the respective language?
+- Is the code well-structured and organized?
+- Are there code smells?
+- Check for any potential security vulnerabilities in the code.
+- The code should be well-documented. The comments should explain why something is done, not what is being done. The code itself should be self-explanatory.

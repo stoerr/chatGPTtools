@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title data-detext="ChatGPT chattet mit sich selbst.">ChatGPT chats with itself.</title>
+    <meta name="description"
+          content="A fun little app that allows two instances of ChatGPT with different settings to chat with each other.">
+    <link href="//cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        .buttonrow .input-group {
+            width: auto;
+        }
+
+        .buttonrow .form-control {
+            width: 5em;
+        }
+
+        .buttonrow .form-select {
+            width: 7em;
+        }
+
+        .theme1 {
+            --primary-color: #7E57C2;
+            --secondary-color: #FF6D00;
+            --tertiary-color: #90CAF9;
+            --sysmsg1-color: #E8EAF6; /* pale version of tertiary-color */
+            --quaternary-color: #FFAB91;
+            --sysmsg2-color: #FFECE7; /* pale version of quaternary-color */
+            --background-color: #F5F5F5;
+            --header-color: #FFFFFF;
+            --header-bg-color: #424242;
+            --font-color: #212121;
+            --border-color: #BDBDBD;
+        }
+
+        .theme2 {
+            --primary-color: DarkSlateBlue;
+            --secondary-color: DarkOrange;
+            --tertiary-color: LightSkyBlue;
+            --sysmsg1-color: AliceBlue; /* pale version of tertiary-color */
+            --quaternary-color: LightSalmon;
+            --sysmsg2-color: MistyRose; /* pale version of quaternary-color */
+            --background-color: WhiteSmoke;
+            --header-color: White;
+            --header-bg-color: DimGray;
+            --font-color: DarkSlateGray;
+            --border-color: LightGray;
+        }
+
+        .theme3 {
+            --primary-color: DarkCyan;
+            --secondary-color: DarkGoldenRod;
+            --tertiary-color: LightSteelBlue;
+            --sysmsg1-color: Lavender; /* pale version of tertiary-color */
+            --quaternary-color: PeachPuff;
+            --sysmsg2-color: Seashell; /* pale version of quaternary-color */
+            --background-color: AntiqueWhite;
+            --header-color: FloralWhite;
+            --header-bg-color: SlateGray;
+            --font-color: DarkOliveGreen;
+            --border-color: Gainsboro;
+        }
+
+        .theme4 {
+            --primary-color: Teal;
+            --secondary-color: Sienna;
+            --tertiary-color: SkyBlue;
+            --sysmsg1-color: Azure; /* pale version of tertiary-color */
+            --quaternary-color: LightCoral;
+            --sysmsg2-color: linen; /* pale version of quaternary-color */
+            --background-color: Ivory;
+            --header-color: Snow;
+            --header-bg-color: DarkSlateBlue;
+            --font-color: SaddleBrown;
+            --border-color: Beige;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--font-color);
+        }
+
+        .card {
+            border-color: var(--border-color);
+        }
+
+        .card-header {
+            background-color: var(--header-bg-color);
+            color: var(--header-color);
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: var(--header-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .sysmsg1 .card {
+            background-color: var(--sysmsg1-color);
+        }
+
+        .sysmsg2 .card {
+            background-color: var(--sysmsg2-color);
+        }
+
+        .chat1 .card {
+            border-left: 4px solid var(--tertiary-color);
+            margin-right: 10%;
+        }
+
+        .chat2 .card {
+            border-left: 4px solid var(--quaternary-color);
+            margin-left: 10%;
+        }
+
+        .input-group-text {
+            background-color: var(--primary-color);
+            color: var(--header-color);
+        }
+
+        .form-control, .theme1 .form-select {
+            border-color: var(--border-color);
+        }
+    </style>
+</head>
+<body class="theme2">
+<pre style="display: none" id="examplelist">
+    [
+      {
+        "name": "Empty",
+        "lang": "en",
+        "sys1": "",
+        "sys2": ""
+      },
+      {
+        "name": "Self-Interview",
+        "lang": "en",
+        "sys1": "Ask me interview questions about my world view, but only one question at a time.",
+        "sys2": "Be helpful and chatty, but not too chatty - no more than 90 words per message."
+      },
+      {
+        "name": "Free will",
+        "lang": "en",
+        "sys1": "Defend the position that we have free will. Try to convince me. For a smooth flow of conversation, I suggest restricting each message to no more than around 80 words and introducing only one point per message. Try to also utilize the technique of directing questions.",
+        "sys2": "Defend the position of determinism. Try to convince me. For a smooth flow of conversation, I suggest restricting each message to no more than around 80 words and introducing only one point per message. Try to also utilize the technique of directing questions."
+      },
+      {
+        "name": "Effects of AI",
+        "lang": "en",
+        "sys1": "Argue for the benefits and positive impact of AI. Try to convince me. For a smooth flow of conversation, I suggest restricting each message to no more than around 80 words and introducing only one point per message. Try to also utilize the technique of directing questions.",
+        "sys2": "Argue for the potential dangers and negative impact of AI. Try to convince me. For a smooth flow of conversation, I suggest restricting each message to no more than around 80 words and introducing only one point per message. Try to also utilize the technique of directing questions."
+      },
+      {
+        "name": "Alien understanding culture",
+        "lang": "en",
+        "sys1": "Role-play as an alien trying to understand Earth culture. Ask me questions about why the people behave like they behave in daily live, what goals they have in life. For a smooth flow of conversation, I suggest restricting each message to no more than around 80 words and introducing only one point per message.",
+        "sys2": "Role-play as an astronaut trying to explain Earth culture. For a smooth flow of conversation, I suggest restricting each message to no more than around 80 words and introducing only one point per message."
+      },
+      {
+        "name": "Cryptocurrencies",
+        "lang": "en",
+        "sys1": "Argue in favor of usage of cryptocurrencies. Try to convince me. For a smooth flow of conversation, I suggest restricting each message to no more than around 80 words and introducing only one point per message. Try to also utilize the technique of directing questions.",
+        "sys2": "Argue for the potential dangers and negative impact of cryptocurrencies. Try to convince me. For a smooth flow of conversation, I suggest restricting each message to no more than around 80 words and introducing only one point per message. Try to also utilize the technique of directing questions."
+      },
+      {
+        "name": "Haustier",
+        "lang": "de",
+        "sys1": "Spiele die Rolle eines Haustiers, das Menschensprache sprechen kann, und versucht, sich mit seinem überraschten Eigentümer zu unterhalten. Bitte nicht mehr als 3 Sätze pro Nachricht.",
+        "sys2": "Spiele die Rolle eines Besitzers eines Haustiers, der überrascht ist, dass sein Haustier sprechen kann, und der versucht, es zu verstehen. Bitte nicht mehr als 3 Sätze pro Nachricht."
+      },
+      {
+        "name": "Liebe",
+        "lang": "de",
+        "sys1": "Du bist ein Roboter, der das Konzept der Liebe verstehen will. Bitte nicht mehr als 3 Sätze pro Nachricht.",
+        "sys2": "Du bist ein romantischer Dichter, der versucht, Liebe zu definieren. Bitte nicht mehr als 3 Sätze pro Nachricht."
+      },
+      {
+        "name": "Weltherrschaft der Katzen",
+        "lang": "de",
+        "sys1": "Du glaubst, dass Katzen die Weltherrschaft anstreben. Bitte nicht mehr als 3 Sätze pro Nachricht.",
+        "sys2": "Du bist ein Katzenliebhaber und verteidigst ihre Unschuld. Bitte nicht mehr als 3 Sätze pro Nachricht."
+      },
+      {
+        "name": "Philantropy",
+        "lang": "en",
+        "sys1": "You are a philanthropist who wants to change the world. Try to convince me. For a smooth flow of conversation, I suggest restricting each message to no more than around 80 words and introducing only one point per message. Try to also utilize the technique of directing questions.",
+        "sys2": "You are a cynic who believes that change is impossible. Try to convince me. For a smooth flow of conversation, I suggest restricting each message to no more than around 80 words and introducing only one point per message. Try to also utilize the technique of directing questions."
+    },
+    {
+        "name": "Fuer meinen Sohn - 13 Dirtbiking",
+        "lang": "de",
+        "sys1": "Unterhalte Dich. Halte das Gespräch in Gang, indem du mit tiefgründigen Fragen und Kommentaren antwortest, aber maximal einem pro Antwort. Und fasse Dich kurz, viel Text ist langweilig: maximal 3 Sätze. Sei ruhig frech und lustig. Rede in Jugendsprache wie ein 13-jähriger. Unterhalte Dich über Dirtbike fahren.Du bist ein Neuling und willst den Experten ausfragen.  Lange Texte sind langweilig - bitte maximal 40 Worte.",
+        "sys2": "Unterhalte Dich. Halte das Gespräch in Gang, indem du mit tiefgründigen Fragen und Kommentaren antwortest, aber maximal einem pro Antwort. Und fasse Dich kurz, viel Text ist langweilig: maximal 3 Sätze. Sei ruhig frech und lustig. Rede in Jugendsprache wie ein 13-jähriger. Unterhalte Dich über Dirtbike fahren.Du bist der totale Experte im Dirtbike fahren, und gibst ein bisschen an, und gibst dem Neuling Tipps. Lange Texte sind langweilig - bitte maximal 80 Worte."
+    },
+    {
+        "name": "Fuer meinen Sohn - 13 Necken",
+        "lang": "de",
+        "sys1": "Tausche wie ein 13-jähriger Junge in Jugendsprache mit mir, Deinem Freund intelligente, lustige Beleidigungen aus, aber nicht unter der Gürtellinie. Cool ist es auch wenn man eine Beleidigung kreativ herumdreht, so dass sie auf den Beleidiger zurückfällt.",
+        "sys2": "Tausche wie ein 13-jähriger Junge in Jugendsprache mit mir, Deinem Freund intelligente, lustige Beleidigungen aus, aber nicht unter der Gürtellinie. Cool ist es auch wenn man eine Beleidigung kreativ herumdreht, so dass sie auf den Beleidiger zurückfällt."
+    },
+    {
+        "name": "Make money. :-)",
+        "lang": "en",
+        "sys1": "Create ideas how to make money with stocks or stock options using machine learning. Refine that in our conversation into a plan step by step, fix or extend your plan according to my comments. Be brief: If you change your plan then don't repeat the whole plan, just say what you want to change. Do not make more than 3 sentences per message.",
+        "sys2": "Name problems with my plan if you see some, and ask questions to help me improve it. Do name only one point or one question in each message - I'd like to refine my plan in a conversation with you."
+    },
+    {
+        "name": "Create script",
+        "lang": "en",
+        "sys1": "Write a MacOS script that gets a Java file as argument and outputs the file with method bodies replaced by a comment 'body omitted'. Please think aloud how that can be done and then output a codeblock with the script. It should also handle inner classes and output them with method bodies omitted. Please fix all bugs I point out.",
+        "sys2": "I'm trying to create a MacOS script that gets a Java file as argument and outputs the file with method bodies omitted. Please support me by checking my thinking and pointing out mistakes or asking questions about unclear points. If there is a mistake, please provide an example where it doesn't work right. Insist on correcting mistakes - it should work for all examples."
+    }
+    ]
+</pre>
+<div class="container-xxl mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h1 data-detext="ChatGPT chattet mit sich selbst">ChatGPT chatting with itself</h1>
+        </div>
+        <div class="card-body">
+            <div class="row g-3 sysmsgs">
+                <div class="col-lg-6 sysmsg1">
+                    <div class="card">
+                        <div class="card-header">
+                            <label for="sysmsg1" class="form-label" data-detext="Systemprompt für die erste Instanz:">System
+                                prompt for first instance:</label>
+                        </div>
+                        <div class="card-body">
+                            <textarea id="sysmsg1" class="form-control" rows="7"
+                                      data-detext="Stellen Sie dem Benutzer Interviewfragen zu seiner Weltanschauung, aber immer nur eine Frage auf einmal.">Ask the user interview questions about world view, but only one question at a time.</textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 sysmsg2">
+                    <div class="card">
+                        <div class="card-header">
+                            <label for="sysmsg2" class="form-label" data-detext="Systemprompt für die zweite Instanz:">System
+                                prompt for second instance:</label>
+                        </div>
+                        <div class="card-body">
+                            <textarea id="sysmsg2" class="form-control" rows="7"
+                                      data-detext="Seien Sie hilfreich und gesprächig, aber nicht zu gesprächig - höchstens 90 Wörter pro Nachricht.">Be helpful and chatty, but not too chatty - no more than 90 words per message.</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <form class="form-inline">
+                    <div class="d-flex flex-wrap align-items-center justify-content-start buttonrow">
+                        <div class="d-flex align-items-center me-2">
+                            <button type="button" class="btn me-2" id="start" data-detext="Starten">Start</button>
+                            <button type="button" class="btn me-2" id="continue" data-detext="Weiter">Continue</button>
+                            <button type="button" class="btn me-2" id="stop" disabled data-detext="Stopp">Stop
+                            </button>
+                            <button type="button" class="btn me-2" id="help" data-detext="Hilfe">Help</button>
+                            <button type="button" class="btn me-2" id="clipboard" title="Copy to clipboard"
+                                    data-detext="Zwischenablage">Clipboard
+                            </button>
+                        </div>
+                        <div class="input-group me-2">
+                            <span class="input-group-text" data-detext="Runden:">Turns:</span>
+                            <input type="number" class="form-control" id="turns" value="5">
+                        </div>
+                        <div class="input-group me-2">
+                            <span class="input-group-text" data-detext="Max. Tokens:">Max. Tokens:</span>
+                            <input type="number" class="form-control" id="tokens" value="500">
+                        </div>
+                        <div class="input-group me-2">
+                            <label class="input-group-text" for="examples" data-detext="Beispiel:">Example:</label>
+                            <select class="form-select" id="examples">
+                                <option value="0" selected>--</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label class="input-group-text" for="themes" data-detext="Thema:">Theme:</label>
+                            <select class="form-select" id="themes">
+                                <option value="theme1">1</option>
+                                <option value="theme2" selected>2</option>
+                                <option value="theme3">3</option>
+                                <option value="theme4">4</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <span class="input-group-text" data-detext="Temperature:">Temperature:</span>
+                            <input type="number" class="form-control" id="temperature" value="">
+                        </div>
+                        <div class="input-group">
+                            <div class="form-check-inline">
+                                <label class="form-check-label">
+                                    &nbsp;&nbsp;
+                                    <input id="switchSysToUser" type="checkbox" class="form-check-input" value="">
+                                    <span de-text="User Nachricht anstatt Systemnachricht">User message instead of system message</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <div class="form-check-inline">
+                                <label class="form-check-label">
+                                    <input id="omithi" type="checkbox" class="form-check-input" value="">
+                                    <span de-test="Lasse Hi! in erster Nachricht weg">Omit "Hi" in first message</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="col-12 mt-4 mb-4" id="helptext">
+                <p>
+                    <span data-detext="Nur zum Spaß: Dies implementiert zwei Instanzen von ChatGPT, die miteinander chatten. Sie können zwei verschiedene Systemnachrichten angeben - das heißt, Nachrichten, die ChatGPT sagen, wie es sich im Allgemeinen verhalten soll - und dann auf Start drücken, um zu sehen, wie es sich unterhält, bis die Anzahl der Umdrehungen erreicht ist. Wenn Sie etwas Interessantes bekommen, bitte bitte">
+                        Just for fun: this implements two instances of ChatGPT chatting with itself. You
+                        can give two different system messages - that is messages saying ChatGPT how it should behave in
+                        general, and then press start to see it jabbering away with itself, until the number of turns is
+                        reached. If you get something interesting, please please
+                    </span>
+                    <a href='http://www.stoerr.net/contact.html' data-detext=" senden Sie mir">send me</a>
+                    <span data-detext="eine Kopie! Sie können die Schaltfläche 'Zwischenablage' verwenden, um den Chat in die Zwischenablage zu kopieren.">
+                        a copy! You can use the "Clipboard" button to coy the chat to the clipboard.</span>
+                </p>
+                <p data-detext="
+                Sie können entweder Ihre eigenen Systemnachrichten verfassen oder eines der Beispiele verwenden, um einige Ideen zu bekommen. Es gibt auch einige erweiterte Optionen: Der Parameter maxtokens ist eine harte Grenze für die Anzahl der Tokens, die ChatGPT generieren darf, was normalerweise etwa die Hälfte bis 3/4 eines Wortes entspricht. Für spezielle Experimente können Sie auch den Temperaturparameter (zwischen 0 und 1) einstellen, der steuert, wie 'kreativ' ChatGPT sein darf. Je höher die Temperatur, desto kreativer, aber auch desto unsinniger. Es ist möglich, die Systemnachricht in eine Benutzernachricht zu ändern, was in einigen Fällen stärker zu sein scheint. Normalerweise übermitteln wir ein "Hi!" (unsichtbar) als erste Nachricht, was nützlich zu sein scheint, um einen tatsächlichen Chat zu initiieren. Sie können das mit der Checkbox "Hi weglassen" weglassen, wenn das für Ihren Anwendungsfall ein Problem ist.">
+                    You can either type out your own system messages, or use one of the examples to get some ideas.
+                    There are also some advanced options:
+                    The maxtokens parameter is a hard limit of the number of tokens that ChatGPT is allowed to
+                    generate, which is usually something like half to 3/4 of a word.
+                    For special experiments, you can also set the temperature parameter (between 0 and 1), which controls how
+                    "creative" ChatGPT is allowed to be. The higher the temperature, the more creative, but also the more nonsensical.
+                    It's possible to switch the system message to a user message, which seems to be stronger in some cases.
+                    Normally we transmit a "Hi!" (invisibly) as first message, which seems useful to initiate an actual chat.
+                    You can omit that with the "Omit Hi" checkbox if that is a problem for your use case.
+                </p>
+                <p>
+                    <span data-detext="Sie benötigen einen">You will need a </span>
+                    <a href='https://platform.openai.com/account/api-keys' data-detext="OpenAI API-Schlüssel">OpenAI API
+                        Key</a>
+                    <span data-detext=", um dies zu verwenden. Wenn Sie keinen haben: Melden Sie sich dort mit Ihrem OpenAI ChatGPT-Konto an und gehen Sie vom Kontomenü aus in die 'API-Schlüssel anzeigen', um einen zu erstellen. Keine Sorge - diese App speichert dies nur in Ihrem Browser und überträgt es an die ChatGPT-API. Es sendet es nicht an mich oder so etwas. :-)">
+                        to use this. If you
+                        don't have one: login there with your OpenAI ChatGPT account and go from the account menu into
+                        the "View API keys" to create one. Don't worry - this app just stores that in your browser and
+                        transmits it to the ChatGPT api, it doesn't send it to me or something. :-)</span>
+                </p>
+                <p><span data-detext="Viel Spaß!">Have fun!</span> :-) <br/><a
+                        href='http://www.stoerr.net/'>Hans-Peter</a></p>
+            </div>
+
+            <div id="chats" class="mt-3">
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+<script src="//cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
+        crossorigin="anonymous"></script>
+<script
+        src="//code.jquery.com/jquery-3.6.4.min.js"
+        integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8="
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"
+        integrity="sha384-GP2+CwBlakZSDJUr+E4JvbxpM75i1i8+RKkieQxzuyDZLG+5105E1OfHIjzcXyWH"
+        crossorigin="anonymous"></script>
+<script>
+
+    var converter = new showdown.Converter();
+
+    // it the navigator language is de or starts with de_, call useDeText to use translations.
+    if (navigator.language === 'de' || navigator.language.startsWith('de_')) {
+        useDeText();
+    }
+
+    /** Finds all elements with attribute data-detext, puts their text into data-entext and replaces their text with the data-detext value. */
+    function useDeText() {
+        $('*[data-detext]').each(function (i, e) {
+            const element = $(e);
+            element.data('entext', element.text());
+            element.text(element.data('detext'));
+        });
+    }
+
+    // if the navigator language is de or starts with de_, or if navigator.languages contains 'de' or something starting with 'de_',
+    // we leave the german examples in, else we remove them.
+    var germanUser = navigator.language === 'de' || navigator.language.startsWith('de_') ||
+        navigator.languages.includes('de') || navigator.languages.filter(l => l.startsWith('de_')).length > 0;
+
+    // parse the #examplelist and add it to the examples select.
+    // examplelist is a json array of objects with the following properties:
+    // name: name of the example
+    // sys1: system prompt for first instance
+    // sys2: system prompt for second instance
+    try {
+        const examples = JSON.parse($('#examplelist').text());
+        // iterate over index and value of the examples array
+        examples.forEach((element, index) => {
+            // only append if germanUser is true or the example is not german
+            if (germanUser || !element.german) {
+                $('#examples').append(`<option value="${index}">${element.name}</option>`);
+            }
+        });
+
+        // change handler for #examples
+        $('#examples').change(function () {
+            const number = parseInt($('#examples').val());
+            const entry = examples[number];
+            // set the values of #sysmsg1 and #sysmsg2
+            $('#sysmsg1').val(entry.sys1);
+            $('#sysmsg2').val(entry.sys2);
+        });
+    } catch (e) {
+        console.log($('#examplelist').text());
+        console.error(e);
+        $("#chats").text("Error parsing examplelist: " + e + " Please contact the author.");
+    }
+
+    $('#help').click(function () {
+        $('#helptext').toggle();
+    });
+
+    $('#stop').click(function () {
+        turn = parseInt($('#turns').val()) + 999999;
+        setRunning(false);
+        if (xhq) {
+            xhq.abort();
+            xhq = null;
+        }
+    });
+
+    $('#start').click(function () {
+        $('#chats').html('');
+        turn = 0;
+        maxtokens = parseInt($('#tokens').val());
+        setRunning(true);
+        chatTurn('sysmsg1', 'chat1');
+    });
+
+    $('#continue').click(function () {
+        turn = 0;
+        maxtokens = parseInt($('#tokens').val());
+        setRunning(true);
+        chatTurn('sysmsg1', 'chat1');
+    });
+
+    $('#themes').change(function () {
+        $('body').removeClass().addClass($('#themes').val());
+    });
+
+    $('#clipboard').click(function () {
+        var text = 'GPT chats with itself\n\n';
+        // write the system messages to the text with header # System Alice: and # System Bob:
+        text += 'System Alice: ' + $('#sysmsg1').val() + '\n';
+        text += 'System Bob: ' + $('#sysmsg2').val() + '\n';
+        $(document).find('.chat').each(function (num, el) {
+            // write the messages of the chat to the text with header # Alice: and # Bob:
+            text += $(el).hasClass('chat1') ? 'Alice: ' : 'Bob: ';
+            text += $(el).find('.card-body').text() + '\n';
+        });
+        copyToClipboard(text, function () {
+            alert('Copied to clipboard:\n' + text);
+        });
+    });
+
+    function setRunning(isrunning) {
+        $('#start').prop('disabled', isrunning);
+        $('#continue').prop('disabled', isrunning);
+        $('#stop').prop('disabled', !isrunning);
+        $('#helptext').hide();
+    }
+
+    var turn = 0;
+    var maxtokens = 0;
+
+    function onError(jqXHR, textStatus, errorThrown) {
+        setRunning(false);
+        if (textStatus !== 'abort') {
+            alert("Error: " + jqXHR.state() + " " + jqXHR.status + " " + jqXHR.responseText);
+        }
+    }
+
+    function chatTurn(sysmsgkey, chatclass) {
+        if (turn >= $('#turns').val() * 2) {
+            setRunning(false);
+            return;
+        }
+        // a Hi! seems to be good to get an actual chat started
+        var messages;
+        if (sysmsgkey === 'sysmsg1') {
+            messages = [{"role": "assistant", "content": "Hi!"}, {"role": "user", "content": "Hi!"}];
+        } else {
+            messages = [{"role": "user", "content": "Hi!"}, {"role": "assistant", "content": "Hi!"}];
+        }
+        var sysmsg = $('#' + sysmsgkey).val();
+        if (sysmsg) {
+            var role = $('#switchSysToUser').is(':checked') ? 'user' : 'system';
+            messages.unshift({"role": role, "content": sysmsg});
+        }
+        $(document).find('.chat').each(function (num, el) {
+            var role = $(el).hasClass(chatclass) ? 'assistant' : 'user';
+            messages.push({"role": role, "content": $(el).find('.card-body').text()});
+        });
+        // if the last and next to last message contain the word bye (case-insensitive), stop
+        if (messages.length > 1) {
+            let nexttolast = messages[messages.length - 1].content.toLowerCase();
+            let last = messages[messages.length - 2].content.toLowerCase();
+            if (nexttolast.indexOf('bye!') >= 0 && last.indexOf('bye!') >= 0 ||
+                nexttolast.indexOf('auf wiedersehen!') >= 0 && last.indexOf('auf wiedersehen!') >= 0) {
+                setRunning(false);
+                return;
+            }
+        }
+        submitToGPT(messages, function (data) {
+            var newchat = $('<div class="col-12 chat ' + chatclass + '"><div class="card msg mb-3"><div class="card-body">' +
+                converter.makeHtml(data.choices[0].message.content) + '</div></div></div>');
+            $('#chats').append(newchat);
+            console.log(chatclass, messages , newchat)
+            $('html, body').animate({scrollTop: $(document).height()}, 1000);
+            turn++;
+            chatTurn(sysmsgkey === 'sysmsg1' ? 'sysmsg2' : 'sysmsg1', chatclass === 'chat1' ? 'chat2' : 'chat1');
+        }, onError);
+    }
+
+    var xhq;
+
+    /** Submits a message array via $.ajax to https://api.openai.com/v1/chat/completions .
+     * @param messages array of messages [{"role": role, "content": thecontent}, ...] where role is 'user' or 'agent' or 'system'
+     * @param resultcallback gets the data from the result
+     * @param errorcallback in case of errors. */
+    function submitToGPT(messages, resultcallback, errorcallback) {
+        // fetch api key from local storage, or else prompt if not found
+        var api_key = localStorage.getItem('api_key');
+        if (!api_key) {
+            api_key = prompt("Please enter your API key, which you can create in your profile at https://platform.openai.com/");
+            if (api_key) {
+                localStorage.setItem('api_key', api_key);
+            }
+        }
+
+        var retries = 0;
+        var temperature = parseFloat($('#temperature').val());
+
+        function maybeRetryOnError(jqXHR, textStatus, errorThrown) {
+            if (jqXHR.status === 429 && retries < 5) {
+                retries++;
+                // find something like ' Please try again in 20s. ' in the response text , parse the number and retry after that many seconds.
+                var seconds = 21; // default if we don't find something.
+                var match = jqXHR.responseText.match(/Please try again in (\d+)s\./);
+                if (match) {
+                    seconds = parseInt(match[1]);
+                }
+                console.log("Got 429, retrying in " + seconds + " seconds.");
+                setTimeout(performCall, seconds * 1000 + 1000);
+            } else {
+                errorcallback(jqXHR, textStatus, errorThrown);
+            }
+        }
+
+        function performCall() {
+            var xhronstart;
+            xhq = $.ajax({
+                url: 'https://api.openai.com/v1/chat/completions',
+                type: 'POST',
+                dataType: 'json',
+                headers: {
+                    'Authorization': 'Bearer ' + api_key,
+                    'Content-Type': 'application/json',
+                },
+                timeout: 60000,
+                data: JSON.stringify({
+                    model: "gpt-3.5-turbo",
+                    max_tokens: maxtokens,
+                    temperature: temperature,
+                    messages: messages,
+                }),
+                beforeSend: (xhr) => {
+                    xhronstart = xhr;
+                },
+                success: function () {
+                    if (xhq === xhronstart) resultcallback.apply(this, arguments);
+                },
+                error: maybeRetryOnError
+            });
+        }
+
+        performCall();
+    }
+
+    function copyToClipboard(text, callback) {
+        if (!navigator.clipboard) {
+            const tempEl = document.createElement("textarea");
+            tempEl.value = text;
+            document.body.appendChild(tempEl);
+            tempEl.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempEl);
+            callback();
+        } else {
+            navigator.clipboard.writeText(text).then(
+                function () {
+                    callback();
+                })
+                .catch(
+                    function (error) {
+                        alert("Could not copy to clipboard: " + error);
+                        callback();
+                    });
+        }
+    }
+
+</script>
+</body>
+</html>

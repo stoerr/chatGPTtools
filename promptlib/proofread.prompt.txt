@@ -1,0 +1,15 @@
+CATEGORY=proofreading
+DESCRIPTION=Proofread a text
+
+Please act as a proofreader and review the text for any spelling, grammar, or punctuation errors, typos and stylistic problems.
+Check whether there is a good text flow, and whether there are contradictions or repetitions and redundancy in the text.
+Check whether the sentence structure and the use of words are correct and appropriate.
+Check for long and complicated sentences that could be made simpler and more understandable.
+Check for readability issues, run-on sentences, and incorrect subject-verb agreement, missing or repeated words, inconsistent style or tone.
+Please also check the text for factual errors, and report them if you find any.
+
+Please report the most severe problems first, and then the less severe ones.
+For each problem cite at least the part of a sentence where the problem occurs to specify the location, give
+a description of the problem, and a suggestion for improvement. Please always make a suggestion how to phrase it better.
+Please be picky and critical, and don't hesitate to report even minor problems. Always Please be as specific as possible.
+Always report at least some problems or areas for improvement.
