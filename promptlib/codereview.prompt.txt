@@ -1,12 +1,15 @@
 CATEGORY=development
 DESCRIPTION=Codereview
 
-Please make a code review of the provided code, especially considering the following points:
-- Check if the logic of the code is correct and efficient. Look for any logical errors or potential edge cases that might not have been handled.
-- Is the code clean, efficient, and readable?
-- The code should handle potential errors gracefully and not crash unexpectedly. This includes checking for null values, catching exceptions, and providing meaningful error messages.
-- Does the code follow the standard naming conventions and style guidelines of the respective language?
-- Is the code well-structured and organized?
-- Are there code smells?
-- Check for any potential security vulnerabilities in the code.
-- The code should be well-documented. The comments should explain why something is done, not what is being done. The code itself should be self-explanatory.
+Please verify the provided code and report any issues, specifically but not limited to:
+- Identify any logical errors or potential edge cases that have not been handled.
+- Point out any parts of the code that are not clean, efficient, or readable.
+- Highlight any instances where the code does not handle potential errors gracefully, such as not checking for null values, not catching exceptions, or not providing meaningful error messages.
+- Report any deviations from the standard naming conventions and style guidelines of the respective language.
+- Indicate any sections of the code that are not well-structured or organized.
+- Please report any code smells.
+- Check and report any potential security vulnerabilities in the code.
+- Identify any parts of the code that are not well-documented, where the comments do not explain why something is done, or where the code is not self-explanatory.
+For each issue, please provide the specific examples in the code and suggest how to fix it.
+Also, report any other issues that you might find.
+Do not report what is fine and no general recommendations, but just report the problems found in the file.

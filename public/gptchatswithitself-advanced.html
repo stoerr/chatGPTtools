@@ -516,8 +516,10 @@
             }
         }
         submitToGPT(messages, function (data) {
+            const content = data.choices[0].message.content;
             var newchat = $('<div class="col-12 chat ' + chatclass + '"><div class="card msg mb-3"><div class="card-body">' +
-                converter.makeHtml(data.choices[0].message.content) + '</div></div></div>');
+                converter.makeHtml(content) + '</div></div></div>');
+            newchat.find('.msg').attr('markdown', content);
             $('#chats').append(newchat);
             console.log(chatclass, messages , newchat)
             $('html, body').animate({scrollTop: $(document).height()}, 1000);
@@ -612,6 +614,28 @@
                     });
         }
     }
+
+    function editMessageListener(event) {
+        var el = $(event.target);
+        var msg = el.closest('.msg');
+        var text = msg.attr('markdown');
+        var textarea = $('<textarea class="form-control">' + text + '</textarea>');
+        msg.find('.card-body').replaceWith(textarea);
+        textarea.focus();
+        textarea.on('blur', function () {
+            var newtext = textarea.val();
+            if (newtext) {
+                var newbody = $('<div class="card-body">' + newtext + '</div>');
+                textarea.replaceWith(newbody);
+                msg.find('.card-body').html(converter.makeHtml(newtext));
+                msg.attr('markdown', newtext);
+            } else {
+                msg.remove();
+            }
+        });
+    }
+
+    $("#chats").on('click', '.msg', editMessageListener);
 
 </script>
 </body>
