@@ -149,8 +149,7 @@
         },
 
         getSummary: async function () {
-            const content = "Language X is the language the following text is written in.\n" +
-                "Please create a summary of this text in language X. Focus on new or surprising information. Very important: use language X for your answer!\n" +
+            const content = "Please determine the language the following text is written in and create a summary of this text in that language. Do not output the language or explations, just your summary. Focus on new or surprising information.\n" +
                 "The text starts now:\n" +
                 "\n" + this.getIncludedText();
             const messages = [{role: 'user', content: content}];
