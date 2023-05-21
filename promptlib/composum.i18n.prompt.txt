@@ -1,0 +1,9 @@
+CATEGORY=development, composum
+DESCRIPTION=Proper 18n handling in JSPs
+
+Wrap title attributes into the function cpn:i18n, for example instead of `title="Close"`
+use `title="${cpn:i18n(slingRequest,'Close')}"` . Put those title attributes on their own line for code readability.
+Apply such a wrapping to existing titles, if they are present.
+
+Wrap texts that are not internationalized with function cpn:i18n or the tag cpn:text in a cpn:text like this:
+`Cancel` should become `<cpn:text i18n="true">Cancel</cpn:text>`.
