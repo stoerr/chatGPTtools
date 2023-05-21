@@ -22,9 +22,12 @@ Options:
   -v              verbose output : print prompt to stderr and info about connection retries
   -w column       Word wrap the response to a specified column width using fmt.
   -h, --help      Show this help message
+  
+If the prompt contains a construct like promptlib:key , the chatgptpromptlib command will be called with that key
+and this will be replaced with the prompt library entry.
 `;
 
-if (process.argv.length < 3 || process.argv.includes('--help')) {
+if (process.argv.length < 3) {
     console.log(helpMessage);
     process.exit(0);
 }
@@ -51,7 +54,10 @@ for (let i = 2; i < process.argv.length; i++) {
     const arg = process.argv[i];
 
     if (inOptions) {
-        if (arg === '-m' && process.argv[i + 1]) {
+        if (arg === '--help' || arg === '-h') {
+            console.log(helpMessage);
+            process.exit(0);
+        } else if (arg === '-m' && process.argv[i + 1]) {
             model = process.argv[i + 1];
             i++;
         } else if (arg === '-t' && process.argv[i + 1]) {
@@ -102,6 +108,17 @@ if (readStdin) {
     const stdinPrompt = fs.readFileSync(0, 'utf-8');
     prompt = stdinPrompt.trim() + '\n\n' + prompt;
 }
+
+// look for promptlib:key constructs in the prompt and replace them with the prompt library entry
+const promptlibRegex = /promptlib:([a-zA-Z0-9_.-]+)/g;
+prompt = prompt.replace(promptlibRegex, function (match, key) {
+    try {
+        return execSync(`chatgptpromptlib ${key}`, {encoding: 'utf8'});
+    } catch (e) {
+        console.error('Error: Prompt library key not found: ' + key);
+        process.exit(1);
+    }
+});
 
 if (files.length > 0) {
     prompt = "=== INSTRUCTIONS === \n\nYour task is:\n" + prompt;
