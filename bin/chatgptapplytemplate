@@ -9,8 +9,8 @@ if [ "$#" -ne 2 ] || [ ! -f "$2" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; th
   exit 0
 fi
 
-templateName=$1
-fileName=$2
+templateName="$1"
+fileName="$2"
 
 # if fileName ends with .pdf, we need to convert it to text
 if [[ "$fileName" == *.pdf ]]; then

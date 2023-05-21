@@ -85,6 +85,17 @@ The second line can provide a description, e.g., DESCRIPTION=a description of th
 These lines are not included in the output.
 
 
+# findfilewithpattern
+
+findfilewithpattern - searches for files with IntelliJ style pattern.
+
+Usage: findfilewithpattern [pattern]
+
+Options:
+  --help          Show this help message and exit
+
+
+
 # chatgpt
 
 chatgpt - Submit a prompt to ChatGPT conversation and print the response to stdout. The prompt can be given on the command line or read from stdin.
@@ -94,15 +105,19 @@ Usage: chatgpt [options] [prompt]
 Options:
   -               Reads prompt from stdin, instead of as an argument
   -f filename     Reads prompt from a file, including a frame naming the filename. Can be given multiple times.
-  -fp filepattern Searches in the current directory and subdirectories for files matching this pattern - it's an error if there are several. Otherwise like -f.
   -p prefix       Prefix the prompt with a string. Use this or -pf, not both.
   -pf prefixfile  Prefix the prompt with the contents of a file
+  -pl key         Add a prompt from the ChatGPT prompt library using the given key (see script chatgptpromptlib)
   -s suffix       Suffix the prompt with a string. Use this or -sf, not both.
   -sf suffixfile  Suffix the prompt with the contents of a file
   -m modelname    Use a specific model (default: gpt-3.5-turbo)
   -t number       Set max tokens for response (default: no limit)
   -v              verbose output : print prompt to stderr and info about connection retries
-  --help          Show this help message
+  -w column       Word wrap the response to a specified column width using fmt.
+  -h, --help      Show this help message
+  
+If the prompt contains a construct like promptlib:key , the chatgptpromptlib command will be called with that key
+and this will be replaced with the prompt library entry.
 
 
 

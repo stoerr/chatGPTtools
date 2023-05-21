@@ -25,3 +25,4 @@ Article containers: article, body
 Exclude nav, aside, ?header, ?foot
 ?? List of element types
 Use ChatGPT webapp
+edit summary command

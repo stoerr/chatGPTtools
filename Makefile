@@ -6,10 +6,10 @@ bin/_usages.txt: bin/*
 	cd bin; ./_makeusagetxt
 
 personal/*.html: personal/*.properties
-	cd personal; ./make.groovy
+	cd personal; groovy make.groovy
 
 README.md: bin/_usages.txt
 	project-bin/_makescriptlist
 
 templates/*.json: templates/*.template.txt
-	cd templates; ./makeTemplates.groovy
+	cd templates; groovy makeTemplates.groovy
