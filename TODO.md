@@ -15,8 +15,9 @@ If -f is given, chatgpt additionally gets the option -f with that additionalfile
 - automatic translation of my webpages
 
 https://discord.com/channels/974519864045756446/1047565374645870743/1102540385726767104 changing files
+https://community.openai.com/t/how-to-generate-automatically-applicable-file-diffs-with-chatgpt/227822?u=hpstoerr
+https://www.promptingguide.ai/techniques/react
 
-- GPT talking to himself, with different system messages. :-)
 - bookmarklets to render dotty graphs and HTML from chat output
 
 ### chatgpt possible additional options
