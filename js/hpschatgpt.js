@@ -62,7 +62,7 @@ function submitToGPT(messages, resultcallback, errorcallback, additionalProperti
                         if (match) {
                             retryAfter = parseInt(match[1]);
                         }
-                        console.log(`Got error ${response.status}, retrying after ${retryAfter} seconds`);
+                        console.error(`Got error ${response.status}, retrying after ${retryAfter} seconds`);
                         await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
                     } else {
                         errorcb(response);

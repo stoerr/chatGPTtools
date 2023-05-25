@@ -10,6 +10,11 @@
 - Extract CSS for element, subelements and parents. https://stackoverflow.
   com/questions/9196451/how-to-export-all-relevant-html-css-for-one-element https://stackoverflow.com/questions/8407550/how-to-get-and-extract-matched-css-rules-on-dom-node
 
+Things for IntelliJ:
+Explain code (selection), Generate Comment, Performance Check, Security Check, Style Check, Improve Readability, 
+Clean Code, (Generate Unit test)
+Work on a selection in a file.
+
 
 ## Ergaenzungen von quickchatgpt.html
 - Prompt-Teile per select oder checkbox

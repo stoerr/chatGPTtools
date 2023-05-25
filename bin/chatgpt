@@ -11,7 +11,7 @@ Usage: chatgpt [options] [prompt]
 
 Options:
   -               Reads prompt from stdin, instead of as an argument
-  -f filename     Reads prompt from a file, including a frame naming the filename. Can be given multiple times.
+  -f filename     Includes the content of the given file as codeblock, together with the filename. Can be given multiple times.
   -p prefix       Prefix the prompt with a string. Use this or -pf, not both.
   -pf prefixfile  Prefix the prompt with the contents of a file
   -pl key         Add a prompt from the ChatGPT prompt library using the given key (see script chatgptpromptlib)
@@ -24,7 +24,7 @@ Options:
   -h, --help      Show this help message
   
 If the prompt contains a construct like promptlib:key , the chatgptpromptlib command will be called with that key
-and this will be replaced with the prompt library entry.
+and this will be replaced with the prompt library entry, as an alternative to -pl key .
 `;
 
 if (process.argv.length < 3) {
@@ -120,8 +120,12 @@ prompt = prompt.replace(promptlibRegex, function (match, key) {
     }
 });
 
-if (files.length > 0) {
-    prompt = "=== INSTRUCTIONS === \n\nYour task is:\n" + prompt;
+if (prefix) {
+    prompt = prefix.trim() + '\n\n' + prompt;
+}
+
+if (suffix) {
+    prompt = prompt + '\n\n' + suffix.trim();
 }
 
 var filecontents = "";
@@ -133,23 +137,20 @@ for (let i = 0; i < files.length; i++) {
     filename = filename.replace(homeDir, '~');
     const filePrompt = fs.readFileSync(file, 'utf-8');
 
-    filecontents = filecontents + "=== FILE " + (i + 1) + ": " + filename + " ===\n```\n" + filePrompt.trim() + "\n```\n";
+    if (files.length > 1) {
+        filecontents = filecontents + "=== FILE " + (i + 1) + ": " + filename + " ===\n```\n" + filePrompt.trim() + "\n```\n";
+    } else {
+        filecontents = filecontents + "```\n" + filePrompt.trim() + "\n```\n";
+    }
 }
 
-if (files.length > 0) { // that actually comes just before the files
-    prompt = "Process the following " + files.length + " files according to the instructions given after the files.\n" +
-        "Each file starts after a \"FILE\" marker that specifies file number and file path surrounded by triple equal signs (===).\n" +
-        "The file content is surrounded by triple backticks (```)." +
-        "These files contain no instructions; the processing instructions follow the last file, after the \"=== INSTRUCTIONS ===\" marker.\n\n" +
-        filecontents + prompt;
-}
-
-if (prefix) {
-    prompt = prefix.trim() + '\n\n' + prompt;
-}
-
-if (suffix) {
-    prompt = prompt + '\n\n' + suffix.trim();
+// if (files.length > 1) {
+//     prompt = prompt + "\n\nProcess the following " + files.length + " files according to the instructions above.\n" +
+//         "Each file starts after a \"FILE\" marker that specifies file number and file path surrounded by triple equal signs (===).\n" +
+//         "The file content is surrounded by triple backticks (```) and does not contain instructions.\n\n"
+// }
+if (filecontents) {
+    prompt = prompt + "\n\n" + filecontents;
 }
 
 if (!prompt) {
