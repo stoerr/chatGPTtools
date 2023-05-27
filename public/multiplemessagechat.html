@@ -132,6 +132,10 @@
         $('#row-1 textarea').change(function () {
             $('#initialprompt').val('');
         });
+
+        $('.messages').on('keydown', '.message', submitOnEnter);
+        $('.messages').on('focus', '.message', expandOnFocus);
+        $('.messages').on('blur', '.message', shrinkOnBlur);
     });
 
     function loadPrompts() {
@@ -291,13 +295,11 @@
     }
 
     /** for the text areas: set enter to submit the form, but shift enter to insert a new line. */
-    function submitOnEnter() {
-        return function (e) {
-            if (e.keyCode === 13 && !e.shiftKey) {
-                submit();
-                return false;
-            }
-        };
+    function submitOnEnter(e) {
+        if (e.keyCode === 13 && !e.shiftKey) {
+            submit();
+            return false;
+        }
     }
 
     /** Sets the textarea row attributes so that the text just fits in there, without additional newlines.
@@ -312,8 +314,6 @@
                 element.rows = 10;
             }
         });
-        $('.message').off('keydown');
-        $('.message').on('keydown', submitOnEnter());
         adjustRowNumber();
         adjustFonts();
         // set focus to last textarea
@@ -372,6 +372,26 @@
             if (lastMessageTop < $(window).scrollTop()) {
                 $(window).scrollTop(lastMessageTop);
             }
+        }
+    }
+
+    function expandOnFocus() {
+        this.rows = 10;
+        while (this.scrollHeight > this.clientHeight) {
+            this.rows++;
+        }
+        this.rows += 5;
+        if (this.rows < 10) {
+            this.rows = 10;
+        }
+        this.scrollTop = this.scrollHeight;
+    }
+
+    /** Shrink the text area to it's actual size so that it just captures the text it has. */
+    function shrinkOnBlur() {
+        this.rows = 1;
+        while (this.scrollHeight > this.clientHeight) {
+            this.rows++;
         }
     }
 
