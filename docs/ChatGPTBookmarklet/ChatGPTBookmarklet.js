@@ -149,9 +149,9 @@
         },
 
         getSummary: async function () {
-            const content = "Please determine the language the following text is written in and create a summary of this text in that language. Do not output the language or explations, just your summary. Focus on new or surprising information.\n" +
-                "The text starts now:\n" +
-                "\n" + this.getIncludedText();
+            const content = "```\n" + this.getIncludedText() + "\n``\n" +
+                "=== Instructions ===\n" +
+                "Please create a summary of this text in the language the text is written in.";
             const messages = [{role: 'user', content: content}];
             const summary = await this.sendChatGPTRequest(messages);
             return summary;
