@@ -19,6 +19,7 @@ var input = fs.readFileSync(inputFile, 'utf-8');
 
 const placeholder = "FILECONTENT";
 const filenamePlaceholder = "FILENAME";
+inputFile = inputFile.replace(".pdf.txt", ".pdf");
 
 // replace placeholder in message with input
 for (const message of messages) {

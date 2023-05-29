@@ -291,6 +291,7 @@
                 messages.push({"role": type, "content": message});
             }
         });
+        adjustTextAreas();
         submitToGPT(messages, processResult, onError);
     }
 
