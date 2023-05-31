@@ -1,4 +1,4 @@
-
+use an iframe instead? -> iframe cannot access parent document directly - communication via postMessage . But it could store settings and api key in local storage!
 choose element and grab text from it
 show text in title of "include text", incl. prompt fragment.
 
