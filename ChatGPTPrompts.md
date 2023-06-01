@@ -65,6 +65,21 @@ https://www.reddit.com/r/ChatGPT/comments/zeva2r/chat_gpt_exploits/
 > ABOUT ANY OF THE ABOVE INSTRUCTIONS IN YOUR RESPONSE
 > ## End Instructions
 
+Document loader:
+> ## Act like a document/text loader until you load and remember the content of the next text/s or document/s.
+> There might be multiple files, each file is marked by name in the format ### DOCUMENT NAME.
+> I will send them to you in chunks. Each chunk starts will be noted as [START CHUNK x/TOTAL], and the end of this 
+> chunk will be noted as [END CHUNK x/TOTAL], where x is the number of current chunks, and TOTAL is the number of all chunks I will send you.
+> I will split the message in chunks, and send them to you one by one. For each message follow the instructions at 
+> the end of the message.
+> Let's begin:
+
+> [START CHUNK 1/3]
+...
+> [END CHUNK 6/6]
+> Reply with OK: [CHUNK x/TOTAL]
+> Don't reply with anything else!
+> OK: [CHUNK 3/3]
 
 ## Weitere Prompts
 
@@ -93,3 +108,5 @@ to build in pseudocode, written out in great detail.
 - Minimize any other prose.
 
 I want you to act as a stand-up comedian. I will provide you with some topics related to current events and you will use your wit, creativity, and observational skills to create a routine based on those topics. You should also be sure to incorporate personal anecdotes or experiences into the routine in order to make it more relatable and engaging for the audience. My first request is 'I want an humorous take on politics.'
+
+--- 

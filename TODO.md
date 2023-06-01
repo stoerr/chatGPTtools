@@ -19,6 +19,7 @@ https://community.openai.com/t/how-to-generate-automatically-applicable-file-dif
 https://www.promptingguide.ai/techniques/react
 
 - bookmarklets to render dotty graphs and HTML from chat output
+- better approximation of token count
 
 ### chatgpt possible additional options
 -c number Set the number of responses to generate (default: 1)
