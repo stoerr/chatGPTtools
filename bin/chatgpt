@@ -178,11 +178,13 @@ if (maxTokens) {
 
 async function requestChatGPT(attempt = 1) {
     try {
+        if (verbose) console.error("Requesting with messages ", JSON.stringify(requestData.messages));
         const response = await fetch(apiURL, {
             method: 'POST',
             headers,
             body: JSON.stringify(requestData),
         });
+        if (verbose) console.error("Response status: ", response.status);
 
         if (response.status === 429) {
             const retryMessage = await response.text();
@@ -195,11 +197,11 @@ async function requestChatGPT(attempt = 1) {
                 setTimeout(() => requestChatGPT(attempt + 1), waitTime * 1000);
             } else {
                 console.error('Error: Too many retries');
-                process.exit(3);
+                process.exit(4);
             }
         } else if (!response.ok) {
             console.error('Error: Request failed with status', response.status, 'and message', await response.statusText, 'and body', await response.text());
-            process.exit(3);
+            process.exit(5);
         } else {
             const responseData = await response.json();
             const assistantMessage = responseData.choices[0].message;
@@ -211,7 +213,7 @@ async function requestChatGPT(attempt = 1) {
                     const fmt = spawnSync('fmt', ['-w', wordWrapColumn, '-p'], { input: output, encoding: 'utf8' });
                     if (fmt.error) {
                         console.error(`Error: fmt command failed with error ${fmt.error.message}`);
-                        process.exit(1);
+                        process.exit(7);
                     }
                     output = fmt.stdout;
                 }
@@ -223,7 +225,7 @@ async function requestChatGPT(attempt = 1) {
         }
     } catch (error) {
         console.error('Error:', error.message);
-        process.exit(3);
+        process.exit(6);
     }
 }
 

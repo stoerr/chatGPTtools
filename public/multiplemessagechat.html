@@ -446,9 +446,9 @@
      * @param function errorCallback the error callback that is called once if all calls fail
      */
     function retrialStrategy(makeCall, isRetryable, successCallback, errorCallback) {
-        const maxTries = 4;
-        const maxInflightCalls = 3;
-        var timeNextStep = 10000; // for iterative doubling
+        const maxTries = 3; // well, now it costs money, so I'm effectively disabling premature retries.
+        const maxInflightCalls = 1;
+        var timeNextStep = 300000; // for iterative doubling
         var inflightCalls = []; // the results of makeCall which we could .abort() later
         var runningTimeout = null; // the timeout that will trigger the next step
         var done = false; // whether we have called either success or error callback
