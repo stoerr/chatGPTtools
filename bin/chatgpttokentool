@@ -1,0 +1,76 @@
+#!/usr/bin/env node
+
+const usage = `
+Usage: ${process.argv[1].split('/').slice(-1)[0]} [options] inputfile
+
+Options:
+  -h or --help  Show this help message and exit
+  -c            prints the token count for the input file
+  -e            prints the tokens for the input file separated by one space
+  -ev           prints the tokens for the input as token number, tab, token, newline
+  -d            the input file must be a whitespace separated token list; decodes that into the original text and prints it
+  -sm number    shortens the input file to at most the given number of tokens by cutting off the middle
+  -ss number    shortens the input file to at most the given number of tokens by cutting off the start
+  -se number    shortens the input file to at most the given number of tokens by cutting off the end
+
+Description:
+  This script uses tokenization according to ChatGPT-3.5 / ChatGPT-4 tokenization with cl100k_base .  
+  If the input file is given as - then the input is read from stdin.
+  If the input file is shortened, the removed part is replaced by ' ... ' . If there is no need for shortening, the input is printed as is.
+`;
+
+const fs = require('fs');
+const tokenToNumber = new Map();
+const tokens = [];
+
+processLines(callback);
+
+let input = '';
+process.stdin.on('data', function (chunk) {
+    input += chunk;
+});
+
+process.stdin.on('end', function () {
+    const tokens = tokenize(input);
+    console.log(tokens.length);
+});
+
+function processLines(callback) {
+    const fileContent = fs.readFileSync(__dirname + '/.cl100k_base.tiktoken', 'utf8');
+    const lines = fileContent.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+        if (lines[i] === '') continue;
+        callback(lines[i]);
+    }
+}
+
+function callback(line) {
+    const parts = line.split(' ');
+    const token = Buffer.from(parts[0], 'base64').toString('utf8');
+    const number = parts[1];
+    tokenToNumber.set(token, number);
+    tokens.push(token);
+}
+
+/** Extremely simple and embarssing inefficient implementation of tokenization, but that doesn't matter as ChatGPT is much much slower. */
+function tokenize(input) {
+    let result = [];
+    let pos = 0;
+    while (pos < input.length) {
+        let token = '';
+        for (let i = 1; i <= 128 && pos + i <= input.length; i++) {
+            let tokenCandidate = input.substring(pos, pos + i);
+            if (tokenToNumber.has(tokenCandidate)) {
+                token = tokenCandidate;
+            }
+        }
+        if (token === '') {
+            console.error('No token found for ', pos, input.substring(pos).length, input.substring(pos, pos + 128));
+            process.exit(1);
+        }
+        // console.log(token, tokenToNumber.get(token));
+        pos += token.length;
+        result.push(token);
+    }
+    return result;
+}

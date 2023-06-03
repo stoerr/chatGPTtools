@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 print_help() {
   echo "Usage: chatgptfixfile [options] [filepath] [prompt]"
@@ -48,7 +47,7 @@ shift $((OPTIND-1))
 # Parse non-option arguments
 filepath=$1
 # prompt is the rest of the arguments
-prompt="${@:2}"
+prompt="Your task is: ${@:2} End of task."
 
 prompt="$prompt
 $(chatgptpromptlib -d "mainfile=$filepath" fixSingleFile)"

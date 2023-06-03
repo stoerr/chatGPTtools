@@ -1,6 +1,9 @@
 CATEGORY=development
 DESCRIPTION=instructions to output changes to first file as a single codeblock
 
-Please give a high level description in flowing text what changes to the first given file (main file) $mainfile are needed to fulfill your task and why they are necessary - e.g. what classes, identifiers, functions you need to add or modify, but absolutely no blocks.
-Then output exactly one codeblock with the new contents of the whole file $mainfile surrounded by triple backticks, changed as described.
-Important: your response must only include exactly one codeblock, not more, not less, except if you feel there is an error in your task and it cannot be fulfilled!
+You are an expert Javascript programmer. Think aloud step by step how you would solve your task.
+If there are several ways to do the task, discuss them and choose the best one.
+Then give a high level description what changes to the first given file (main file) $mainfile are needed to
+fulfill your task and why they are necessary -
+e.g. what classes, identifiers, functions you need to add or modify, but do not output any code blocks.
+Finally, as the last part of your message, output "Complete unabbreviated modified file content:" and then exactly one code block with the whole new contents of the whole file $mainfile surrounded by triple backticks, with the changed as you described before that. Do not omit or abbreviate in the code block - the code block needs to contain the whole new content of the file, including the unchanged parts!
