@@ -41,7 +41,7 @@
                         await new Promise(resolve => setTimeout(resolve, (retryAfter + 1) * 1000));
                         retries++;
                     } else {
-                        throw new Error('API limit exceeded, but retry time not found.');
+                        throw new Error('API limit exceeded, but retry time not found in ' + retryAfterText);
                     }
                 } else {
                     break;
