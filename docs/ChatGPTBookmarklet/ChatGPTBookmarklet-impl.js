@@ -7,6 +7,9 @@
         init: async function () {
             if (!this.initialized) {
                 this.initialized = true;
+                // Detect user's preferred language
+                const userLang = navigator.language || navigator.userLanguage;
+                this.lang = userLang.startsWith('de') ? 'de' : 'en';
 
                 this.selectedText = this.getSelectedText();
                 this.pageContent = this.getPageContent();
@@ -114,19 +117,21 @@
         },
 
         getSummary: async function () {
-            const content = threebackticks + "\n" + this.getIncludedText().trim() + "\n" + threebackticks + "\n\n" +
-                "=== Instructions ===\n" +
-                "Create a summary of this text. Focus on new or surprising information.";
+            let instructions = this.lang === 'de' ?
+                "Erstelle eine Zusammenfassung des folgenden Texts auf Deutsch. Konzentriere dich auf neue oder überraschende Informationen.\n\n" :
+                "Create a summary of this text. Focus on new or surprising information.\n\n";
+            const content = instructions + this.threebackticks + "\n" + this.getIncludedText().trim() + "\n" + this.threebackticks;
             const messages = [{role: 'user', content: content}];
             const summary = await this.sendChatGPTRequest(messages);
             return summary;
         },
 
         getAnswer: async function (question, includePageContent) {
-            let textinclude = threebackticks + "\n" + this.getIncludedText().trim() + "\n" + threebackticks + "\n\n" +
-                "=== Instructions ===\n" +
-                "Please answer the following question with regard to the text above:\n";
-            const content = includePageContent ? textinclude + question : question;
+            let instructions = this.lang === 'de' ?
+                "\nBitte beantworte diese Frage in Bezug auf den folgenden Text auf Deutsch:\n" :
+                "\nPlease answer this question with regard to the following text:\n";
+            let textinclude = this.threebackticks + "\n" + this.getIncludedText().trim() + "\n" + this.threebackticks + "\n\n";
+            const content = includePageContent ? question + instructions + textinclude : question;
             const messages = [{role: 'user', content: content}];
             const answer = await this.sendChatGPTRequest(messages);
             return answer;
