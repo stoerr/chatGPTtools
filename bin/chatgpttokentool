@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
 const usage = `
-Usage: ${process.argv[1].split('/').slice(-1)[0]} [options] inputfile
+Usage: ${process.argv[1].split('/').slice(-1)[0]} [option] inputfile
 
 Options:
   -h or --help  Show this help message and exit
   -c            prints the token count for the input file
-  -e            prints the tokens for the input file separated by one space
+  -e            prints the token numbers for the input file separated by one space
   -ev           prints the tokens for the input as token number, tab, token, newline
   -d            the input file must be a whitespace separated token list; decodes that into the original text and prints it
   -sm number    shortens the input file to at most the given number of tokens by cutting off the middle
@@ -14,26 +14,18 @@ Options:
   -se number    shortens the input file to at most the given number of tokens by cutting off the end
 
 Description:
-  This script uses tokenization according to ChatGPT-3.5 / ChatGPT-4 tokenization with cl100k_base .  
+  There always has to be exactly one option given (possibly including a number) and the input file.
+  This script uses tokenization according to ChatGPT-3.5 / ChatGPT-4 tokenization with cl100k_base .
   If the input file is given as - then the input is read from stdin.
   If the input file is shortened, the removed part is replaced by ' ... ' . If there is no need for shortening, the input is printed as is.
 `;
 
 const fs = require('fs');
 const tokenToNumber = new Map();
+const numberToToken = new Map();
 const tokens = [];
 
 processLines(callback);
-
-let input = '';
-process.stdin.on('data', function (chunk) {
-    input += chunk;
-});
-
-process.stdin.on('end', function () {
-    const tokens = tokenize(input);
-    console.log(tokens.length);
-});
 
 function processLines(callback) {
     const fileContent = fs.readFileSync(__dirname + '/.cl100k_base.tiktoken', 'utf8');
@@ -47,9 +39,9 @@ function processLines(callback) {
 function callback(line) {
     const parts = line.split(' ');
     const token = Buffer.from(parts[0], 'base64').toString('utf8');
-    const number = parts[1];
+    const number = parseInt(parts[1], 10); // Ensure the number is stored as an integer
     tokenToNumber.set(token, number);
-    tokens.push(token);
+    numberToToken.set(number, token); // Store the token against the number
 }
 
 /** Extremely simple and embarssing inefficient implementation of tokenization, but that doesn't matter as ChatGPT is much much slower. */
@@ -74,3 +66,90 @@ function tokenize(input) {
     }
     return result;
 }
+
+function decode(tokenNums) {
+    const tokens = tokenNums.trim().split(/\s+/);
+    let result = '';
+    for (let i = 0; i < tokens.length; i++) {
+        const token = numberToToken.get(parseInt(tokens[i], 10));
+        if (!token) {
+            console.error('No token found for ', tokens[i]);
+            process.exit(1);
+        }
+        result += token;
+    }
+    return result;
+}
+
+function shorten(input, numTokens, mode) {
+    const tokenList = tokenize(input);
+    if (tokenList.length <= numTokens) {
+        return input;
+    }
+    let result = '';
+    switch (mode) {
+        case 'm': // Change the case options to match the ones passed ('m' for middle, 's' for start, 'e' for end)
+            const half = Math.floor(numTokens / 2);
+            result = [...tokenList.slice(0, half), '...', ...tokenList.slice(-half)].join('');
+            break;
+        case 's':
+            result = '...' + tokenList.slice(tokenList.length - numTokens).join('');
+            break;
+        case 'e':
+            result = tokenList.slice(0, numTokens).join('') + '...';
+            break;
+    }
+    return result;
+}
+
+function readInput(fileArg) {
+    return fileArg && fileArg !== '-' ? fs.readFileSync(fileArg, 'utf8') : fs.readFileSync(0, 'utf8');
+}
+
+// Main function that handles command-line options
+function main() {
+    const option = process.argv[2];
+
+    switch (option) {
+        case '-h':
+        case '--help':
+            console.log(usage);
+            break;
+        case '-c': {
+            const input = readInput(process.argv[3]);
+            console.log(tokenize(input).length);
+            break;
+        }
+        case '-e': {
+            const input = readInput(process.argv[3]);
+            console.log(tokenize(input).map(token => tokenToNumber.get(token)).join(' '));
+            break;
+        }
+        case '-ev': {
+            const input = readInput(process.argv[3]);
+            tokenize(input).forEach(token => {
+                console.log(`${tokenToNumber.get(token)}\t${token}`);
+            });
+            break;
+        }
+        case '-d': {
+            const tokenNums = readInput(process.argv[3]);
+            console.log(decode(tokenNums));
+            break;
+        }
+        case '-sm':
+        case '-ss':
+        case '-se': {
+            const numTokens = parseInt(process.argv[3], 10);
+            const mode = option.slice(-1);
+            const input = readInput(process.argv[4]);
+            console.log(shorten(input, numTokens, mode));
+            break;
+        }
+        default:
+            console.error('Unknown option:', option);
+            console.log(usage);
+    }
+}
+
+main();
