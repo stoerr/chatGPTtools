@@ -166,12 +166,6 @@
         }
     }
 
-    /** Adds a button with the given title, with an onclick resetAndSetSystemMessage to systemmessage */
-    function addButton(title, systemmessage) {
-        var button = $('<button type="button" class="btn btn-primary" onclick="reset(\'' + systemmessage + '\')">' + title + '</button>');
-        button.appendTo('.buttons');
-    }
-
     /** Adds a new row to the chat. The id row-1 is replaced by row, followed by the number of the row In the select 'type' the given type is preselected. */
     function addRow(type, message) {
         var row = $('#row-1').clone();
@@ -182,8 +176,8 @@
     }
 
     function addFields() {
-        addRow(assistant, '');
-        addRow(user, '');
+        addRow('assistant', '');
+        addRow('user', '');
     }
 
     function resetAndSetSystemMessage(message) {
@@ -306,6 +300,8 @@
     /** Sets the textarea row attributes so that the text just fits in there, without additional newlines.
      * For the last message, we leave rows at 10. */
     function adjustTextAreas() {
+        adjustRowNumber();
+        adjustFonts();
         $('.message').each(function (index, element) {
             element.rows = 1;
             while (element.scrollHeight > element.clientHeight) {
@@ -315,8 +311,6 @@
                 element.rows = 10;
             }
         });
-        adjustRowNumber();
-        adjustFonts();
         // set focus to last textarea
         $('.message').last().focus();
         scrollIfNecessary();
@@ -390,10 +384,13 @@
 
     /** Shrink the text area to it's actual size so that it just captures the text it has. */
     function shrinkOnBlur() {
-        this.rows = 1;
-        while (this.scrollHeight > this.clientHeight) {
-            this.rows++;
-        }
+        var that = this;
+        setTimeout(function() {
+            that.rows = 1;
+            while (that.scrollHeight > that.clientHeight) {
+                that.rows++;
+            }
+        }, 100);
     }
 
     function importJson() {
