@@ -21,9 +21,10 @@ Options:
   -t number       Set max tokens for response (default: no limit)
   -v              verbose output : print prompt to stderr and info about connection retries
   -w column       Word wrap the response to a specified column width using fmt.
+  -y systemmsg    Use the given string as system message
   -h, --help      Show this help message
   
-If the prompt contains a construct like promptlib:key , the chatgptpromptlib command will be called with that key
+If the prompt or system message contain a construct like promptlib:key , the chatgptpromptlib command will be called with that key
 and this will be replaced with the prompt library entry, as an alternative to -pl key .
 `;
 
@@ -49,6 +50,7 @@ let prefix = '';
 let suffix = '';
 let files = [];
 let wordWrapColumn;
+let systemMsg = '';
 
 for (let i = 2; i < process.argv.length; i++) {
     const arg = process.argv[i];
@@ -95,6 +97,9 @@ for (let i = 2; i < process.argv.length; i++) {
         } else if (arg === '-w' && process.argv[i + 1]) {
             wordWrapColumn = parseInt(process.argv[i + 1], 10);
             i++;
+        }  else if (arg === '-y' && process.argv[i + 1]) {
+            systemMsg = process.argv[i + 1];
+            i++;
         } else if (!arg.startsWith('-')) {
             inOptions = false;
             prompt += arg;
@@ -109,16 +114,7 @@ if (readStdin) {
     prompt = stdinPrompt.trim() + '\n\n' + prompt;
 }
 
-// look for promptlib:key constructs in the prompt and replace them with the prompt library entry
-const promptlibRegex = /promptlib:([a-zA-Z0-9_.-]+)/g;
-prompt = prompt.replace(promptlibRegex, function (match, key) {
-    try {
-        return execSync(`chatgptpromptlib ${key}`, {encoding: 'utf8'});
-    } catch (e) {
-        console.error('Error: Prompt library key not found: ' + key);
-        process.exit(1);
-    }
-});
+prompt = replacePromptlibKey(prompt);
 
 if (prefix) {
     prompt = prefix.trim() + '\n\n' + prompt;
@@ -172,8 +168,26 @@ const requestData = {
     messages: [{role: 'user', content: prompt}],
 };
 
+if (systemMsg) {
+    requestData.messages.unshift({role: 'system', content: replacePromptlibKey(systemMsg)});
+}
+
 if (maxTokens) {
     requestData.max_tokens = maxTokens;
+}
+
+/** Helper function to replace promptlib:key constructs with library entry */
+function replacePromptlibKey(inputString) {
+    if (!inputString) return inputString;
+    const promptlibRegex = /promptlib:([a-zA-Z0-9_.-]+)/g;
+    return inputString.replace(promptlibRegex, function (match, key) {
+        try {
+            return execSync(`chatgptpromptlib ${key}`, {encoding: 'utf8'});
+        } catch (e) {
+            console.error('Error: Prompt library key not found: ' + key);
+            process.exit(1);
+        }
+    });
 }
 
 async function requestChatGPT(attempt = 1) {

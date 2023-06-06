@@ -29,6 +29,7 @@ https://github.com/marketplace/actions/chatgpt-action !!!!!!!!!!!!
 https://platform.openai.com/docs/api-reference/chat/create
 export OPENAI_API_KEY="<OPENAI_API_KEY>"
 https://platform.openai.com/docs/libraries/community-libraries
+$HOME/.openai-api-key.txt
 
 ## Summary
 - Summarize langes Dokument : URL, PDF, ...
@@ -46,8 +47,12 @@ Use a pre-processing step: You can use a pre-processing step to reduce the lengt
 
 Use a different API or tool: If the text is too long for the API you are currently using, you may need to explore other options. There are many other APIs and tools available for summarizing text, and you may find that another option is better suited to your needs.
 
-
+## Personal ChatGPT
 
 From the users messages in this chat: please summarize everything that might aid ChatGPT (not the user) in future chats with the user for providing personalization, context and chat continuity. That can include, but is not limited to: personal details, interests and hobbies, preferences and goals. The summary should be 500 words of extremely compact language of high information density. Please emphasize on keeping and extending the information from the following summary, that was gathered from several conversations, while rephrasing and condensing is permitted. Summary starts:
 
 The following text contains background information about the user, including personal details, interests, preferences, and conversation history. Please use this information to provide personalized and context-aware responses during the conversation:
+
+## React
+
+https://til.simonwillison.net/llms/python-react-pattern
