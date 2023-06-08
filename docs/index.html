@@ -43,12 +43,13 @@
                     <h4 class="card-subtitle mb-2">Grab Styles Bookmarklet</h4>
                     <p class="card-text">
                         This lets you select an element in the page and then copies out just that element and its
-                        subelements,
-                        and all CSS
+                        subelements, and all CSS
                         rules that apply to any of those. That way you can copy out the HTML and CSS needed to have
-                        ChatGPT
-                        answer questions
-                        about the CSS. Press 'h' to see the help.</p>
+                        ChatGPT answer questions
+                        about the CSS. Press 'h' to see the help.
+                        See also my blog entry <a href="http://www.stoerr.net/blog/2023-05-10-cssWithChatGPT.html">Some
+                        experiences using ChatGPT to develop CSS</a> for what this is good for.
+                    </p>
 
                     <p class="card-text">Bookmarklet to drag: <a id="grabstyles"></a></p>
 
@@ -67,7 +68,10 @@
                     <p class="card-text">
                         This allows you to send the text of any page to ChatGPT for summarization. You can also ask any
                         followup question on the content.
-                        It has growing functionality - see the help for details.</p>
+                        It has growing functionality - see the help for details.
+                        See also my blog <a href="http://www.stoerr.net/blog/2023-04-10-readingWithChatGPT.html">Reading
+                        with ChatGPT</a> about this.
+                    </p>
 
                     <p>
                         You'll need your own ChatGPT API key to run that, which you can get at <a
@@ -86,7 +90,8 @@
 
                     <p class="card-text">Bookmarklet to drag: <a id="chatgptbookmarklet">Enter a ChatGPT API Key
                         first.</a> (If you want a quick preview of the dialog, you can
-                        <a href="javascript:(function()%7Bjavascript%3A%2F*ChatGPTBookmarklet*%2F(function()%20%7B%0A%20%20function%20load(basePath%2C%20apikey)%20%7B%0A%20%20%20%20if%20(!window.hpsChatGPTBookmarklet)%20%7B%0A%20%20%20%20%20%20var%20script%20%3D%20document.createElement(%27script%27)%3B%0A%20%20%20%20%20%20script.type%20%3D%20%27text%2Fjavascript%27%3B%0A%20%20%20%20%20%20script.src%20%3D%20basePath%20%2B%20%27%2FChatGPTBookmarklet.js%27%3B%0A%20%20%20%20%20%20script.onload%20%3D%20function%20()%20%7B%0A%20%20%20%20%20%20%20%20window.hpsChatGPTBookmarklet.init(basePath%2C%20apikey%2C%20window.hpsChatGPTBookmarklet.openDialog)%3B%0A%20%20%20%20%20%20%7D%3B%0A%20%20%20%20%20%20document.body.appendChild(script)%3B%0A%20%20%20%20%7D%20else%20%7B%0A%20%20%20%20%20%20window.hpsChatGPTBookmarklet.openDialog()%3B%0A%20%20%20%20%7D%0A%20%20%7D%0A%20%20load(%27https%3A%2F%2Fstoerr.github.io%2FchatGPTtools%2FChatGPTBookmarklet%27%2C%20%27sk-123456789012345678901234567890123456789012345678%27)%3B%0A%7D)()%3B%7D)()">click here</a>.
+                        <a href="javascript:(function()%7Bjavascript%3A%2F*ChatGPTBookmarklet*%2F(function()%20%7B%0A%20%20function%20load(basePath%2C%20apikey)%20%7B%0A%20%20%20%20if%20(!window.hpsChatGPTBookmarklet)%20%7B%0A%20%20%20%20%20%20var%20script%20%3D%20document.createElement(%27script%27)%3B%0A%20%20%20%20%20%20script.type%20%3D%20%27text%2Fjavascript%27%3B%0A%20%20%20%20%20%20script.src%20%3D%20basePath%20%2B%20%27%2FChatGPTBookmarklet.js%27%3B%0A%20%20%20%20%20%20script.onload%20%3D%20function%20()%20%7B%0A%20%20%20%20%20%20%20%20window.hpsChatGPTBookmarklet.init(basePath%2C%20apikey%2C%20window.hpsChatGPTBookmarklet.openDialog)%3B%0A%20%20%20%20%20%20%7D%3B%0A%20%20%20%20%20%20document.body.appendChild(script)%3B%0A%20%20%20%20%7D%20else%20%7B%0A%20%20%20%20%20%20window.hpsChatGPTBookmarklet.openDialog()%3B%0A%20%20%20%20%7D%0A%20%20%7D%0A%20%20load(%27https%3A%2F%2Fstoerr.github.io%2FchatGPTtools%2FChatGPTBookmarklet%27%2C%20%27sk-123456789012345678901234567890123456789012345678%27)%3B%0A%7D)()%3B%7D)()">click
+                            here</a>.
                         That doesn't work, though, since it doesn't have an API key.)
                     </p>
 
