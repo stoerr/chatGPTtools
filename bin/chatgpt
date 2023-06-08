@@ -124,11 +124,11 @@ if (suffix) {
     prompt = prompt + '\n\n' + suffix.trim();
 }
 
-var filecontents = "";
+let filecontents = "";
 
 for (let i = 0; i < files.length; i++) {
     const file = files[i];
-    var filename = file;
+    let filename = file;
     const homeDir = process.env.HOME;
     filename = filename.replace(homeDir, '~');
     const filePrompt = fs.readFileSync(file, 'utf-8');
