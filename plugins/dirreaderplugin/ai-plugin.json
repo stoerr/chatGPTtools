@@ -1,0 +1,17 @@
+{
+    "schema_version": "v1",
+    "name_for_human": "Directory Reader",
+    "name_for_model": "dirreader",
+    "description_for_human": "Read a directory and it's files.",
+    "description_for_model": "Help the user with inspecting a directories files. You can list and read files.",
+    "auth": {
+        "type": "none"
+    },
+    "api": {
+        "type": "openapi",
+        "url": "http://localhost:3000/dirreaderplugin.yaml"
+    },
+    "logo_url": "https://d1q6f0aelx0por.cloudfront.net/product-logos/library-hello-world-logo.png",
+    "contact_email": "hans-peter+publicsoftware@stoerr.net",
+    "legal_info_url": "http://www.example.com/legal"
+}

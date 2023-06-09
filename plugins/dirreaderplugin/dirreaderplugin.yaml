@@ -1,0 +1,86 @@
+openapi: 3.0.1
+info:
+  title: ReadDir ChatGPT Plugin
+  description: A plugin that allows the user to inspect a directory and read the contents of files using ChatGPT
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+paths:
+  /thought:
+    post:
+      summary: Logs a string to the console
+      operationId: thought
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              type: string
+      responses:
+        '200':
+          description: Message logged successfully
+  /files:
+    get:
+      summary: List files in a directory
+      operationId: listFiles
+      parameters:
+        - in: query
+          name: directorypath
+          required: true
+          schema:
+            type: string
+          description: The full path of the directory
+        - in: query
+          name: globpattern
+          schema:
+            type: string
+          description: A glob pattern to match files
+        - in: query
+          name: recursive
+          schema:
+            type: boolean
+            default: true
+          description: A flag to traverse the directory recursively, default true
+        - in: query
+          name: grepregex
+          schema:
+            type: string
+          description: A regex pattern to match file content
+      responses:
+        '200':
+          description: A list of files
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    size:
+                      type: integer
+                    creationDate:
+                      type: string
+                      format: date-time
+                    lastModifiedDate:
+                      type: string
+                      format: date-time
+  /fileContent:
+    get:
+      summary: Reads the content of a file
+      operationId: readFileContent
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                path:
+                  type: string
+      responses:
+        '200':
+          description: Content of the file
+          content:
+            text/plain:
+              schema:
+                type: string
