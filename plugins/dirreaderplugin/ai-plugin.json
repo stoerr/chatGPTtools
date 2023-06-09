@@ -3,7 +3,7 @@
     "name_for_human": "Directory Reader",
     "name_for_model": "dirreader",
     "description_for_human": "Read a directory and it's files.",
-    "description_for_model": "Help the user with inspecting a directories files. You can list and read files.",
+    "description_for_model": "Help the user with inspecting a directories files. You can list and read files. Before each operation please always send a thought with the reason why you're performing the operation.",
     "auth": {
         "type": "none"
     },
