@@ -54,7 +54,7 @@ function processRequest(req, res) {
                 res.end();
             });
             break;
-        case '/files':
+        case '/list':
             if (req.method !== 'GET') {
                 res.writeHead(405, 'Method Not Allowed');
                 return res.end();
@@ -66,7 +66,7 @@ function processRequest(req, res) {
             res.writeHead(200, 'OK');
             res.end(JSON.stringify(files));
             break;
-        case '/fileContent':
+        case '/read':
             if (req.method !== 'GET') {
                 res.writeHead(405, 'Method Not Allowed');
                 return res.end();

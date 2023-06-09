@@ -8,7 +8,7 @@ servers:
 paths:
   /thought:
     post:
-      summary: Logs a string to the console
+      summary: Sends a thought with the reason for the next operation
       operationId: thought
       requestBody:
         content:
@@ -18,7 +18,7 @@ paths:
       responses:
         '200':
           description: Message logged successfully
-  /files:
+  /list:
     get:
       summary: List files in a directory
       operationId: listFiles
@@ -55,7 +55,7 @@ paths:
                     lastModifiedDate:
                       type: string
                       format: date-time
-  /fileContent:
+  /read:
     get:
       summary: Reads the content of a file
       operationId: readFileContent
