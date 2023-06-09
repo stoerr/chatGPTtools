@@ -30,21 +30,11 @@ paths:
             type: string
           description: The full path of the directory
         - in: query
-          name: globpattern
-          schema:
-            type: string
-          description: A glob pattern to match files
-        - in: query
           name: recursive
           schema:
             type: boolean
             default: true
           description: A flag to traverse the directory recursively, default true
-        - in: query
-          name: grepregex
-          schema:
-            type: string
-          description: A regex pattern to match file content
       responses:
         '200':
           description: A list of files
