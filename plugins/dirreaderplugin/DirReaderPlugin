@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -47,7 +46,7 @@ public class DirReaderPlugin implements HttpHandler {
                 "name_for_human": "Directory Reader 2",
                 "name_for_model": "dirreader",
                 "description_for_human": "Read a directory and its files.",
-                "description_for_model": "Help the user with inspecting and processing a directories files. You can list and read files and send reasons. Before each operation with the dirreader plugin please always send a reason why you're performing the operation.",
+                "description_for_model": "Help the user with inspecting and processing a directories files. You can list and read files and send reasons. Before each operation with the dirreader plugin please be sure to always send a reason why you're performing the operation.",
                 "auth": {
                     "type": "none"
                 },
@@ -75,7 +74,9 @@ public class DirReaderPlugin implements HttpHandler {
     final StringBuilder pathDescriptions = new StringBuilder();
     final Map<String, AbstractPluginOperation> handlers = new HashMap<>();
 
-    final Map<String, Supplier<String>> STATICFILES = Map.of("/.well-known/ai-plugin.json", () -> AIPLUGIN_JSON.replaceAll("THEPORT", String.valueOf(port)), "/dirreaderplugin.yaml", () -> OPENAPI_DESCR_START + pathDescriptions.toString().replaceAll("THEPORT", String.valueOf(port)));
+    final Map<String, Supplier<String>> STATICFILES = Map.of("/.well-known/ai-plugin.json",
+            () -> AIPLUGIN_JSON.replaceAll("THEPORT", String.valueOf(port)), "/dirreaderplugin.yaml",
+            () -> OPENAPI_DESCR_START.replaceAll("THEPORT", String.valueOf(port)) + pathDescriptions.toString());
 
     final Path currentDir = Path.of(".").normalize().toAbsolutePath();
 
@@ -190,7 +191,7 @@ public class DirReaderPlugin implements HttpHandler {
                       /listFiles:
                         get:
                           operationId: listFiles
-                          summary: Recursively lists files in a directory
+                          summary: Recursively lists files in a directory. Please be sure to provide a reason with the operation reason before calling this.
                           parameters:
                             - name: path
                               in: query
@@ -236,7 +237,7 @@ public class DirReaderPlugin implements HttpHandler {
                       /readFile:
                         get:
                           operationId: readFile
-                          summary: Read a file
+                          summary: Read a files content. Please be sure to provide a reason with the operation reason before calling this.
                           parameters:
                             - name: path
                               in: query
