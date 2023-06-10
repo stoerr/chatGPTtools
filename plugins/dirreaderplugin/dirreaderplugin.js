@@ -20,10 +20,14 @@ const scriptDir = __dirname;
  * @param {http.ServerResponse} res
  */
 function processRequest(req, res) {
+    console.log(`Request: ${req.method} ${req.url}`);
+
     if (req.method === 'OPTIONS') {
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Access-Control-Allow-Methods', '*');
-        res.setHeader('Access-Control-Allow-Headers', req.headers['access-control-request-headers']);
+        if (req.headers['access-control-request-headers']) {
+            res.setHeader('Access-Control-Allow-Headers', req.headers['access-control-request-headers']);
+        }
         res.setHeader('Access-Control-Max-Age', '86400');
         res.setHeader('Allow', '*');
         res.writeHead(200);
@@ -35,8 +39,6 @@ function processRequest(req, res) {
     res.setHeader('Cache-Control', 'no-store');
 
     const reqUrl = url.parse(req.url, true);
-
-    console.log(`Request: ${req.method} ${reqUrl.pathname}`);
 
     switch (reqUrl.pathname) {
         case '/thought':
@@ -116,12 +118,13 @@ function listFiles(directoryPath, recursive = true) {
     return filesInfo;
 }
 
-function readFileContent(path) {
-    if (path.contains('..')) {
+function readFileContent(filepath) {
+    if (filepath.includes('..')) {
         throw new Error('Invalid path');
     }
+    filepath = filepath.startsWith('/') ? '.' + filepath : filepath;
     try {
-        const data = fs.readFileSync(path, 'utf8');
+        const data = fs.readFileSync(filepath, 'utf8');
         return data;
     } catch (err) {
         console.error(err);
