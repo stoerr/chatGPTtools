@@ -22,6 +22,10 @@ import com.sun.net.httpserver.HttpServer;
  * Plugin for ChatGPT that can access the files in the directory it is started in. Implemented as a single Java application runnable from the shell, without using any dependencies outside the JDK.
  * To use this, you need to have registered as a plugin developer, and add this with "Develop your own plugin" in the ChatGPT web interface.
  * Start it in the directory you want to access, then use the plugin in ChatGPT.
+ * <p>
+ * Check OpenAPI description with curl -is http://localhost:3000/dirreaderplugin.yaml , and the plugin description with
+ * curl -is http://localhost:3000/.well-known/ai-plugin.json .
+ * </p>
  */
 public class DirReaderPlugin implements HttpHandler {
 
@@ -30,7 +34,7 @@ public class DirReaderPlugin implements HttpHandler {
     final String AIPLUGIN_JSON = """
             {
                 "schema_version": "v1",
-                "name_for_human": "Directory Reader",
+                "name_for_human": "Directory Reader 2",
                 "name_for_model": "dirreader",
                 "description_for_human": "Read a directory and its files.",
                 "description_for_model": "Help the user with inspecting and processing a directories files. You can list and read files and send reasons. Before each operation with the dirreader plugin please always send a reason why you're performing the operation.",
@@ -78,6 +82,7 @@ public class DirReaderPlugin implements HttpHandler {
         System.out.println("Request: " + exchange.getRequestMethod() + " " + exchange.getRequestURI());
         try {
             String path = exchange.getRequestURI().getPath();
+            exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
             if (exchange.getRequestMethod().equalsIgnoreCase("OPTIONS")) {
                 giveCORSResponse(exchange);
             } else if (STATICFILES.containsKey(path)) {
@@ -90,8 +95,8 @@ public class DirReaderPlugin implements HttpHandler {
                 exchange.getResponseBody().write("<html><body><h1>DirReaderPlugin</h1><p>See <a href=\"/.well-known/ai-plugin.json\">/.well-known/ai-plugin.json</a> for the plugin description.</p></body></html>".getBytes());
             } else {
                 exchange.getResponseHeaders().add("Content-Type", "text/plain");
-                exchange.sendResponseHeaders(200, 0);
-                exchange.getResponseBody().write("Hello World".getBytes());
+                exchange.sendResponseHeaders(404, 0);
+                exchange.getResponseBody().write("Unknown request".getBytes());
             }
         } catch (Exception e) {
             e.printStackTrace(System.err);
@@ -106,9 +111,9 @@ public class DirReaderPlugin implements HttpHandler {
      * TODO: restrict to ChatGPT domain
      */
     private void giveCORSResponse(HttpExchange exchange) throws IOException {
-        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
-        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "*");
-        if (exchange.getRequestHeaders().containsKey("access-control-request-headers")) {
+        // already there: exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+        if (exchange.getRequestHeaders().containsKey("Access-control-request-headers")) {
             exchange.getResponseHeaders().add("Access-Control-Allow-Headers", exchange.getRequestHeaders().getFirst("access-control-request-headers"));
         }
         exchange.getResponseHeaders().add("Access-Control-Max-Age", "3600");
@@ -158,13 +163,16 @@ public class DirReaderPlugin implements HttpHandler {
         }
     }
 
-    /** Lists files in current dir or subdirectory. Test e.g. with curl -is http://localhost:3000/listfiles?path=.  */
+    /**
+     * Lists files in current dir or subdirectory. Test e.g. with curl -is http://localhost:3000/listFiles?path=.
+     */
     private final AbstractPluginOperation LIST_FILES = new AbstractPluginOperation() {
         {
-            handlers.put("/listfiles", this);
+            handlers.put("/listFiles", this);
             pathDescriptions.append("""
-                      /listfiles:
+                      /listFiles:
                         get:
+                          operationId: listFiles
                           summary: List files in a directory
                           parameters:
                             - name: path
