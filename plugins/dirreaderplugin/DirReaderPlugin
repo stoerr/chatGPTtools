@@ -32,6 +32,13 @@ import com.sun.net.httpserver.HttpServer;
  */
 public class DirReaderPlugin implements HttpHandler {
 
+    public static final String USAGE = """
+            Usage: java DirReaderPlugin [PORT] [-h|--help]
+            Description: Plugin for ChatGPT that can access the files in the directory it is started in.
+            Arguments: PORT the port to listen on, default 3000.
+            Options: -h or --help print this help message.
+            """;
+
     final int port = 3000;
 
     final String AIPLUGIN_JSON = """
@@ -73,6 +80,10 @@ public class DirReaderPlugin implements HttpHandler {
     final Path currentDir = Path.of(".").normalize().toAbsolutePath();
 
     public static void main(String[] args) throws IOException {
+        if (Arrays.stream(args).anyMatch(s -> s.equals("-h") || s.equals("--help"))) {
+            System.out.println(USAGE);
+            System.exit(0);
+        }
         int port = args.length > 0 ? Integer.parseInt(args[0]) : 3000;
         HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
         server.createContext("/", new DirReaderPlugin());
