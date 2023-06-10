@@ -8,13 +8,15 @@ servers:
 paths:
   /thought:
     post:
-      summary: Sends a thought with the reason for the next operation
+      summary: Sends a thought with the reason for the next operation on the dirreader plugin
       operationId: thought
-      requestBody:
-        content:
-          text/plain:
-            schema:
-              type: string
+      parameters:
+        - in: query
+          name: thought
+          required: true
+          schema:
+            type: string
+          description: The reason for the next operation
       responses:
         '200':
           description: Message logged successfully
@@ -59,14 +61,13 @@ paths:
     get:
       summary: Reads the content of a file
       operationId: readFileContent
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                path:
-                  type: string
+      parameters:
+        - in: query
+          name: path
+          required: true
+          schema:
+            type: string
+          description: The full path of the file
       responses:
         '200':
           description: Content of the file
