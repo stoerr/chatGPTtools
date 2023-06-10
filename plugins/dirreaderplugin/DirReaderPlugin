@@ -32,7 +32,7 @@ import com.sun.net.httpserver.HttpServer;
  */
 public class DirReaderPlugin implements HttpHandler {
 
-    public static final int PORT = 3000;
+    final int port = 3000;
 
     final String AIPLUGIN_JSON = """
             {
@@ -52,7 +52,7 @@ public class DirReaderPlugin implements HttpHandler {
                 "contact_email": "yu4cheem@techno.ms",
                 "legal_info_url": "http://www.example.com/legal"
             }
-            """.stripIndent().replaceAll("THEPORT", String.valueOf(PORT));
+            """.stripIndent();
 
     final String OPENAPI_DESCR_START = """
             openapi: 3.0.1
@@ -63,21 +63,22 @@ public class DirReaderPlugin implements HttpHandler {
             servers:
               - url: http://localhost:THEPORT
             paths:
-            """.stripIndent().replaceAll("THEPORT", String.valueOf(PORT));
+            """.stripIndent();
 
     final StringBuilder pathDescriptions = new StringBuilder();
     final Map<String, AbstractPluginOperation> handlers = new HashMap<>();
 
-    final Map<String, Supplier<String>> STATICFILES = Map.of("/.well-known/ai-plugin.json", () -> AIPLUGIN_JSON, "/dirreaderplugin.yaml", () -> OPENAPI_DESCR_START + pathDescriptions.toString());
+    final Map<String, Supplier<String>> STATICFILES = Map.of("/.well-known/ai-plugin.json", () -> AIPLUGIN_JSON.replaceAll("THEPORT", String.valueOf(port)), "/dirreaderplugin.yaml", () -> OPENAPI_DESCR_START + pathDescriptions.toString().replaceAll("THEPORT", String.valueOf(port)));
 
     final Path currentDir = Path.of(".").normalize().toAbsolutePath();
 
     public static void main(String[] args) throws IOException {
-        HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
+        int port = args.length > 0 ? Integer.parseInt(args[0]) : 3000;
+        HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
         server.createContext("/", new DirReaderPlugin());
         server.setExecutor(null);
         server.start();
-        System.out.println("Server started on http://localhost:" + PORT + "/");
+        System.out.println("Server started on http://localhost:" + port + "/");
     }
 
     @Override
@@ -85,7 +86,7 @@ public class DirReaderPlugin implements HttpHandler {
         System.out.println("Request: " + exchange.getRequestMethod() + " " + exchange.getRequestURI());
         try {
             String path = exchange.getRequestURI().getPath();
-            exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+            exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "https://chat.openai.com");
             if (exchange.getRequestMethod().equalsIgnoreCase("OPTIONS")) {
                 giveCORSResponse(exchange);
             } else if (STATICFILES.containsKey(path)) {
@@ -104,6 +105,7 @@ public class DirReaderPlugin implements HttpHandler {
         } catch (Exception e) {
             e.printStackTrace(System.err);
             exchange.sendResponseHeaders(500, 0);
+            exchange.getResponseBody().write(e.toString().getBytes(UTF_8));
         } finally {
             exchange.close();
         }
