@@ -1,0 +1,200 @@
+#!/usr/bin/env java --source 16
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
+
+/**
+ * Plugin for ChatGPT that can access the files in the directory it is started in. Implemented as a single Java application runnable from the shell, without using any dependencies outside the JDK.
+ * To use this, you need to have registered as a plugin developer, and add this with "Develop your own plugin" in the ChatGPT web interface.
+ * Start it in the directory you want to access, then use the plugin in ChatGPT.
+ */
+public class DirReaderPlugin implements HttpHandler {
+
+    public static final int PORT = 3000;
+
+    final String AIPLUGIN_JSON = """
+            {
+                "schema_version": "v1",
+                "name_for_human": "Directory Reader",
+                "name_for_model": "dirreader",
+                "description_for_human": "Read a directory and its files.",
+                "description_for_model": "Help the user with inspecting and processing a directories files. You can list and read files and send reasons. Before each operation with the dirreader plugin please always send a reason why you're performing the operation.",
+                "auth": {
+                    "type": "none"
+                },
+                "api": {
+                    "type": "openapi",
+                    "url": "http://localhost:THEPORT/dirreaderplugin.yaml"
+                },
+                "logo_url": "https://d1q6f0aelx0por.cloudfront.net/product-logos/library-hello-world-logo.png",
+                "contact_email": "yu4cheem@techno.ms",
+                "legal_info_url": "http://www.example.com/legal"
+            }
+            """.stripIndent().replaceAll("THEPORT", String.valueOf(PORT));
+
+    final String OPENAPI_DESCR_START = """
+            openapi: 3.0.1
+            info:
+              title: ReadDir ChatGPT Plugin
+              description: A plugin that allows the user to inspect a directory and read the contents of files using ChatGPT
+              version: 1.0.0
+            servers:
+              - url: http://localhost:THEPORT
+            paths:
+            """.stripIndent().replaceAll("THEPORT", String.valueOf(PORT));
+
+    final StringBuilder pathDescriptions = new StringBuilder();
+    final Map<String, AbstractPluginOperation> handlers = new HashMap<>();
+
+    final Map<String, Supplier<String>> STATICFILES = Map.of("/.well-known/ai-plugin.json", () -> AIPLUGIN_JSON, "/dirreaderplugin.yaml", () -> OPENAPI_DESCR_START + pathDescriptions.toString());
+
+    final Path currentDir = Path.of(".").normalize().toAbsolutePath();
+
+    public static void main(String[] args) throws IOException {
+        HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
+        server.createContext("/", new DirReaderPlugin());
+        server.setExecutor(null);
+        server.start();
+        System.out.println("Server started on http://localhost:" + PORT + "/");
+    }
+
+    @Override
+    public void handle(HttpExchange exchange) throws IOException {
+        System.out.println("Request: " + exchange.getRequestMethod() + " " + exchange.getRequestURI());
+        try {
+            String path = exchange.getRequestURI().getPath();
+            if (exchange.getRequestMethod().equalsIgnoreCase("OPTIONS")) {
+                giveCORSResponse(exchange);
+            } else if (STATICFILES.containsKey(path)) {
+                handleStaticFile(exchange, path);
+            } else if (handlers.containsKey(path)) {
+                handlers.get(path).handle(exchange);
+            } else if (path.equals("/")) {
+                exchange.getResponseHeaders().add("Content-Type", "text/html");
+                exchange.sendResponseHeaders(200, 0);
+                exchange.getResponseBody().write("<html><body><h1>DirReaderPlugin</h1><p>See <a href=\"/.well-known/ai-plugin.json\">/.well-known/ai-plugin.json</a> for the plugin description.</p></body></html>".getBytes());
+            } else {
+                exchange.getResponseHeaders().add("Content-Type", "text/plain");
+                exchange.sendResponseHeaders(200, 0);
+                exchange.getResponseBody().write("Hello World".getBytes());
+            }
+        } catch (Exception e) {
+            e.printStackTrace(System.err);
+            exchange.sendResponseHeaders(500, 0);
+        } finally {
+            exchange.close();
+        }
+    }
+
+    /**
+     * Remove any CORS restrictions so that ChatGPT interface can use it.
+     * TODO: restrict to ChatGPT domain
+     */
+    private void giveCORSResponse(HttpExchange exchange) throws IOException {
+        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "*");
+        if (exchange.getRequestHeaders().containsKey("access-control-request-headers")) {
+            exchange.getResponseHeaders().add("Access-Control-Allow-Headers", exchange.getRequestHeaders().getFirst("access-control-request-headers"));
+        }
+        exchange.getResponseHeaders().add("Access-Control-Max-Age", "3600");
+        exchange.getResponseHeaders().add("Allow", "*");
+        exchange.sendResponseHeaders(200, 0);
+    }
+
+    private void handleStaticFile(HttpExchange exchange, String path) throws IOException {
+        String file = STATICFILES.get(path).get();
+        if (path.endsWith(".yaml") || path.endsWith(".yml")) {
+            exchange.getResponseHeaders().add("Content-Type", "text/yaml; charset=utf-8");
+        } else if (path.endsWith(".json")) {
+            exchange.getResponseHeaders().add("Content-Type", "application/json; charset=utf-8");
+        } else {
+            exchange.getResponseHeaders().add("Content-Type", "text/plain; charset=utf-8");
+        }
+        exchange.sendResponseHeaders(200, 0);
+        exchange.getResponseBody().write(file.getBytes("UTF-8"));
+        exchange.close();
+    }
+
+    private abstract class AbstractPluginOperation {
+        public abstract void handle(HttpExchange exchange) throws IOException;
+
+        Map<String, String> getQueryParams(HttpExchange exchange) {
+            String query = exchange.getRequestURI().getQuery();
+            if (query == null) {
+                return Collections.emptyMap();
+            }
+            return Arrays.stream(query.split("&"))
+                    .map(s -> s.split("="))
+                    .collect(Collectors.toMap(a -> a[0],
+                            a -> URLDecoder.decode(a[1], StandardCharsets.UTF_8)));
+        }
+
+        Path getPath(HttpExchange exchange) {
+            String path = getQueryParams(exchange).get("path");
+            Path resolved = currentDir.resolve(path).normalize().toAbsolutePath();
+            if (!resolved.startsWith(currentDir)) {
+                throw new IllegalArgumentException("Path " + path + " is not in current directory " + currentDir);
+            }
+            return resolved;
+        }
+
+        String jsonRep(String string) {
+            return "\"" + string.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
+        }
+    }
+
+    /** Lists files in current dir or subdirectory. Test e.g. with curl -is http://localhost:3000/listfiles?path=.  */
+    private final AbstractPluginOperation LIST_FILES = new AbstractPluginOperation() {
+        {
+            handlers.put("/listfiles", this);
+            pathDescriptions.append("""
+                      /listfiles:
+                        get:
+                          summary: List files in a directory
+                          parameters:
+                            - name: path
+                              in: query
+                              description: relative path to directory
+                              required: true
+                              schema:
+                                type: string
+                          responses:
+                            '200':
+                              description: List of relative paths of the files
+                              content:
+                                application/json:
+                                  schema:
+                                    type: array
+                                    items:
+                                      type: string
+                    """.stripIndent());
+        }
+
+        public void handle(HttpExchange exchange) throws IOException {
+            Path path = getPath(exchange);
+            exchange.getResponseHeaders().add("Content-Type", "application/json; charset=utf-8");
+            exchange.sendResponseHeaders(200, 0);
+            List<String> files = Files.walk(path)
+                    .filter(Files::isRegularFile)
+                    .map(p -> currentDir.relativize(p).toString())
+                    .collect(Collectors.toList());
+            String response = "[\n" + files.stream().map(this::jsonRep).collect(Collectors.joining(",\n")) + "\n]";
+            exchange.getResponseBody().write(response.getBytes("UTF-8"));
+        }
+    };
+}
