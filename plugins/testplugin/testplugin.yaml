@@ -6,52 +6,6 @@ info:
 servers:
   - url: http://localhost:3010
 paths:
-  /messageQuery:
-    post:
-      summary: Sends a message in query
-      operationId: messageQuery
-      parameters:
-        - in: query
-          name: message
-          required: true
-          schema:
-            type: string
-          description: The message to send
-      responses:
-        '200':
-          description: Message received acknowledgement
-#  /messageJson:
-#    post:
-#      summary: Sends a message in json in the body. This doesn't work - ChatGPT complains that it has to be an object - In path /messageJson, method post, operationId messageJson, request body schema is not an object schema; skipping
-#      operationId: messageJson
-#      requestBody:
-#        description: message to send
-#        required: true
-#        content:
-#          application/json:
-#            schema:
-#              type: string
-#      responses:
-#        '200':
-#          description: Message received acknowledgement
-  /messageJsonObject:
-    post:
-      summary: Sends a message in json object in the body
-      operationId: messageJsonObject
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              description: message to send
-              properties:
-                message:
-                  type: string
-                  description: the actual message
-      responses:
-        '200':
-          description: Message received acknowledgement
   /messagePlaintext:
     post:
       summary: Sends a message type Plaintext
