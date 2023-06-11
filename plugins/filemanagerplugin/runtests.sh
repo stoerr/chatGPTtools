@@ -50,7 +50,7 @@ function executetest() {
 }
 
 executetest /.well-known/ai-plugin.json "" ai-plugin.json
-executetest /filemanagerplugin.yaml "" filemanagerplugin.yaml
+executetest /filemanager.yaml "" filemanager.yaml
 executetest /listFiles?path=. "" listFiles.json
 executetest /listFiles?path=subdir "" listFilesSubdir.json
 executetest /readFile?path=firstfile.txt "" getFirstfile.txt
@@ -77,3 +77,6 @@ if [ -n "$failures" ]; then
     echo -e "FAILURES: $failures"
     exit 1
 fi
+
+echo
+echo "ALL TESTS PASSED"
