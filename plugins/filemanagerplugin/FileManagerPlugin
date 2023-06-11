@@ -1,6 +1,9 @@
 #!/usr/bin/env java --source 16
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
+import static java.nio.file.StandardOpenOption.WRITE;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,25 +19,25 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
 /**
- * Plugin for ChatGPT that can access the files in the directory it is started in. Implemented as a single Java application runnable from the shell, without using any dependencies outside the JDK.
+ * Plugin for ChatGPT that can access the files in the directory it is started in.
+ * Implemented as a single Java application runnable from the shell, without using any dependencies outside the JDK.
  * To use this, you need to have registered as a plugin developer, and add this with "Develop your own plugin" in the ChatGPT web interface.
  * Start it in the directory you want to access, then use the plugin in ChatGPT.
  * <p>
- * Check OpenAPI description with curl -is http://localhost:3000/dirreaderplugin.yaml , and the plugin description with
+ * Check OpenAPI description with curl -is http://localhost:3000/filemanagerplugin.yaml , and the plugin description with
  * curl -is http://localhost:3000/.well-known/ai-plugin.json .
  * </p>
  */
-public class DirReaderPlugin implements HttpHandler {
+public class FileManagerPlugin implements HttpHandler {
 
     public static final String USAGE = """
-            Usage: java DirReaderPlugin [PORT] [-h|--help]
+            Usage: java FileManagerPlugin [PORT] [-h|--help]
             Description: Plugin for ChatGPT that can access the files in the directory it is started in.
             Arguments: PORT the port to listen on, default 3000.
             Options: -h or --help print this help message.
@@ -47,16 +50,16 @@ public class DirReaderPlugin implements HttpHandler {
     final String AIPLUGIN_JSON = """
             {
                 "schema_version": "v1",
-                "name_for_human": "Directory Reader 2",
-                "name_for_model": "dirreader",
-                "description_for_human": "Read a directory and its files.",
-                "description_for_model": "Help the user with inspecting and processing a directories files. You can list and read files and send reasons. Before each operation with the dirreader plugin please be sure to always send a reason why you're performing the operation.",
+                "name_for_human": "File Manager",
+                "name_for_model": "filemanager",
+                "description_for_human": "Read and write a directory and its files.",
+                "description_for_model": "Help the user with inspecting and processing a directories files. You can list and read and write files.",
                 "auth": {
                     "type": "none"
                 },
                 "api": {
                     "type": "openapi",
-                    "url": "http://localhost:THEPORT/dirreaderplugin.yaml"
+                    "url": "http://localhost:THEPORT/filemanager.yaml"
                 },
                 "logo_url": "https://d1q6f0aelx0por.cloudfront.net/product-logos/library-hello-world-logo.png",
                 "contact_email": "hans-peter+publicsoftware@stoerr.net",
@@ -79,7 +82,7 @@ public class DirReaderPlugin implements HttpHandler {
     final Map<String, AbstractPluginOperation> handlers = new HashMap<>();
 
     final Map<String, Supplier<String>> STATICFILES = Map.of("/.well-known/ai-plugin.json",
-            () -> AIPLUGIN_JSON.replaceAll("THEPORT", String.valueOf(port)), "/dirreaderplugin.yaml",
+            () -> AIPLUGIN_JSON.replaceAll("THEPORT", String.valueOf(port)), "/filemanager.yaml",
             () -> OPENAPI_DESCR_START.replaceAll("THEPORT", String.valueOf(port)) + pathDescriptions.toString());
 
     final Path currentDir = Path.of(".").normalize().toAbsolutePath();
@@ -89,7 +92,7 @@ public class DirReaderPlugin implements HttpHandler {
             System.out.println(USAGE);
             System.exit(0);
         }
-        DirReaderPlugin handler = new DirReaderPlugin();
+        FileManagerPlugin handler = new FileManagerPlugin();
         handler.port = args.length > 0 ? Integer.parseInt(args[0]) : 3000;
         HttpServer server = HttpServer.create(new InetSocketAddress(handler.port), 0);
         server.createContext("/", handler);
@@ -115,7 +118,7 @@ public class DirReaderPlugin implements HttpHandler {
             } else if (path.equals("/")) {
                 exchange.getResponseHeaders().add("Content-Type", "text/html");
                 exchange.sendResponseHeaders(200, 0);
-                exchange.getResponseBody().write("<html><body><h1>DirReaderPlugin</h1><p>See <a href=\"/.well-known/ai-plugin.json\">/.well-known/ai-plugin.json</a> for the plugin description.</p></body></html>\n".getBytes());
+                exchange.getResponseBody().write("<html><body><h1>FileManagerPlugin</h1><p>See <a href=\"/.well-known/ai-plugin.json\">/.well-known/ai-plugin.json</a> for the plugin description.</p></body></html>\n".getBytes());
             } else {
                 exchange.getResponseHeaders().add("Content-Type", "text/plain");
                 exchange.sendResponseHeaders(404, 0);
@@ -198,7 +201,7 @@ public class DirReaderPlugin implements HttpHandler {
                       /listFiles:
                         get:
                           operationId: listFiles
-                          summary: Recursively lists files in a directory. Please be sure to provide a reason with the operation reason before calling this.
+                          summary: Recursively lists files in a directory.
                           parameters:
                             - name: path
                               in: query
@@ -240,7 +243,7 @@ public class DirReaderPlugin implements HttpHandler {
         }
     };
 
-    // curl -is http://localhost:3000/readFile?path=DirReaderPlugin
+    // curl -is http://localhost:3000/readFile?path=somefile.txt
     private final AbstractPluginOperation READ_FILE = new AbstractPluginOperation() {
         {
             handlers.put("/readFile", this);
@@ -248,7 +251,7 @@ public class DirReaderPlugin implements HttpHandler {
                       /readFile:
                         get:
                           operationId: readFile
-                          summary: Read a files content. Please be sure to provide a reason with the operation reason before calling this.
+                          summary: Read a files content.
                           parameters:
                             - name: path
                               in: query
@@ -294,7 +297,7 @@ public class DirReaderPlugin implements HttpHandler {
                       /reason:
                         post:
                           operationId: reason
-                          summary: Provide a reason for the next operation on the dirreader plugin
+                          summary: Provide a reason for the next operation on the filemanager plugin.
                           requestBody:
                             required: true
                             content:
@@ -317,6 +320,49 @@ public class DirReaderPlugin implements HttpHandler {
                 System.out.print("Reason: ");
                 is.transferTo(System.out);
                 System.out.println();
+            }
+        }
+    };
+
+    /** an operation that writes the message into the file at path. */
+    // curl -is http://localhost:3000/writeFile?path=testfile -d '{"content":"testcontent line one\nline two\n"}'
+    private final AbstractPluginOperation WRITEFILE = new AbstractPluginOperation() {
+        {
+            handlers.put("/writeFile", this);
+            pathDescriptions.append("""
+                      /writeFile:
+                        post:
+                          operationId: writeFile
+                          summary: Write a file.
+                          parameters:
+                            - name: path
+                              in: query
+                              description: relative path to directory for the created file
+                              required: true
+                              schema:
+                                type: string
+                          requestBody:
+                            required: true
+                            content:
+                              application/json:
+                                schema:
+                                  type: object
+                                  properties:
+                                    content:
+                                      type: string
+                          responses:
+                            '204':
+                              description: File written
+                    """.stripIndent());
+        }
+
+        public void handle(HttpExchange exchange) throws IOException {
+            exchange.getResponseHeaders().add("Content-Type", "text/plain; charset=utf-8");
+            exchange.sendResponseHeaders(204, -1);
+            try (InputStream is = exchange.getRequestBody()) {
+                String content = new String(is.readAllBytes(), UTF_8);
+                Path path = getPath(exchange);
+                Files.write(path, content.getBytes(UTF_8), CREATE, WRITE, TRUNCATE_EXISTING);
             }
         }
     };

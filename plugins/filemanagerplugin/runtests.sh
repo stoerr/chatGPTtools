@@ -49,7 +49,7 @@ function executetest() {
 }
 
 executetest /.well-known/ai-plugin.json "" ai-plugin.json
-executetest /dirreaderplugin.yaml "" dirreaderplugin.yaml
+executetest /filemanagerplugin.yaml "" filemanagerplugin.yaml
 executetest /listFiles?path=. "" listFiles.json
 executetest /listFiles?path=subdir "" listFilesSubdir.json
 executetest /readFile?path=firstfile.txt "" getFirstfile.txt
@@ -59,7 +59,7 @@ executetest /unknown "" unknown
 # cannot really test this because that has no output, just logs to stdoud, but maybe we'll notice
 echo
 echo expecting output "testreason"
-curl -s $baseurl/reason '-d {\"reason\": \"testreason\"}'
+curl -s $baseurl/reason -d '{\"reason\": \"testreason\"}'
 
 # if there are failures, print them out and exit with a non-zero exit code
 if [ -n "$failures" ]; then
