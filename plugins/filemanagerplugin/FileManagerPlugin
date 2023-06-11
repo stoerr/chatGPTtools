@@ -38,7 +38,7 @@ public class DirReaderPlugin implements HttpHandler {
             Options: -h or --help print this help message.
             """;
 
-    final int port = 3000;
+    int port = 3000;
 
     final String AIPLUGIN_JSON = """
             {
@@ -85,12 +85,13 @@ public class DirReaderPlugin implements HttpHandler {
             System.out.println(USAGE);
             System.exit(0);
         }
-        int port = args.length > 0 ? Integer.parseInt(args[0]) : 3000;
-        HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
-        server.createContext("/", new DirReaderPlugin());
+        DirReaderPlugin handler = new DirReaderPlugin();
+        handler.port = args.length > 0 ? Integer.parseInt(args[0]) : 3000;
+        HttpServer server = HttpServer.create(new InetSocketAddress(handler.port), 0);
+        server.createContext("/", handler);
         server.setExecutor(null);
         server.start();
-        System.out.println("Server started on http://localhost:" + port + "/");
+        System.out.println("Server started on http://localhost:" + handler.port + "/");
     }
 
     @Override
@@ -277,7 +278,7 @@ public class DirReaderPlugin implements HttpHandler {
     /**
      * An operation /reason that might or might not be good to introduce a REACT like pattern - it just gets a text on stdin and writes that to stdout.
      */
-    // curl -is http://localhost:3000/reason -d "Hello World"
+    // curl -is http://localhost:3000/reason -d "{\"reason\": \"testreason\"}"
     private final AbstractPluginOperation GIVE_REASON = new AbstractPluginOperation() {
         {
             handlers.put("/reason", this);
@@ -289,9 +290,12 @@ public class DirReaderPlugin implements HttpHandler {
                           requestBody:
                             required: true
                             content:
-                              text/plain:
+                              application/json:
                                 schema:
-                                  type: string
+                                  type: object
+                                properties:
+                                    reason:
+                                    type: string
                           responses:
                             '204':
                               description: Reason accepted
