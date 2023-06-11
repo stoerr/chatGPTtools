@@ -1,4 +1,32 @@
-This is currently in development, not useable.
+This is currently in development, but is already useable.
 
 Next feature:
-operation
+operation changeFile changes one part of a file (must be called multiple times for multiple changes)
+parameters:
+- content : the replacement for the part of the file demarked by the other parameters. Optional - if empty the part of the file is deleted.
+- startLineRegex (optional)
+- startLineOffset (optional, default 0, can be negative)
+- endLineRegex (optional)
+- endLineOffset (optional, default 0, can be negative)
+
+This will change the content of a file between two lines, excluding those lines, with the given content.
+The lines are identified by a optional regex and an offset.
+If the startLineRegex or endLineRegex is not given, we take the start of the file. as the position.
+If the startLineRegex or endLineRegex matches several lines in the file, that is an error.
+
+Important cases:
+start of file until given line
+given line until end of file
+some line until other line
+line number x until line number y
+change whole file
+insertion at specific line or start of the file
+append to file
+replace last n lines
+
+Please make a list with what parameters each of these cases can be covered, or mark the cases that are not covered.
+
+---
+More operations:
+search and replace in file
+rename file, delete file
