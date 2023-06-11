@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -30,8 +31,8 @@ import com.sun.net.httpserver.HttpServer;
  * To use this, you need to have registered as a plugin developer, and add this with "Develop your own plugin" in the ChatGPT web interface.
  * Start it in the directory you want to access, then use the plugin in ChatGPT.
  * <p>
- * Check OpenAPI description with curl -is http://localhost:3000/filemanagerplugin.yaml , and the plugin description with
- * curl -is http://localhost:3000/.well-known/ai-plugin.json .
+ * Check OpenAPI description with curl -is http://localhost:3001/filemanagerplugin.yaml , and the plugin description with
+ * curl -is http://localhost:3001/.well-known/ai-plugin.json .
  * </p>
  */
 public class FileManagerPlugin implements HttpHandler {
@@ -39,13 +40,13 @@ public class FileManagerPlugin implements HttpHandler {
     public static final String USAGE = """
             Usage: java FileManagerPlugin [PORT] [-h|--help]
             Description: Plugin for ChatGPT that can access the files in the directory it is started in.
-            Arguments: PORT the port to listen on, default 3000.
+            Arguments: PORT the port to listen on, default 3001.
             Options: -h or --help print this help message.
             """;
 
     private static final Pattern IGNORE = Pattern.compile(".*/[.].*");
 
-    int port = 3000;
+    int port = 3001;
 
     final String AIPLUGIN_JSON = """
             {
@@ -93,7 +94,7 @@ public class FileManagerPlugin implements HttpHandler {
             System.exit(0);
         }
         FileManagerPlugin handler = new FileManagerPlugin();
-        handler.port = args.length > 0 ? Integer.parseInt(args[0]) : 3000;
+        handler.port = args.length > 0 ? Integer.parseInt(args[0]) : 3001;
         HttpServer server = HttpServer.create(new InetSocketAddress(handler.port), 0);
         server.createContext("/", handler);
         server.setExecutor(null);
@@ -193,7 +194,7 @@ public class FileManagerPlugin implements HttpHandler {
         }
     }
 
-    // curl -is http://localhost:3000/listFiles?path=.
+    // curl -is http://localhost:3001/listFiles?path=.
     private final AbstractPluginOperation LIST_FILES = new AbstractPluginOperation() {
         {
             handlers.put("/listFiles", this);
@@ -243,7 +244,7 @@ public class FileManagerPlugin implements HttpHandler {
         }
     };
 
-    // curl -is http://localhost:3000/readFile?path=somefile.txt
+    // curl -is http://localhost:3001/readFile?path=somefile.txt
     private final AbstractPluginOperation READ_FILE = new AbstractPluginOperation() {
         {
             handlers.put("/readFile", this);
@@ -289,7 +290,7 @@ public class FileManagerPlugin implements HttpHandler {
     /**
      * An operation /reason that might or might not be good to introduce a REACT like pattern - it just gets a text on stdin and writes that to stdout.
      */
-    // curl -is http://localhost:3000/reason -d "{\"reason\": \"testreason\"}"
+    // curl -is http://localhost:3001/reason -d "{\"reason\": \"testreason\"}"
     private final AbstractPluginOperation GIVE_REASON = new AbstractPluginOperation() {
         {
             handlers.put("/reason", this);
@@ -324,8 +325,10 @@ public class FileManagerPlugin implements HttpHandler {
         }
     };
 
-    /** an operation that writes the message into the file at path. */
-    // curl -is http://localhost:3000/writeFile?path=testfile -d '{"content":"testcontent line one\nline two\n"}'
+    /**
+     * an operation that writes the message into the file at path.
+     */
+    // curl -is http://localhost:3001/writeFile?path=testfile -d '{"content":"testcontent line one\nline two\n"}'
     private final AbstractPluginOperation WRITEFILE = new AbstractPluginOperation() {
         {
             handlers.put("/writeFile", this);
@@ -353,14 +356,36 @@ public class FileManagerPlugin implements HttpHandler {
                           responses:
                             '204':
                               description: File written
+                            '422':
+                              description: The request body was not a valid JSON object with a content property
                     """.stripIndent());
         }
+
+        /**
+         * Content JSON is  e.g. {"content":"Sunlight warms the day,\nClouds dance in the azure sky,\nWeather's gentle play."}
+         * We transform to real text by matching that with regex. The regex should match the whole thing including braces, possibly whitespace before and after and at places where it doesn't hurt the JSON
+         */
+        static final Pattern CONTENT_PATTERN = Pattern.compile("\\s*\\{\\s*\"content\"\\s*:\\s*\"([^\"]*)\"\\s*\\}\\s*");
 
         public void handle(HttpExchange exchange) throws IOException {
             exchange.getResponseHeaders().add("Content-Type", "text/plain; charset=utf-8");
             exchange.sendResponseHeaders(204, -1);
             try (InputStream is = exchange.getRequestBody()) {
-                String content = new String(is.readAllBytes(), UTF_8);
+                String json = new String(is.readAllBytes(), UTF_8);
+                Matcher matcher = CONTENT_PATTERN.matcher(json);
+                if (!matcher.matches()) { // send 422
+                    exchange.sendResponseHeaders(422, 0);
+                    exchange.getResponseBody().write("The request body was not a valid JSON object with a content property".getBytes());
+                    return;
+                }
+                String content = matcher.group(1);
+                // unquote quoted characters \n, \t, \", \\, \b, \f, \r in content
+                content = content.replaceAll("\\\\n", "\n");
+                content = content.replaceAll("\\\\t", "\t");
+                content = content.replaceAll("\\\\\"", "\"");
+                content = content.replaceAll("\\\\\\\\", "\\\\");
+                content = content.replaceAll("\\\\b", "\b");
+                content = content.replaceAll("\\\\f", "\f");
                 Path path = getPath(exchange);
                 Files.write(path, content.getBytes(UTF_8), CREATE, WRITE, TRUNCATE_EXISTING);
             }
