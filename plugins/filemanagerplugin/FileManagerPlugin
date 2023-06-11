@@ -40,8 +40,7 @@ public class DirReaderPlugin implements HttpHandler {
             Options: -h or --help print this help message.
             """;
 
-    // regex matching paths that contain a file starting with a dot.
-    private static final Pattern IGNORE = Pattern.compile("/[^/]*\\.[^/]*");
+    private static final Pattern IGNORE = Pattern.compile(".*/[.].*");
 
     int port = 3000;
 
@@ -228,7 +227,7 @@ public class DirReaderPlugin implements HttpHandler {
                 exchange.sendResponseHeaders(200, 0);
                 List<String> files = Files.walk(path)
                         .filter(Files::isRegularFile)
-                        .filter(p -> IGNORE.matcher(p.toString()).matches())
+                        .filter(p -> !IGNORE.matcher(p.toString()).matches())
                         .map(p -> currentDir.relativize(p).toString())
                         .collect(Collectors.toList());
                 String response = "[\n" + files.stream().map(this::jsonRep).collect(Collectors.joining(",\n")) + "\n]";

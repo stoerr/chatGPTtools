@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 overwrite=false
 # if the first argument is -o, overwrite the expected files: set overwrite to true
+# used for initialization of the tests
 if [ "$1" == "-o" ]; then
     overwrite=true
 fi
@@ -45,6 +46,8 @@ function executetest() {
 executetest /.well-known/ai-plugin.json "" ../ai-plugin.json
 executetest /dirreaderplugin.yaml "" ../dirreaderplugin.yaml
 executetest /listFiles?path=. "" listFiles.json
+executetest /listFiles?path=subdir "" listFilesSubdir.json
+
 
 # if there are failures, print them out and exit with a non-zero exit code
 if [ -n "$failures" ]; then
