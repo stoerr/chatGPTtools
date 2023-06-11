@@ -1,15 +1,15 @@
 {
     "schema_version": "v1",
-    "name_for_human": "Directory Reader 2",
-    "name_for_model": "dirreader",
-    "description_for_human": "Read a directory and its files.",
-    "description_for_model": "Help the user with inspecting and processing a directories files. You can list and read files and send reasons. Before each operation with the dirreader plugin please be sure to always send a reason why you're performing the operation.",
+    "name_for_human": "File Manager",
+    "name_for_model": "filemanager",
+    "description_for_human": "Read and write a directory and its files.",
+    "description_for_model": "Help the user with inspecting and processing a directories files. You can list and read and write files.",
     "auth": {
         "type": "none"
     },
     "api": {
         "type": "openapi",
-        "url": "http://localhost:7364/dirreaderplugin.yaml"
+        "url": "http://localhost:7364/filemanager.yaml"
     },
     "logo_url": "https://d1q6f0aelx0por.cloudfront.net/product-logos/library-hello-world-logo.png",
     "contact_email": "yu4cheem@techno.ms",
