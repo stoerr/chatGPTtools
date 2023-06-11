@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
+# We run the FileManager in testdir and execute a number of tests with curl and
+# compare the output to the expected output in test-expected
+#
+# If the first argument is -o, overwrite the expected files to adapt them to the tests: set overwrite to true
+
 overwrite=false
-# if the first argument is -o, overwrite the expected files: set overwrite to true
-# used for initialization of the tests
 if [ "$1" == "-o" ]; then
     overwrite=true
 fi
@@ -34,16 +37,14 @@ function executetest() {
     echo
     echo "Testing $url"
     curl -s $args $url -o $actual
-    echo >> $actual
-    # if expected does not exist, copy actual to expected and add failure
+
     if ! diff -u $expected $actual; then
         failures="$failures $expected"
-    fi
-    # if expected does not exist or overwrite is true, overwrite expected with actual
-    if [ ! -f $expected ] || [ "$overwrite" == "true" ]; then
-        cp $actual $expected
-        echo "CREATED: $expected"
-        failures="$failures $expected"
+        # if overwrite is true, overwrite expected with actual
+        if [ "$overwrite" == "true" ]; then
+            cp $actual $expected
+            echo "OVERWRITTEN: $expected"
+        fi
     fi
 }
 
@@ -51,6 +52,7 @@ executetest /.well-known/ai-plugin.json "" ai-plugin.json
 executetest /dirreaderplugin.yaml "" dirreaderplugin.yaml
 executetest /listFiles?path=. "" listFiles.json
 executetest /listFiles?path=subdir "" listFilesSubdir.json
+executetest /readFile?path=firstfile.txt "" getFirstfile.txt
 
 # if there are failures, print them out and exit with a non-zero exit code
 if [ -n "$failures" ]; then
