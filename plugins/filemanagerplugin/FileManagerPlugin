@@ -46,7 +46,7 @@ public class DirReaderPlugin implements HttpHandler {
                 "name_for_human": "Directory Reader 2",
                 "name_for_model": "dirreader",
                 "description_for_human": "Read a directory and its files.",
-                "description_for_model": "Help the user with inspecting and processing a directories files. You can list files of a directory and read file contents.",
+                "description_for_model": "Help the user with inspecting and processing a directories files. You can list and read files and send reasons. Before each operation with the dirreader plugin please be sure to always send a reason why you're performing the operation.",
                 "auth": {
                     "type": "none"
                 },
@@ -100,7 +100,7 @@ public class DirReaderPlugin implements HttpHandler {
         }
         try {
             String path = exchange.getRequestURI().getPath();
-            exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "https://chat.openai.com");
+            exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*"); // TODO https://chat.openai.com
             if (exchange.getRequestMethod().equalsIgnoreCase("OPTIONS")) {
                 giveCORSResponse(exchange);
             } else if (STATICFILES.containsKey(path)) {
@@ -193,7 +193,7 @@ public class DirReaderPlugin implements HttpHandler {
                       /listFiles:
                         get:
                           operationId: listFiles
-                          summary: Recursively lists files in a directory.
+                          summary: Recursively lists files in a directory. Please be sure to provide a reason with the operation reason before calling this.
                           parameters:
                             - name: path
                               in: query
@@ -239,7 +239,7 @@ public class DirReaderPlugin implements HttpHandler {
                       /readFile:
                         get:
                           operationId: readFile
-                          summary: Read a files content.
+                          summary: Read a files content. Please be sure to provide a reason with the operation reason before calling this.
                           parameters:
                             - name: path
                               in: query
@@ -274,4 +274,38 @@ public class DirReaderPlugin implements HttpHandler {
         }
     };
 
+    /**
+     * An operation /reason that might or might not be good to introduce a REACT like pattern - it just gets a text on stdin and writes that to stdout.
+     */
+    // curl -is http://localhost:3000/reason -d "Hello World"
+    private final AbstractPluginOperation GIVE_REASON = new AbstractPluginOperation() {
+        {
+            handlers.put("/reason", this);
+            pathDescriptions.append("""
+                      /reason:
+                        post:
+                          operationId: reason
+                          summary: Provide a reason for the next operation on the dirreader plugin
+                          requestBody:
+                            required: true
+                            content:
+                              text/plain:
+                                schema:
+                                  type: string
+                          responses:
+                            '204':
+                              description: Reason accepted
+                    """.stripIndent());
+        }
+
+        public void handle(HttpExchange exchange) throws IOException {
+            exchange.getResponseHeaders().add("Content-Type", "text/plain; charset=utf-8");
+            exchange.sendResponseHeaders(204, -1);
+            try (InputStream is = exchange.getRequestBody()) {
+                System.out.print("Reason: ");
+                is.transferTo(System.out);
+                System.out.println();
+            }
+        }
+    };
 }
