@@ -220,7 +220,7 @@ public class FileManagerPlugin implements HttpHandler {
                                 type: string
                             - name: grepRegex
                               in: query
-                              description: regex to filter file content
+                              description: q
                               required: false
                               schema:
                                 type: string
@@ -257,7 +257,7 @@ public class FileManagerPlugin implements HttpHandler {
                                 return true;
                             } else {
                                 try (Stream<String> lines = Files.lines(p)) {
-                                    return lines.anyMatch(line -> grepPattern.matcher(line).matches());
+                                    return lines.anyMatch(line -> grepPattern.matcher(line).find());
                                 } catch (IOException e) {
                                     throw new UncheckedIOException(e);
                                 }
