@@ -11,10 +11,13 @@ port=7364
 # cd to the directory of the script
 cd "$(dirname "$0")"
 # start the app
+cd testdir
 ../FileManagerPlugin $port &
 # save the pid of the app
 pid=$!
 trap "kill $pid" EXIT
+cd ..
+mkdir -p test-expected/.tmp
 
 # wait for the app to start
 sleep 1
@@ -26,9 +29,10 @@ failures=""
 function executetest() {
     url="$baseurl$1"
     args="$2"
-    expected="$3"
-    actual=".tmp/$(basename $expected)"
-    echo "testing $url"
+    expected="test-expected/$3"
+    actual="test-expected/.tmp/$(basename $expected)"
+    echo
+    echo "Testing $url"
     curl -s $args $url -o $actual
     echo >> $actual
     # if expected does not exist, copy actual to expected and add failure
@@ -43,11 +47,10 @@ function executetest() {
     fi
 }
 
-executetest /.well-known/ai-plugin.json "" ../ai-plugin.json
-executetest /dirreaderplugin.yaml "" ../dirreaderplugin.yaml
+executetest /.well-known/ai-plugin.json "" ai-plugin.json
+executetest /dirreaderplugin.yaml "" dirreaderplugin.yaml
 executetest /listFiles?path=. "" listFiles.json
 executetest /listFiles?path=subdir "" listFilesSubdir.json
-
 
 # if there are failures, print them out and exit with a non-zero exit code
 if [ -n "$failures" ]; then
