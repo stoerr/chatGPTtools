@@ -115,7 +115,7 @@ public class DirReaderPlugin implements HttpHandler {
             } else if (path.equals("/")) {
                 exchange.getResponseHeaders().add("Content-Type", "text/html");
                 exchange.sendResponseHeaders(200, 0);
-                exchange.getResponseBody().write("<html><body><h1>DirReaderPlugin</h1><p>See <a href=\"/.well-known/ai-plugin.json\">/.well-known/ai-plugin.json</a> for the plugin description.</p></body></html>".getBytes());
+                exchange.getResponseBody().write("<html><body><h1>DirReaderPlugin</h1><p>See <a href=\"/.well-known/ai-plugin.json\">/.well-known/ai-plugin.json</a> for the plugin description.</p></body></html>\n".getBytes());
             } else {
                 exchange.getResponseHeaders().add("Content-Type", "text/plain");
                 exchange.sendResponseHeaders(404, 0);

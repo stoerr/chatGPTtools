@@ -53,6 +53,13 @@ executetest /dirreaderplugin.yaml "" dirreaderplugin.yaml
 executetest /listFiles?path=. "" listFiles.json
 executetest /listFiles?path=subdir "" listFilesSubdir.json
 executetest /readFile?path=firstfile.txt "" getFirstfile.txt
+executetest / "" index.html
+executetest /unknown "" unknown
+
+# cannot really test this because that has no output, just logs to stdoud, but maybe we'll notice
+echo
+echo expecting output "testreason"
+curl -s $baseurl/reason '-d {\"reason\": \"testreason\"}'
 
 # if there are failures, print them out and exit with a non-zero exit code
 if [ -n "$failures" ]; then
