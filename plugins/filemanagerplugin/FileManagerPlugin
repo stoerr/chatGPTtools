@@ -73,7 +73,7 @@ public class FileManagerPlugin implements HttpHandler {
     final String OPENAPI_DESCR_START = """
             openapi: 3.0.1
             info:
-              title: ReadDir ChatGPT Plugin
+              title: FileManager ChatGPT Plugin
               description: A plugin that allows the user to inspect a directory and read the contents of files using ChatGPT
               version: 1.0.0
             servers:
@@ -336,9 +336,9 @@ public class FileManagerPlugin implements HttpHandler {
                               application/json:
                                 schema:
                                   type: object
-                                properties:
-                                    reason:
-                                    type: string
+                                  properties:
+                                    content:
+                                      type: string
                           responses:
                             '204':
                               description: Reason accepted
