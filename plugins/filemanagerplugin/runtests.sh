@@ -37,6 +37,7 @@ function executetest() {
     echo
     echo "Testing $url"
     curl -s $args $url -o $actual
+    touch $actual # for some requests that's empty and isn't created
 
     if ! diff -u $expected $actual; then
         failures="$failures $expected"
@@ -56,9 +57,13 @@ executetest /readFile?path=firstfile.txt "" getFirstfile.txt
 executetest / "" index.html
 executetest /unknown "" unknown
 
+echo
+echo Testing write: we get a 204 and then read the file back
+rm -f testdir/filewritten.txt
+curl -is $baseurl/writeFile?path=filewritten.txt -d '{"content":"testcontent line one\nline two\n"}'
+executetest /readFile?path=filewritten.txt "" filewritten.txt
 
-
-# cannot really test this because that has no output, just logs to stdoud, but maybe we'll notice
+# cannot really test this because that has no output,http://localhost:3001 just logs to stdoud, but maybe we'll notice
 echo
 echo expecting output "testreason"
 curl -s $baseurl/reason -d '{\"reason\": \"testreason\"}'
