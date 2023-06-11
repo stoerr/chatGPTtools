@@ -7,6 +7,7 @@ import static java.nio.file.StandardOpenOption.WRITE;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.nio.file.Files;
@@ -20,6 +21,7 @@ import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -54,7 +56,7 @@ public class FileManagerPlugin implements HttpHandler {
                 "name_for_human": "File Manager",
                 "name_for_model": "filemanager",
                 "description_for_human": "Read and write a directory and its files.",
-                "description_for_model": "Help the user with inspecting and processing a directories files. You can list and read and write files.",
+                "description_for_model": "Help the user with inspecting and processing a directories files. You can list and read and write files. Do only write files at the explicit request of the user, and before changing the file print what changes you are going to make and ask for confirmation.",
                 "auth": {
                     "type": "none"
                 },
@@ -210,6 +212,18 @@ public class FileManagerPlugin implements HttpHandler {
                               required: true
                               schema:
                                 type: string
+                            - name: filenameRegex
+                              in: query
+                              description: regex to filter file names
+                              required: false
+                              schema:
+                                type: string
+                            - name: grepRegex
+                              in: query
+                              description: regex to filter file content
+                              required: false
+                              schema:
+                                type: string
                           responses:
                             '200':
                               description: List of relative paths of the files
@@ -225,13 +239,30 @@ public class FileManagerPlugin implements HttpHandler {
         }
 
         public void handle(HttpExchange exchange) throws IOException {
+            Map<String, String> queryParams = getQueryParams(exchange);
             Path path = getPath(exchange);
+            String filenameRegex = queryParams.get("filenameRegex");
+            String grepRegex = queryParams.get("grepRegex");
+            Pattern filenamePattern = filenameRegex != null ? Pattern.compile(filenameRegex) : null;
+            Pattern grepPattern = grepRegex != null ? Pattern.compile(grepRegex) : null;
+
             if (Files.isDirectory(path)) {
                 exchange.getResponseHeaders().add("Content-Type", "application/json; charset=utf-8");
                 exchange.sendResponseHeaders(200, 0);
                 List<String> files = Files.walk(path)
                         .filter(Files::isRegularFile)
-                        .filter(p -> !IGNORE.matcher(p.toString()).matches())
+                        .filter(p -> filenamePattern == null || filenamePattern.matcher(p.getFileName().toString()).matches())
+                        .filter(p -> {
+                            if (grepPattern == null) {
+                                return true;
+                            } else {
+                                try (Stream<String> lines = Files.lines(p)) {
+                                    return lines.anyMatch(line -> grepPattern.matcher(line).matches());
+                                } catch (IOException e) {
+                                    throw new UncheckedIOException(e);
+                                }
+                            }
+                        })
                         .map(p -> currentDir.relativize(p).toString())
                         .collect(Collectors.toList());
                 String response = "[\n" + files.stream().map(this::jsonRep).collect(Collectors.joining(",\n")) + "\n]\n";

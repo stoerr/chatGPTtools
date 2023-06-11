@@ -3,7 +3,7 @@
     "name_for_human": "File Manager",
     "name_for_model": "filemanager",
     "description_for_human": "Read and write a directory and its files.",
-    "description_for_model": "Help the user with inspecting and processing a directories files. You can list and read and write files.",
+    "description_for_model": "Help the user with inspecting and processing a directories files. You can list and read and write files. Do only write files at the explicit request of the user, and before changing the file print what changes you are going to make and ask for confirmation.",
     "auth": {
         "type": "none"
     },

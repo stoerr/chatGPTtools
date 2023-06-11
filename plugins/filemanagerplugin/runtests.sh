@@ -57,6 +57,10 @@ executetest /readFile?path=firstfile.txt "" getFirstfile.txt
 executetest / "" index.html
 executetest /unknown "" unknown
 
+executetest "/listFiles?path=.&filenameRegex=.*%5C.txt" "" listFilesFilenameRegex.json
+executetest '/listFiles?path=.&grepRegex=testcontent' "" listFilesGrepRegex.json
+executetest "/listFiles?path=.&filenameRegex=.*%5C.txt&grepRegex=testcontent" "" listFilesBothRegex.json
+
 echo
 echo Testing write: we get a 204 and then read the file back
 rm -f testdir/filewritten.txt
