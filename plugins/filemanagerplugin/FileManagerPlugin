@@ -14,7 +14,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -37,6 +39,9 @@ public class DirReaderPlugin implements HttpHandler {
             Arguments: PORT the port to listen on, default 3000.
             Options: -h or --help print this help message.
             """;
+
+    // regex matching paths that contain a file starting with a dot.
+    private static final Pattern IGNORE = Pattern.compile("/[^/]*\\.[^/]*");
 
     int port = 3000;
 
@@ -221,7 +226,11 @@ public class DirReaderPlugin implements HttpHandler {
             if (Files.isDirectory(path)) {
                 exchange.getResponseHeaders().add("Content-Type", "application/json; charset=utf-8");
                 exchange.sendResponseHeaders(200, 0);
-                List<String> files = Files.walk(path).filter(Files::isRegularFile).map(p -> currentDir.relativize(p).toString()).collect(Collectors.toList());
+                List<String> files = Files.walk(path)
+                        .filter(Files::isRegularFile)
+                        .filter(p -> IGNORE.matcher(p.toString()).matches())
+                        .map(p -> currentDir.relativize(p).toString())
+                        .collect(Collectors.toList());
                 String response = "[\n" + files.stream().map(this::jsonRep).collect(Collectors.joining(",\n")) + "\n]";
                 exchange.getResponseBody().write(response.getBytes(UTF_8));
             } else {
