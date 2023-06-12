@@ -1,7 +1,6 @@
 [
 "firstfile.txt",
 "filewritten.txt",
-".ignoreddotfile",
 "secondfile.md",
 "subdir/fileinsubdir.md"
 ]

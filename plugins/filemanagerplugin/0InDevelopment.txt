@@ -28,10 +28,11 @@ Please make a list with what parameters each of these cases can be covered, or m
 
 ---
 More operations:
-search and replace in file
+search and replace in file or file tree
 rename file, delete file
 
 --- more changes:
 Add excludeRegex to file list
 Add recursive (default = false) to file list. Ouch: then that should list directories, too!
-Refactor into an actual project as this becomes unmanageable.
+Refactor into an actual project as this becomes unmanageable. Perhaps integration of scripts like
+    https://www.chatpc.ai/docs/macos/getting-started/
