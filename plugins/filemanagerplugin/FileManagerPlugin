@@ -101,7 +101,7 @@ public class FileManagerPlugin implements HttpHandler {
         server.createContext("/", handler);
         server.setExecutor(null);
         server.start();
-        System.out.println("Server started on http://localhost:" + handler.port + "/");
+        System.out.println("Server started on http://localhost:" + handler.port + "/ in " + handler.currentDir);
     }
 
     @Override
@@ -251,6 +251,7 @@ public class FileManagerPlugin implements HttpHandler {
                 exchange.sendResponseHeaders(200, 0);
                 List<String> files = Files.walk(path)
                         .filter(Files::isRegularFile)
+                        .filter(p -> !IGNORE.matcher(p.toString()).matches())
                         .filter(p -> filenamePattern == null || filenamePattern.matcher(p.getFileName().toString()).matches())
                         .filter(p -> {
                             if (grepPattern == null) {
