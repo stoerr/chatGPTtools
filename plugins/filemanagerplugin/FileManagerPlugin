@@ -104,6 +104,18 @@ public class FileManagerPlugin implements HttpHandler {
         System.out.println("Server started on http://localhost:" + handler.port + "/ in " + handler.currentDir);
     }
 
+    FileManagerPlugin() {
+        register(new ListFilesOperation());
+        register(new ReadFileOperation());
+        register(new WriteFileOperation());
+        register(new GiveReasonOperation());
+    }
+
+    void register(AbstractPluginOperation operation) {
+        handlers.put(operation.getUrl(), operation);
+        pathDescriptions.append(operation.openApiDescription());
+    }
+
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         if (!"OPTIONS".equals(exchange.getRequestMethod())) {
@@ -165,10 +177,22 @@ public class FileManagerPlugin implements HttpHandler {
         exchange.close();
     }
 
-    private abstract class AbstractPluginOperation {
+    static abstract class AbstractPluginOperation {
+        protected final Path currentDir = Path.of(".").normalize().toAbsolutePath();
+
         public abstract void handle(HttpExchange exchange) throws IOException;
 
-        Map<String, String> getQueryParams(HttpExchange exchange) {
+        /**
+         * The URL it is deployed at, e.g. /listFiles.
+         */
+        public abstract String getUrl();
+
+        /**
+         * The OpenAPI description for this operation.
+         */
+        public abstract String openApiDescription();
+
+        protected Map<String, String> getQueryParams(HttpExchange exchange) {
             String query = exchange.getRequestURI().getQuery();
             if (query == null) {
                 return Collections.emptyMap();
@@ -176,7 +200,7 @@ public class FileManagerPlugin implements HttpHandler {
             return Arrays.stream(query.split("&")).map(s -> s.split("=")).collect(Collectors.toMap(a -> a[0], a -> URLDecoder.decode(a[1], UTF_8)));
         }
 
-        Path getPath(HttpExchange exchange) {
+        protected Path getPath(HttpExchange exchange) {
             String path = getQueryParams(exchange).get("path");
             Path resolved = currentDir.resolve(path).normalize().toAbsolutePath();
             if (!resolved.startsWith(currentDir)) {
@@ -185,7 +209,7 @@ public class FileManagerPlugin implements HttpHandler {
             return resolved;
         }
 
-        String jsonRep(String string) {
+        protected String jsonRep(String string) {
             string = string == null ? "" : string;
             string = string.replace("\b", "\\b")
                     .replace("\f", "\\f")
@@ -197,10 +221,16 @@ public class FileManagerPlugin implements HttpHandler {
     }
 
     // curl -is http://localhost:3001/listFiles?path=.
-    private final AbstractPluginOperation LIST_FILES = new AbstractPluginOperation() {
-        {
-            handlers.put("/listFiles", this);
-            pathDescriptions.append("""
+    static class ListFilesOperation extends AbstractPluginOperation {
+
+        @Override
+        public String getUrl() {
+            return "/listFiles";
+        }
+
+        @Override
+        public String openApiDescription() {
+            return """
                       /listFiles:
                         get:
                           operationId: listFiles
@@ -235,7 +265,7 @@ public class FileManagerPlugin implements HttpHandler {
                                       type: string
                             '404':
                               description: Directory not found
-                    """.stripIndent());
+                    """.stripIndent();
         }
 
         public void handle(HttpExchange exchange) throws IOException {
@@ -274,13 +304,19 @@ public class FileManagerPlugin implements HttpHandler {
                 return;
             }
         }
-    };
+    }
 
     // curl -is http://localhost:3001/readFile?path=somefile.txt
-    private final AbstractPluginOperation READ_FILE = new AbstractPluginOperation() {
-        {
-            handlers.put("/readFile", this);
-            pathDescriptions.append("""
+    static class ReadFileOperation extends AbstractPluginOperation {
+
+        @Override
+        public String getUrl() {
+            return "/readFile";
+        }
+
+        @Override
+        public String openApiDescription() {
+            return """
                       /readFile:
                         get:
                           operationId: readFile
@@ -301,7 +337,7 @@ public class FileManagerPlugin implements HttpHandler {
                                     type: string
                             '404':
                               description: File not found
-                    """.stripIndent());
+                    """.stripIndent();
         }
 
         public void handle(HttpExchange exchange) throws IOException {
@@ -317,16 +353,22 @@ public class FileManagerPlugin implements HttpHandler {
                 exchange.getResponseBody().write("File not found".getBytes());
             }
         }
-    };
+    }
 
     /**
      * An operation /reason that might or might not be good to introduce a REACT like pattern - it just gets a text on stdin and writes that to stdout.
      */
     // curl -is http://localhost:3001/reason -d "{\"reason\": \"testreason\"}"
-    private final AbstractPluginOperation GIVE_REASON = new AbstractPluginOperation() {
-        {
-            handlers.put("/reason", this);
-            pathDescriptions.append("""
+    static class GiveReasonOperation extends AbstractPluginOperation {
+
+        @Override
+        public String getUrl() {
+            return "/reason";
+        }
+
+        @Override
+        public String openApiDescription() {
+            return """
                       /reason:
                         post:
                           operationId: reason
@@ -343,7 +385,7 @@ public class FileManagerPlugin implements HttpHandler {
                           responses:
                             '204':
                               description: Reason accepted
-                    """.stripIndent());
+                    """.stripIndent();
         }
 
         public void handle(HttpExchange exchange) throws IOException {
@@ -355,16 +397,22 @@ public class FileManagerPlugin implements HttpHandler {
                 System.out.println();
             }
         }
-    };
+    }
 
     /**
      * an operation that writes the message into the file at path.
      */
     // curl -is http://localhost:3001/writeFile?path=testfile -d '{"content":"testcontent line one\nline two\n"}'
-    private final AbstractPluginOperation WRITEFILE = new AbstractPluginOperation() {
-        {
-            handlers.put("/writeFile", this);
-            pathDescriptions.append("""
+    static class WriteFileOperation extends AbstractPluginOperation {
+
+        @Override
+        public String getUrl() {
+            return "/writeFile";
+        }
+
+        @Override
+        public String openApiDescription() {
+            return """
                       /writeFile:
                         post:
                           operationId: writeFile
@@ -390,26 +438,26 @@ public class FileManagerPlugin implements HttpHandler {
                               description: File written
                             '422':
                               description: The request body was not a valid JSON object with a content property
-                    """.stripIndent());
+                    """.stripIndent();
         }
 
         /**
          * Content JSON is  e.g. {"content":"Sunlight warms the day,\nClouds dance in the azure sky,\nWeather's gentle play."}
          * We transform to real text by matching that with regex. The regex should match the whole thing including braces, possibly whitespace before and after and at places where it doesn't hurt the JSON
          */
-        static final Pattern CONTENT_PATTERN = Pattern.compile("\\s*\\{\\s*\"content\"\\s*:\\s*\"([^\"]*)\"\\s*\\}\\s*");
+        static final Pattern CONTENT_PATTERN = Pattern.compile("\\s*\\{\\s*\"content\"\\s*:\\s*\"(.*)\"\\s*\\}\\s*");
 
         public void handle(HttpExchange exchange) throws IOException {
-            exchange.getResponseHeaders().add("Content-Type", "text/plain; charset=utf-8");
-            exchange.sendResponseHeaders(204, -1);
             try (InputStream is = exchange.getRequestBody()) {
                 String json = new String(is.readAllBytes(), UTF_8);
                 Matcher matcher = CONTENT_PATTERN.matcher(json);
                 if (!matcher.matches()) { // send 422
+                    System.out.println("Broken JSON: " + json);
                     exchange.sendResponseHeaders(422, 0);
                     exchange.getResponseBody().write("The request body was not a valid JSON object with a content property".getBytes());
                     return;
                 }
+                exchange.sendResponseHeaders(204, -1);
                 String content = matcher.group(1);
                 // unquote quoted characters \n, \t, \", \\, \b, \f, \r in content
                 content = content.replaceAll("\\\\n", "\n");
@@ -419,8 +467,12 @@ public class FileManagerPlugin implements HttpHandler {
                 content = content.replaceAll("\\\\b", "\b");
                 content = content.replaceAll("\\\\f", "\f");
                 Path path = getPath(exchange);
+                if (!Files.exists(path.getParent())) {
+                    Files.createDirectories(path.getParent());
+                }
                 Files.write(path, content.getBytes(UTF_8), CREATE, WRITE, TRUNCATE_EXISTING);
+                System.out.println("Wrote file " + path);
             }
         }
-    };
+    }
 }
