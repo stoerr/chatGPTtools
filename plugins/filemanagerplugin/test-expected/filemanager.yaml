@@ -60,22 +60,6 @@ paths:
                 type: string
         '404':
           description: File not found
-  /reason:
-    post:
-      operationId: reason
-      summary: Provide a reason for the next operation on the filemanager plugin.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                content:
-                  type: string
-      responses:
-        '204':
-          description: Reason accepted
   /writeFile:
     post:
       operationId: writeFile
@@ -101,3 +85,19 @@ paths:
           description: File written
         '422':
           description: The request body was not a valid JSON object with a content property
+  /reason:
+    post:
+      operationId: reason
+      summary: Provide a reason for the next operation on the filemanager plugin.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+      responses:
+        '204':
+          description: Reason accepted
