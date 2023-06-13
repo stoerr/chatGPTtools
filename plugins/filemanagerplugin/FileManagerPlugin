@@ -1,4 +1,4 @@
-#!/usr/bin/env java --source 16
+#!/usr/bin/java --source 16
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.StandardOpenOption.CREATE;

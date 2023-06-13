@@ -1,4 +1,4 @@
-#!/usr/bin/env java --source 16
+#!/usr/bin/java --source 16
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -43,7 +43,7 @@ public class DirReaderPlugin implements HttpHandler {
     final String AIPLUGIN_JSON = """
             {
                 "schema_version": "v1",
-                "name_for_human": "Directory Reader 2",
+                "name_for_human": "Directory Reader",
                 "name_for_model": "dirreader",
                 "description_for_human": "Read a directory and its files.",
                 "description_for_model": "Help the user with inspecting and processing a directories files. You can list files of a directory and read file contents.",
@@ -162,12 +162,18 @@ public class DirReaderPlugin implements HttpHandler {
             if (query == null) {
                 return Collections.emptyMap();
             }
-            return Arrays.stream(query.split("&")).map(s -> s.split("=")).collect(Collectors.toMap(a -> a[0], a -> URLDecoder.decode(a[1], UTF_8)));
+            return Arrays.stream(query.split("&"))
+                    .map(s -> s.split("="))
+                    .filter(a -> a.length > 1)
+                    .collect(Collectors.toMap(a -> a[0], a -> URLDecoder.decode(a[1], UTF_8)));
         }
 
         Path getPath(HttpExchange exchange) {
             String path = getQueryParams(exchange).get("path");
-            Path resolved = currentDir.resolve(path).normalize().toAbsolutePath();
+            Path resolved = currentDir;
+            if (path != null && !path.isBlank()) {
+                resolved = currentDir.resolve(path).normalize().toAbsolutePath();
+            }
             if (!resolved.startsWith(currentDir)) {
                 throw new IllegalArgumentException("Path " + path + " is not in current directory " + currentDir);
             }
@@ -197,7 +203,7 @@ public class DirReaderPlugin implements HttpHandler {
                           parameters:
                             - name: path
                               in: query
-                              description: relative path to directory
+                              description: Optional a relative path to directory, if not specified all files are listed.
                               required: true
                               schema:
                                 type: string
