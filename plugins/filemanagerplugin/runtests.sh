@@ -64,7 +64,7 @@ executetest "/listFiles?path=.&filenameRegex=.*%5C.txt&grepRegex=testcontent" ""
 echo
 echo Testing write: we get a 204 and then read the file back
 rm -f testdir/filewritten.txt
-curl -is $baseurl/writeFile?path=filewritten.txt -d '{"content":"testcontent line one\nline two\n"}'
+curl -is $baseurl/writeFile?path=filewritten.txt -d '{"content":"testcontent line one\nline two \\\n with quoted backslashing \n"}'
 executetest /readFile?path=filewritten.txt "" filewritten.txt
 
 # cannot really test this because that has no output,http://localhost:3001 just logs to stdoud, but maybe we'll notice

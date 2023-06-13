@@ -46,7 +46,7 @@ public class FileManagerPlugin implements HttpHandler {
             Options: -h or --help print this help message.
             """;
 
-    private static final Pattern IGNORE = Pattern.compile(".*/[.].*");
+    private static final Pattern IGNORE = Pattern.compile(".*/[.].*|.*/target/.*");
 
     int port = 3001;
 
@@ -416,7 +416,7 @@ public class FileManagerPlugin implements HttpHandler {
                       /writeFile:
                         post:
                           operationId: writeFile
-                          summary: Write a file.
+                          summary: "Write a file."
                           parameters:
                             - name: path
                               in: query
@@ -443,9 +443,49 @@ public class FileManagerPlugin implements HttpHandler {
 
         /**
          * Content JSON is  e.g. {"content":"Sunlight warms the day,\nClouds dance in the azure sky,\nWeather's gentle play."}
-         * We transform to real text by matching that with regex. The regex should match the whole thing including braces, possibly whitespace before and after and at places where it doesn't hurt the JSON
+         * We extract the content string inside quotes.
          */
         static final Pattern CONTENT_PATTERN = Pattern.compile("\\s*\\{\\s*\"content\"\\s*:\\s*\"(.*)\"\\s*\\}\\s*");
+
+        // unquote quoted characters \n, \t, \", \\, \b, \f, \r
+        String unquoteJsoncontent(String content) {
+            StringBuilder buf = new StringBuilder();
+            for (int i = 0; i < content.length(); i++) {
+                char c = content.charAt(i);
+                if (c == '\\') {
+                    i++;
+                    c = content.charAt(i);
+                    switch (c) {
+                        case 'n':
+                            buf.append('\n');
+                            break;
+                        case 't':
+                            buf.append('\t');
+                            break;
+                        case '"':
+                            buf.append('"');
+                            break;
+                        case '\\':
+                            buf.append('\\');
+                            break;
+                        case 'b':
+                            buf.append('\b');
+                            break;
+                        case 'f':
+                            buf.append('\f');
+                            break;
+                        case 'r':
+                            buf.append('\r');
+                            break;
+                        default:
+                            throw new IllegalArgumentException("Unknown escape sequence \\" + c);
+                    }
+                } else {
+                    buf.append(c);
+                }
+            }
+            return buf.toString();
+        }
 
         public void handle(HttpExchange exchange) throws IOException {
             try (InputStream is = exchange.getRequestBody()) {
@@ -457,19 +497,12 @@ public class FileManagerPlugin implements HttpHandler {
                     exchange.getResponseBody().write("The request body was not a valid JSON object with a content property".getBytes());
                     return;
                 }
-                exchange.sendResponseHeaders(204, -1);
-                String content = matcher.group(1);
-                // unquote quoted characters \n, \t, \", \\, \b, \f, \r in content
-                content = content.replaceAll("\\\\n", "\n");
-                content = content.replaceAll("\\\\t", "\t");
-                content = content.replaceAll("\\\\\"", "\"");
-                content = content.replaceAll("\\\\\\\\", "\\\\");
-                content = content.replaceAll("\\\\b", "\b");
-                content = content.replaceAll("\\\\f", "\f");
+                String content = unquoteJsoncontent(matcher.group(1));
                 Path path = getPath(exchange);
                 if (!Files.exists(path.getParent())) {
                     Files.createDirectories(path.getParent());
                 }
+                exchange.sendResponseHeaders(204, -1);
                 Files.write(path, content.getBytes(UTF_8), CREATE, WRITE, TRUNCATE_EXISTING);
                 System.out.println("Wrote file " + path);
             }
