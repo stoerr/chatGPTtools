@@ -1,13 +1,21 @@
 # My ChatGPT tools
 
-These are some of growing set of personal tools and experiments around ChatGPT.
-This is primarily for my own use, and sparetime quick and dirty quality,
-so don't expect anything to be stable or even work, and various things are in German.
-But perhaps something is of use for you. If you'd like to know what I'm currently professionally doing with ChatGPT,
+These are some of growing set of tools and experiments around ChatGPT.
+I started writing this for my own use in my sparetime and am extending it whenever I need something,
+but most of that is already pretty stable, so you are welcome to use them, too!
+I'll mark things that are new and thus unstable.
+If you'd like to know what I'm professionally doing with ChatGPT,
 [this](https://github.com/ist-dresden/composum-chatgpt-integration) might be more interesting for you.
 
 If you find something interesting, please [contact me](http://www.stoerr.net/)!
-You will also find various ChatGPT related things on [my Blog](http://www.stoerr.net/blog.html).
+You will also find many ChatGPT related things on [my Blog](http://www.stoerr.net/blog.html).
+
+Disclaimer: You know how it is - this is one of my sparetime projects and you're not paying me for that, so no 
+warranties. But please do send me bug reports and suggestions.
+
+I'm happy if you use it, I'm even happier if you tell me about your experiences and maybe some successful 
+prompts or prompt fragments you used, and I'll jump up and down with joy if you link to my project or post about it 
+somewhere. :-)
 
 ## What's here
 
