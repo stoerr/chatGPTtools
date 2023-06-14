@@ -26,6 +26,7 @@ const numberToToken = new Map();
 const tokens = [];
 
 processLines(callback);
+main();
 
 function processLines(callback) {
     const fileContent = fs.readFileSync(__dirname + '/.cl100k_base.tiktoken', 'utf8');
@@ -57,8 +58,10 @@ function tokenize(input) {
             }
         }
         if (token === '') {
-            console.error('No token found for ', pos, input.substring(pos).length, input.substring(pos, pos + 128));
-            process.exit(1);
+            // no idea what ChatGPT does in this case. :-(
+            console.error('Warning: Character ignored, no token found at ', pos, ' of ', input.substring(pos).length, ' for first character of ', input.substring(pos, pos + 128));
+            pos++;
+            continue;
         }
         // console.log(token, tokenToNumber.get(token));
         pos += token.length;
@@ -146,10 +149,38 @@ function main() {
             console.log(shorten(input, numTokens, mode));
             break;
         }
+        // Now unofficial options that aren't in the usage but used for research
+        case '-charstats': {
+            printCharacterTokenStatistics(tokenize(readInput(process.argv[3])));
+            break;
+        }
         default:
             console.error('Unknown option:', option);
             console.log(usage);
     }
 }
 
-main();
+function printCharacterTokenStatistics(tokens) {
+    // for each character that occurs in the input, we want to estimate the average number of tokens that are needed to encode it
+    // that is, for each character in every token we calculate 1/length of token and the average that over all occurrences of the character
+    // we need to count the number of occurrences of each character in the input and
+    // the sum of the inverse of the length of each token that contains the character
+    const charCounts = new Map();
+    const charTokenRatioSum = new Map();
+    for (let i = 0; i < tokens.length; i++) {
+        const token = tokens[i];
+        for (let j = 0; j < token.length; j++) {
+            const char = token[j];
+            charCounts.set(char, (charCounts.get(char) || 0) + 1);
+            charTokenRatioSum.set(char, (charTokenRatioSum.get(char) || 0) + 1 / token.length);
+        }
+    }
+    const charTokenRatios = new Map();
+    for (const [char, count] of charCounts.entries()) {
+        charTokenRatios.set(char, charTokenRatioSum.get(char) / count);
+    }
+    const sorted = [...charTokenRatios.entries()].sort((a, b) => a[1] - b[1]);
+    for (const [char, ratio] of sorted) {
+        console.log(char, ratio);
+    }
+}
