@@ -178,7 +178,52 @@ public class FileManagerPlugin implements HttpHandler {
     }
 
     static abstract class AbstractPluginOperation {
+        /**
+         * Content JSON is  e.g. {"content":"Sunlight warms the day,\nClouds dance in the azure sky,\nWeather's gentle play."}
+         * We extract the content string inside quotes.
+         */
+        static final Pattern CONTENT_PATTERN = Pattern.compile("\\s*\\{\\s*\"content\"\\s*:\\s*\"(.*)\"\\s*\\}\\s*");
         protected final Path currentDir = Path.of(".").normalize().toAbsolutePath();
+
+        // unquote quoted characters \n, \t, \", \\, \b, \f, \r
+        String unquoteJsoncontent(String content) {
+            StringBuilder buf = new StringBuilder();
+            for (int i = 0; i < content.length(); i++) {
+                char c = content.charAt(i);
+                if (c == '\\') {
+                    i++;
+                    c = content.charAt(i);
+                    switch (c) {
+                        case 'n':
+                            buf.append('\n');
+                            break;
+                        case 't':
+                            buf.append('\t');
+                            break;
+                        case '"':
+                            buf.append('"');
+                            break;
+                        case '\\':
+                            buf.append('\\');
+                            break;
+                        case 'b':
+                            buf.append('\b');
+                            break;
+                        case 'f':
+                            buf.append('\f');
+                            break;
+                        case 'r':
+                            buf.append('\r');
+                            break;
+                        default:
+                            throw new IllegalArgumentException("Unknown escape sequence \\" + c);
+                    }
+                } else {
+                    buf.append(c);
+                }
+            }
+            return buf.toString();
+        }
 
         public abstract void handle(HttpExchange exchange) throws IOException;
 
@@ -439,52 +484,6 @@ public class FileManagerPlugin implements HttpHandler {
                             '422':
                               description: The request body was not a valid JSON object with a content property
                     """.stripIndent();
-        }
-
-        /**
-         * Content JSON is  e.g. {"content":"Sunlight warms the day,\nClouds dance in the azure sky,\nWeather's gentle play."}
-         * We extract the content string inside quotes.
-         */
-        static final Pattern CONTENT_PATTERN = Pattern.compile("\\s*\\{\\s*\"content\"\\s*:\\s*\"(.*)\"\\s*\\}\\s*");
-
-        // unquote quoted characters \n, \t, \", \\, \b, \f, \r
-        String unquoteJsoncontent(String content) {
-            StringBuilder buf = new StringBuilder();
-            for (int i = 0; i < content.length(); i++) {
-                char c = content.charAt(i);
-                if (c == '\\') {
-                    i++;
-                    c = content.charAt(i);
-                    switch (c) {
-                        case 'n':
-                            buf.append('\n');
-                            break;
-                        case 't':
-                            buf.append('\t');
-                            break;
-                        case '"':
-                            buf.append('"');
-                            break;
-                        case '\\':
-                            buf.append('\\');
-                            break;
-                        case 'b':
-                            buf.append('\b');
-                            break;
-                        case 'f':
-                            buf.append('\f');
-                            break;
-                        case 'r':
-                            buf.append('\r');
-                            break;
-                        default:
-                            throw new IllegalArgumentException("Unknown escape sequence \\" + c);
-                    }
-                } else {
-                    buf.append(c);
-                }
-            }
-            return buf.toString();
         }
 
         public void handle(HttpExchange exchange) throws IOException {
