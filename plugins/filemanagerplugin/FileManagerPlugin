@@ -5,8 +5,10 @@ import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.nio.file.StandardOpenOption.WRITE;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
@@ -109,6 +111,7 @@ public class FileManagerPlugin implements HttpHandler {
         register(new ReadFileOperation());
         register(new WriteFileOperation());
         register(new GiveReasonOperation());
+        register(new ExecuteActionOperation());
     }
 
     void register(AbstractPluginOperation operation) {
@@ -227,9 +230,6 @@ public class FileManagerPlugin implements HttpHandler {
 
         public abstract void handle(HttpExchange exchange) throws IOException;
 
-        /**
-         * The URL it is deployed at, e.g. /listFiles.
-         */
         public abstract String getUrl();
 
         /**
@@ -507,4 +507,96 @@ public class FileManagerPlugin implements HttpHandler {
             }
         }
     }
+
+    static class ExecuteActionOperation extends AbstractPluginOperation {
+
+        @Override
+        public String getUrl() {
+            return "/executeAction";
+        }
+
+        @Override
+        public String openApiDescription() {
+            return """
+                      /executeAction:
+                        post:
+                          operationId: executeAction
+                          summary: "Execute an action with given content as standard input. Only on explicit user request."
+                          parameters:
+                            - name: actionName
+                              in: query
+                              description: name of the action to be executed
+                              required: true
+                              schema:
+                                type: string
+                          requestBody:
+                            required: true
+                            content:
+                              application/json:
+                                schema:
+                                  type: object
+                                  properties:
+                                    content:
+                                      type: string
+                          responses:
+                            '200':
+                              description: Action executed successfully, output returned
+                              content:
+                                text/plain:
+                                  schema:
+                                    type: string
+                            '400':
+                              description: Action not found
+                            '500':
+                              description: Action execution failed, output returned
+                    """.stripIndent();
+        }
+
+        public void handle(HttpExchange exchange) throws IOException {
+            Map<String, String> queryParams = getQueryParams(exchange);
+            String actionName = queryParams.get("actionName");
+            Path path = currentDir.resolve(".cgptfmgr/" + actionName + ".sh");
+
+            if (!Files.exists(path)) {
+                exchange.sendResponseHeaders(400, 0);
+                exchange.getResponseBody().write("File not found".getBytes());
+                return;
+            }
+
+            try (InputStream is = exchange.getRequestBody()) {
+                String json = new String(is.readAllBytes(), UTF_8);
+                Matcher matcher = CONTENT_PATTERN.matcher(json);
+                if (!matcher.matches()) {
+                    exchange.sendResponseHeaders(422, 0);
+                    exchange.getResponseBody().write("The request body was not a valid JSON object with a content property".getBytes());
+                    return;
+                }
+                String content = unquoteJsoncontent(matcher.group(1));
+
+                ProcessBuilder pb = new ProcessBuilder("/bin/sh", path.toString());
+                pb.redirectErrorStream(true);
+                Process process = pb.start();
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
+                writer.write(content);
+                writer.close();
+
+                int exitCode = process.waitFor();
+                InputStream inputStream = process.getInputStream();
+                String output = new String(inputStream.readAllBytes(), UTF_8);
+
+                if (exitCode == 200) {
+                    exchange.getResponseHeaders().add("Content-Type", "text/plain; charset=utf-8");
+                    exchange.sendResponseHeaders(200, output.length());
+                    exchange.getResponseBody().write(output.getBytes());
+                } else {
+                    String response = "Execution failed with exit code " + exitCode + ": " + output;
+                    exchange.sendResponseHeaders(500, response.length());
+                    exchange.getResponseBody().write(response.getBytes());
+                }
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
 }
