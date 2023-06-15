@@ -565,14 +565,16 @@ public class FileManagerPlugin implements HttpHandler {
 
             try (InputStream is = exchange.getRequestBody()) {
                 String json = new String(is.readAllBytes(), UTF_8);
-                Matcher matcher = CONTENT_PATTERN.matcher(json);
-                if (!matcher.matches()) {
-                    exchange.sendResponseHeaders(422, 0);
-                    exchange.getResponseBody().write("The request body was not a valid JSON object with a content property".getBytes());
-                    return;
+                String content = "";
+                if (json != null && !json.isBlank() && !json.trim().replaceAll("\s+", "").equals("{}")) {
+                    Matcher matcher = CONTENT_PATTERN.matcher(json);
+                    if (!matcher.matches()) {
+                        exchange.sendResponseHeaders(422, 0);
+                        exchange.getResponseBody().write(("The request body was not a valid JSON object with a content property: " + json).getBytes());
+                        return;
+                    }
+                    content = unquoteJsoncontent(matcher.group(1));
                 }
-                String content = unquoteJsoncontent(matcher.group(1));
-
                 ProcessBuilder pb = new ProcessBuilder("/bin/sh", path.toString());
                 pb.redirectErrorStream(true);
                 Process process = pb.start();
