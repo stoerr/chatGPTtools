@@ -63,7 +63,7 @@ paths:
   /writeFile:
     post:
       operationId: writeFile
-      summary: Write a file.
+      summary: "Write a file."
       parameters:
         - name: path
           in: query
@@ -101,3 +101,34 @@ paths:
       responses:
         '204':
           description: Reason accepted
+  /executeAction:
+    post:
+      operationId: executeAction
+      summary: "Execute an action with given content as standard input. Only on explicit user request."
+      parameters:
+        - name: actionName
+          in: query
+          description: name of the action to be executed
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+      responses:
+        '200':
+          description: Action executed successfully, output returned
+          content:
+            text/plain:
+              schema:
+                type: string
+        '400':
+          description: Action not found
+        '500':
+          description: Action execution failed, output returned

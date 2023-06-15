@@ -559,7 +559,7 @@ public class FileManagerPlugin implements HttpHandler {
 
             if (!Files.exists(path)) {
                 exchange.sendResponseHeaders(400, 0);
-                exchange.getResponseBody().write("File not found".getBytes());
+                exchange.getResponseBody().write(("Action " + actionName + " not found").getBytes());
                 return;
             }
 
@@ -584,7 +584,7 @@ public class FileManagerPlugin implements HttpHandler {
                 InputStream inputStream = process.getInputStream();
                 String output = new String(inputStream.readAllBytes(), UTF_8);
 
-                if (exitCode == 200) {
+                if (exitCode == 0) {
                     exchange.getResponseHeaders().add("Content-Type", "text/plain; charset=utf-8");
                     exchange.sendResponseHeaders(200, output.length());
                     exchange.getResponseBody().write(output.getBytes());

@@ -67,7 +67,11 @@ rm -f testdir/filewritten.txt
 curl -is $baseurl/writeFile?path=filewritten.txt -d '{"content":"testcontent line one\nline two \\\n with quoted backslashing \n"}'
 executetest /readFile?path=filewritten.txt "" filewritten.txt
 
-# cannot really test this because that has no output,http://localhost:3001 just logs to stdoud, but maybe we'll notice
+executetest "/executeAction?actionName=helloworld" '-d {"content":"testinput"}' executeAction.txt
+executetest "/executeAction?actionName=notthere" '-d {"content":"testinput"}' executeActionNotThere.txt
+executetest "/executeAction?actionName=fail" '-d {"content":"testinput"}' executeActionFail.txt
+
+# cannot really test testreason because that has no output,http://localhost:3001 just logs to stdoud, but maybe we'll notice
 echo
 echo expecting output "testreason"
 curl -s $baseurl/reason -d '{\"reason\": \"testreason\"}'

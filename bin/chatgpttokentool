@@ -154,13 +154,17 @@ function main() {
             printCharacterTokenStatistics(tokenize(readInput(process.argv[3])));
             break;
         }
+        case '-classstats': {
+            printCharacterTokenStatistics(tokenize(readInput(process.argv[3])), characterclass);
+            break;
+        }
         default:
             console.error('Unknown option:', option);
             console.log(usage);
     }
 }
 
-function printCharacterTokenStatistics(tokens) {
+function printCharacterTokenStatistics(tokens, mapper = c => c) {
     // for each character that occurs in the input, we want to estimate the average number of tokens that are needed to encode it
     // that is, for each character in every token we calculate 1/length of token and the average that over all occurrences of the character
     // we need to count the number of occurrences of each character in the input and
@@ -170,7 +174,7 @@ function printCharacterTokenStatistics(tokens) {
     for (let i = 0; i < tokens.length; i++) {
         const token = tokens[i];
         for (let j = 0; j < token.length; j++) {
-            const char = token[j];
+            const char = mapper(token[j]);
             charCounts.set(char, (charCounts.get(char) || 0) + 1);
             charTokenRatioSum.set(char, (charTokenRatioSum.get(char) || 0) + 1 / token.length);
         }
@@ -181,6 +185,22 @@ function printCharacterTokenStatistics(tokens) {
     }
     const sorted = [...charTokenRatios.entries()].sort((a, b) => a[1] - b[1]);
     for (const [char, ratio] of sorted) {
-        console.log(char, ratio);
+        // console.log(char, ratio, charCounts.get(char), tokens.length);
+        // console.log(char, ratio);
+        // also write bytes of char to stdout
+        console.log(ratio, char, char.charCodeAt(0));
     }
+}
+
+function characterclass(char) {
+    if (char >= 'a' && char <= 'z') {
+        return 'alpha';
+    }
+    if (char >= 'A' && char <= 'Z') {
+        return 'Alpha';
+    }
+    if (char >= '0' && char <= '9') {
+        return 'digit';
+    }
+    return char;
 }
