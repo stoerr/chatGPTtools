@@ -20,6 +20,28 @@ Usage: ./chatgptapplytemplate templateName fileName
 chatgptlistmodels lists all models available for chatgpt
 
 
+# chatgpttokentool
+
+Usage: chatgpttokentool [option] inputfile
+
+Options:
+  -h or --help  Show this help message and exit
+  -c            prints the token count for the input file
+  -e            prints the token numbers for the input file separated by one space
+  -ev           prints the tokens for the input as token number, tab, token, newline
+  -d            the input file must be a whitespace separated token list; decodes that into the original text and prints it
+  -sm number    shortens the input file to at most the given number of tokens by cutting off the middle
+  -ss number    shortens the input file to at most the given number of tokens by cutting off the start
+  -se number    shortens the input file to at most the given number of tokens by cutting off the end
+
+Description:
+  There always has to be exactly one option given (possibly including a number) and the input file.
+  This script uses tokenization according to ChatGPT-3.5 / ChatGPT-4 tokenization with cl100k_base .
+  If the input file is given as - then the input is read from stdin.
+  If the input file is shortened, the removed part is replaced by ' ... ' . If there is no need for shortening, the input is printed as is.
+
+
+
 # chatgptsummarizeurl
 Usage: chatgptsummarizeurl [options] url
 
@@ -104,20 +126,23 @@ Usage: chatgpt [options] [prompt]
 
 Options:
   -               Reads prompt from stdin, instead of as an argument
-  -f filename     Reads prompt from a file, including a frame naming the filename. Can be given multiple times.
+  -f filename     Includes the content of the given file as codeblock, together with the filename. Can be given multiple times.
   -p prefix       Prefix the prompt with a string. Use this or -pf, not both.
   -pf prefixfile  Prefix the prompt with the contents of a file
   -pl key         Add a prompt from the ChatGPT prompt library using the given key (see script chatgptpromptlib)
   -s suffix       Suffix the prompt with a string. Use this or -sf, not both.
   -sf suffixfile  Suffix the prompt with the contents of a file
   -m modelname    Use a specific model (default: gpt-3.5-turbo)
+  -m32k           Use the 32k model instead of the default (that'll bee gpt-3.5-turbo-32k)
+  -m32kif tokens  Use the 32k model if the prompt has more than the given number of tokens
   -t number       Set max tokens for response (default: no limit)
   -v              verbose output : print prompt to stderr and info about connection retries
   -w column       Word wrap the response to a specified column width using fmt.
+  -y systemmsg    Use the given string as system message
   -h, --help      Show this help message
   
-If the prompt contains a construct like promptlib:key , the chatgptpromptlib command will be called with that key
-and this will be replaced with the prompt library entry.
+If the prompt or system message contain a construct like promptlib:key , the chatgptpromptlib command will be called with that key
+and this will be replaced with the prompt library entry, as an alternative to -pl key .
 
 
 
