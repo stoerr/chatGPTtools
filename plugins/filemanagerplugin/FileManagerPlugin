@@ -577,14 +577,18 @@ public class FileManagerPlugin implements HttpHandler {
                 }
                 ProcessBuilder pb = new ProcessBuilder("/bin/sh", path.toString());
                 pb.redirectErrorStream(true);
+                System.out.println("Starting process: " + pb.command() + " with content: " + content);
                 Process process = pb.start();
                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
                 writer.write(content);
                 writer.close();
 
-                int exitCode = process.waitFor();
                 InputStream inputStream = process.getInputStream();
                 String output = new String(inputStream.readAllBytes(), UTF_8);
+                int exitCode = process.waitFor();
+                System.out.println("Process finished with exit code " + exitCode + ": " + output);
+                // replace occurences of the current directory path with empty string to avoid leaking it and have sensible filenames the plugin can read
+                output = output.replaceAll(Pattern.quote(currentDir.toString()), "");
 
                 if (exitCode == 0) {
                     exchange.getResponseHeaders().add("Content-Type", "text/plain; charset=utf-8");
