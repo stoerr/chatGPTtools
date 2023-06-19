@@ -24,7 +24,7 @@ somewhere. :-)
   (http://www.stoerr.net/blog.html), in short form.
 - [bin/](bin/) contains a number of scripts around ChatGPT that help me in my daily work and might be interesting for
   you. See below (script list)
-- [public/](public/) contains some pages that I often use to access ChatGPT quickly - the [chat.openai.com]
+- [public/](docs/chatgpttools/) contains some pages that I often use to access ChatGPT quickly - the [chat.openai.com]
   (https://chat.openai.com/) interface is a bit annoying at times. See [public/0README.html].
 - [templates/](templates/) some templates for use with [bin/chatgptapplytemplate](bin/chatgptapplytemplate) -
   basically an extended prompt with examples for ChatGPT to do something given a file.

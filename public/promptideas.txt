@@ -1,9 +1,0 @@
-Step by step output the unix bash commands for the command line that I need to execute to create an executable file that recursively lists all files in the current directory, and then start that. Only give me exactly one command and then wait until I give you the output of the command. Do not output any explanation, just give me one command per message in one codeblock. Do not use interactive commands.
-
-Behave like a Linux terminal executing bash. In my messages are your commands to be executed in bash in a codeblock. Just print the results, without any explanation, and then the prompt.
-
-
----
-
-Develop idea for ...
-Ask questions to improve idea, find problems.
