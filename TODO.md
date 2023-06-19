@@ -1,30 +1,22 @@
 # TODOs
 
-## Needed scripts
-- chatgptpromptlib
-- chatgptfixfile
-
-The script chatfgptfixfile is called like this:
-chatgptfixfile [filepath] [prompt]
-and can have the option -f [additionalfile] several times. It calls chatgpt with -f filepath and the given prompt. 
-If -f is given, chatgpt additionally gets the option -f with that additionalfile .
-
 ## Next plans:
+- functions into multiplemessagechat
+- tool to create function description from example (?)
 - Statistiken zu Token / Wort : https://platform.openai.com/tokenizer
-- bookmarklet library
 - automatic translation of my webpages
 
 https://discord.com/channels/974519864045756446/1047565374645870743/1102540385726767104 changing files
 https://community.openai.com/t/how-to-generate-automatically-applicable-file-diffs-with-chatgpt/227822?u=hpstoerr
 https://www.promptingguide.ai/techniques/react
 
-- bookmarklets to render dotty graphs and HTML from chat output
+- bookmarklets to render dotty graphs and HTML from chat output. (Or plugin?)
 - better approximation of token count
 
 ### chatgpt possible additional options
 -c number Set the number of responses to generate (default: 1)
 -s number Set the temperature for response generation
--u url read content of url and pipe it through texttohtml
+Not: -u url read content of url and pipe it through texttohtml
 -L List available models and their capabilities
 -t template
 -tf template file
