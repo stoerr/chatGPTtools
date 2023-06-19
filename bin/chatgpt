@@ -18,6 +18,8 @@ Options:
   -s suffix       Suffix the prompt with a string. Use this or -sf, not both.
   -sf suffixfile  Suffix the prompt with the contents of a file
   -m modelname    Use a specific model (default: gpt-3.5-turbo)
+  -m32k           Use the 32k model instead of the default (that'll bee gpt-3.5-turbo-32k)
+  -m32kif tokens  Use the 32k model if the prompt has more than the given number of tokens
   -t number       Set max tokens for response (default: no limit)
   -v              verbose output : print prompt to stderr and info about connection retries
   -w column       Word wrap the response to a specified column width using fmt.
@@ -97,8 +99,18 @@ for (let i = 2; i < process.argv.length; i++) {
         } else if (arg === '-w' && process.argv[i + 1]) {
             wordWrapColumn = parseInt(process.argv[i + 1], 10);
             i++;
-        }  else if (arg === '-y' && process.argv[i + 1]) {
+        } else if (arg === '-y' && process.argv[i + 1]) {
             systemMsg = process.argv[i + 1];
+            i++;
+        } else if (arg === '-m32k') {
+            model = model + '-32k';
+        } else if (arg === '-m32kif' && process.argv[i + 1]) {
+            const tokenLimit = parseInt(process.argv[i + 1], 10);
+            // Use the chatgpttokentool to count the tokens in the prompt
+            const tokenCount = execSync(`chatgpttokentool -c "${prompt}"`, {encoding: 'utf8'});
+            if (tokenCount > tokenLimit) {
+                model = model + '-32k';
+            }
             i++;
         } else if (!arg.startsWith('-')) {
             inOptions = false;
@@ -224,7 +236,7 @@ async function requestChatGPT(attempt = 1) {
             if (finishReason === 'stop') {
                 let output = assistantMessage.content;
                 if (wordWrapColumn) {
-                    const fmt = spawnSync('fmt', ['-w', wordWrapColumn, '-p'], { input: output, encoding: 'utf8' });
+                    const fmt = spawnSync('fmt', ['-w', wordWrapColumn, '-p'], {input: output, encoding: 'utf8'});
                     if (fmt.error) {
                         console.error(`Error: fmt command failed with error ${fmt.error.message}`);
                         process.exit(7);
