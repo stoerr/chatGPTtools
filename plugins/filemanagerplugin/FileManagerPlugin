@@ -8,6 +8,7 @@ import static java.nio.file.StandardOpenOption.WRITE;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
@@ -19,6 +20,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -49,6 +54,7 @@ public class FileManagerPlugin implements HttpHandler {
             """;
 
     private static final Pattern IGNORE = Pattern.compile(".*/[.].*|.*/target/.*");
+    public static final ExecutorService EXECUTOR = Executors.newCachedThreadPool();
 
     int port = 3001;
 
@@ -101,7 +107,7 @@ public class FileManagerPlugin implements HttpHandler {
         handler.port = args.length > 0 ? Integer.parseInt(args[0]) : 3001;
         HttpServer server = HttpServer.create(new InetSocketAddress(handler.port), 0);
         server.createContext("/", handler);
-        server.setExecutor(null);
+        server.setExecutor(EXECUTOR);
         server.start();
         System.out.println("Server started on http://localhost:" + handler.port + "/ in " + handler.currentDir);
     }
@@ -563,6 +569,7 @@ public class FileManagerPlugin implements HttpHandler {
                 return;
             }
 
+            Process process = null;
             try (InputStream is = exchange.getRequestBody()) {
                 String json = new String(is.readAllBytes(), UTF_8);
                 String content = "";
@@ -578,14 +585,30 @@ public class FileManagerPlugin implements HttpHandler {
                 ProcessBuilder pb = new ProcessBuilder("/bin/sh", path.toString());
                 pb.redirectErrorStream(true);
                 System.out.println("Starting process: " + pb.command() + " with content: " + content);
-                Process process = pb.start();
-                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
-                writer.write(content);
-                writer.close();
+                process = pb.start();
+
+                OutputStream out = process.getOutputStream();
+                byte[] bytes = content.getBytes(UTF_8);
+                EXECUTOR.submit(() -> {
+                    try {
+                        try {
+                            out.write(bytes);
+                        } finally {
+                            out.close();
+                        }
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                });
 
                 InputStream inputStream = process.getInputStream();
                 String output = new String(inputStream.readAllBytes(), UTF_8);
-                int exitCode = process.waitFor();
+                if (!process.waitFor(1, TimeUnit.MINUTES)) {
+                    String response = "Process execution took longer than 1 minute";
+                    exchange.sendResponseHeaders(500, response.length());
+                    exchange.getResponseBody().write(response.getBytes());
+                }
+                int exitCode = process.exitValue();
                 System.out.println("Process finished with exit code " + exitCode + ": " + output);
                 // replace occurences of the current directory path with empty string to avoid leaking it and have sensible filenames the plugin can read
                 output = output.replaceAll(Pattern.quote(currentDir.toString()), "");

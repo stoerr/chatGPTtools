@@ -155,7 +155,7 @@ function main() {
             break;
         }
         case '-classstats': {
-            printCharacterTokenStatistics(tokenize(readInput(process.argv[3])), characterclass);
+            printCharacterTokenStatistics(tokenize(readInput(process.argv[3])), characterclassmapper);
             break;
         }
         default:
@@ -164,7 +164,7 @@ function main() {
     }
 }
 
-function printCharacterTokenStatistics(tokens, mapper = c => c) {
+function printCharacterTokenStatistics(tokens, mapper = token => token.split('')) {
     // for each character that occurs in the input, we want to estimate the average number of tokens that are needed to encode it
     // that is, for each character in every token we calculate 1/length of token and the average that over all occurrences of the character
     // we need to count the number of occurrences of each character in the input and
@@ -172,9 +172,9 @@ function printCharacterTokenStatistics(tokens, mapper = c => c) {
     const charCounts = new Map();
     const charTokenRatioSum = new Map();
     for (let i = 0; i < tokens.length; i++) {
-        const token = tokens[i];
+        const token = mapper(tokens[i]);
         for (let j = 0; j < token.length; j++) {
-            const char = mapper(token[j]);
+            const char = token[j];
             charCounts.set(char, (charCounts.get(char) || 0) + 1);
             charTokenRatioSum.set(char, (charTokenRatioSum.get(char) || 0) + 1 / token.length);
         }
@@ -192,15 +192,33 @@ function printCharacterTokenStatistics(tokens, mapper = c => c) {
     }
 }
 
-function characterclass(char) {
-    if (char >= 'a' && char <= 'z') {
-        return 'alpha';
+function characterclassmapper(token) {
+    const splitted = token.split('');
+    const result = [];
+    for (let i = 0; i < splitted.length; i++) {
+        const char = splitted[i];
+        if (char >= 'a' && char <= 'z') {
+            result.push('alpha');
+        } else if (char >= 'A' && char <= 'Z') {
+            result.push('Alpha');
+        } else if (char >= '0' && char <= '9') {
+            result.push('digit');
+        } else if (char === ' ') {
+            // first char is 'space' , if it's a char after a space it's 'spacecont'
+            if (i > 0 && splitted[i - 1] === ' ') {
+                result.push('spacecont');
+            } else {
+                result.push('space');
+            }
+        } else if (char === '\n') {
+            result.push('newline');
+        } else if (char === '\t') {
+            result.push('tab');
+        } else if (char === '\r') {
+            result.push('return');
+        } else {
+            result.push(char);
+        }
     }
-    if (char >= 'A' && char <= 'Z') {
-        return 'Alpha';
-    }
-    if (char >= '0' && char <= '9') {
-        return 'digit';
-    }
-    return char;
+    return result;
 }
