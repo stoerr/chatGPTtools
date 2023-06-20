@@ -2,6 +2,7 @@
 
 ## Next plans:
 - functions into multiplemessagechat
+- functions into chatgpt
 - tool to create function description from example (?)
 - Statistiken zu Token / Wort : https://platform.openai.com/tokenizer
 - automatic translation of my webpages
