@@ -16,6 +16,12 @@ The plugin provides several operations, including:
 Caution: you currently need to be a paying user of ChatGPT (to have access to ChatGPT-4) and to registered for the
 ChatGPT Plugin beta, possibly as a plugin developer.
 
+## Status
+
+It's stable and useable, but I don't plan any extensions to it, since I'm working on a rewrite
+[Developers ChatGPT toolbench](https://github.com/stoerr/DevelopersChatGPTToolbench) that already has more
+functionality. But you're welcome to use this, too.
+
 ## Usage
 
 To use the `FileManagerPlugin`, you need to have registered as a plugin developer with ChatGPT. Once you've done that,
