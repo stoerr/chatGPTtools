@@ -5,6 +5,7 @@ if [ "$#" -eq 0 ] || [ "$1" = "--help" ]; then
   echo ""
   echo "Options:"
   echo "  -f              Overwrite existing test file if it exists"
+  echo "  -y systemmsg    Use the given string as system message (compare -y for chatgpt script)"
   echo "  --help          Show this help message and exit"
   echo ""
   echo "Description:"
@@ -17,10 +18,14 @@ fi
 
 # Parse options
 force=false
-while getopts ":f" opt; do
+chatgpt_options=""
+while getopts ":fy:" opt; do
   case $opt in
     f)
       force=true
+      ;;
+    y)
+      chatgpt_options="$chatgpt_options -y $OPTARG"
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
@@ -76,7 +81,7 @@ EOF
 echo "Word count of input file:"
 wc "$java_file"
 
-chatgpt_output=$(cat "$java_file" | chatgpt - "$chatgpt_prompt" "additionalprompt" || exit 1)
+chatgpt_output=$(cat "$java_file" | chatgpt $chatgpt_options - "$chatgpt_prompt" "additionalprompt" || exit 1)
 
 echo "$chatgpt_output" > "$test_file"
 

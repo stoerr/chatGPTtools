@@ -6,8 +6,9 @@ Usage: ${process.argv[1].split('/').slice(-1)[0]} [option] inputfile
 Options:
   -h or --help  Show this help message and exit
   -c            prints the token count for the input file
-  -e            prints the token numbers for the input file separated by one space
-  -ev           prints the tokens for the input as token number, tab, token, newline
+  -e            prints a quick estimation of the token count for the input file (faster than -c)
+  -n            prints the token numbers for the input file separated by one space
+  -nv           prints the tokens for the input as token number, tab, token, newline
   -d            the input file must be a whitespace separated token list; decodes that into the original text and prints it
   -sm number    shortens the input file to at most the given number of tokens by cutting off the middle
   -ss number    shortens the input file to at most the given number of tokens by cutting off the start
@@ -24,9 +25,6 @@ const fs = require('fs');
 const tokenToNumber = new Map();
 const numberToToken = new Map();
 const tokens = [];
-
-processLines(callback);
-main();
 
 function processLines(callback) {
     const fileContent = fs.readFileSync(__dirname + '/.cl100k_base.tiktoken', 'utf8');
@@ -59,7 +57,7 @@ function tokenize(input) {
         }
         if (token === '') {
             // no idea what ChatGPT does in this case. :-(
-            console.error('Warning: Character ignored, no token found at ', pos, ' of ', input.substring(pos).length, ' for first character of ', input.substring(pos, pos + 128));
+            // console.error('Warning: Character ignored, no token found at ', pos, ' of ', input.substring(pos).length, ' for first character of ', input.substring(pos, pos + 128));
             pos++;
             continue;
         }
@@ -125,10 +123,15 @@ function main() {
         }
         case '-e': {
             const input = readInput(process.argv[3]);
+            console.log(estimateTextTokens(input));
+            break;
+        }
+        case '-n': {
+            const input = readInput(process.argv[3]);
             console.log(tokenize(input).map(token => tokenToNumber.get(token)).join(' '));
             break;
         }
-        case '-ev': {
+        case '-nv': {
             const input = readInput(process.argv[3]);
             tokenize(input).forEach(token => {
                 console.log(`${tokenToNumber.get(token)}\t${token}`);
@@ -150,12 +153,19 @@ function main() {
             break;
         }
         // Now unofficial options that aren't in the usage but used for research
+        case '-w': {
+            // prints a quick estimation for the token count for the input file based on the word count (faster than -c but really really bad - use -e)
+            const input = readInput(process.argv[3]);
+            const words = input.split(/\s+/);
+            console.log(Math.round(words.length * 4 / 3));
+            break;
+        }
         case '-charstats': {
             printCharacterTokenStatistics(tokenize(readInput(process.argv[3])));
             break;
         }
         case '-classstats': {
-            printCharacterTokenStatistics(tokenize(readInput(process.argv[3])), characterclassmapper);
+            printCharacterTokenStatistics(tokenize(readInput(process.argv[3])), characterclass);
             break;
         }
         default:
@@ -164,7 +174,60 @@ function main() {
     }
 }
 
-function printCharacterTokenStatistics(tokens, mapper = token => token.split('')) {
+const C0 = 'NORabcdefghilnopqrstuvy'; // plus space that is not following a space
+const C1 = '"#%)\*+56789<>?@Z[\\]^|§«äç\'';
+const C2 = '-.ABDEFGIKWY_\r\tz{ü';
+const C3 = ',01234:~Üß'; // incl. unicode characters > 255
+const C4 = ''; // space that is following a space
+const C5 = '!$&(/;=JX`j\n}ö';
+const C6 = 'CHLMPQSTUVfkmspwx ';
+
+const allClusters = [C0, C1, C2, C3, C4, C5, C6];
+
+/* Determines whether the character at position pos in the token belongs to which of these clusters, observing the spcnt, sp, ml, tab, ret, uni charcterizations like in characterclassmapper. It returns 'C0' to 'C6'. We minimize by using strings of characters for each cluster. */
+function characterclass(token, pos) {
+    const char = token[pos];
+    if (char === ' ') {
+        // first char is 'space' , if it's a char after a space it's 'spacecont'
+        if (pos > 0 && token[pos - 1] === ' ') {
+            return 'C4';
+        } else {
+            return 'C0';
+        }
+    } else if (char.charCodeAt(0) > 255) {
+        return 'C3';
+    }
+    // find out which one of the clusters in `allClusters` contains the character
+    for (let i = 0; i < allClusters.length; i++) {
+        if (allClusters[i].indexOf(char) !== -1) {
+            return 'C' + i;
+        }
+    }
+    return 'CX';
+}
+
+const avgtokenPerClass = {
+    'C4': 0.08086208692099685,
+    'C0': 0.2020182639633662,
+    'C6': 0.2372744211422125,
+    'C2': 0.3042805747355606,
+    'C5': 0.4157646363858563,
+    'C1': 0.4790556468110302,
+    'C3': 0.6581971122770317,
+    'CX': 0.980083857442348
+};
+
+function estimateTextTokens(text) {
+    let tokencount = 0;
+    for (let i = 0; i < text.length; i++) {
+        tokencount += avgtokenPerClass[characterclass(text, i)];
+    }
+    return Math.round(tokencount);
+}
+
+// "research" code
+
+function printCharacterTokenStatistics(tokens, characterclassmapper = c => c) {
     // for each character that occurs in the input, we want to estimate the average number of tokens that are needed to encode it
     // that is, for each character in every token we calculate 1/length of token and the average that over all occurrences of the character
     // we need to count the number of occurrences of each character in the input and
@@ -172,9 +235,9 @@ function printCharacterTokenStatistics(tokens, mapper = token => token.split('')
     const charCounts = new Map();
     const charTokenRatioSum = new Map();
     for (let i = 0; i < tokens.length; i++) {
-        const token = mapper(tokens[i]);
+        const token = tokens[i];
         for (let j = 0; j < token.length; j++) {
-            const char = token[j];
+            const char = characterclassmapper(token, j);
             charCounts.set(char, (charCounts.get(char) || 0) + 1);
             charTokenRatioSum.set(char, (charTokenRatioSum.get(char) || 0) + 1 / token.length);
         }
@@ -185,40 +248,57 @@ function printCharacterTokenStatistics(tokens, mapper = token => token.split('')
     }
     const sorted = [...charTokenRatios.entries()].sort((a, b) => a[1] - b[1]);
     for (const [char, ratio] of sorted) {
-        // console.log(char, ratio, charCounts.get(char), tokens.length);
+        // console.log(char, ratio, charCounts.get(char));
         // console.log(char, ratio);
         // also write bytes of char to stdout
-        console.log(ratio, char, char.charCodeAt(0));
+        // console.log(ratio, char, char.charCodeAt(0));
+        // console.log(ratio, char);
+        console.log(ratio, char, charCounts.get(char));
     }
 }
 
-function characterclassmapper(token) {
+function characternamemapper(token) {
     const splitted = token.split('');
     const result = [];
     for (let i = 0; i < splitted.length; i++) {
         const char = splitted[i];
-        if (char >= 'a' && char <= 'z') {
-            result.push('alpha');
-        } else if (char >= 'A' && char <= 'Z') {
-            result.push('Alpha');
-        } else if (char >= '0' && char <= '9') {
-            result.push('digit');
-        } else if (char === ' ') {
+        if (char === ' ') {
             // first char is 'space' , if it's a char after a space it's 'spacecont'
             if (i > 0 && splitted[i - 1] === ' ') {
-                result.push('spacecont');
+                result.push('spcnt');
             } else {
-                result.push('space');
+                result.push('sp');
             }
         } else if (char === '\n') {
-            result.push('newline');
+            result.push('ml');
         } else if (char === '\t') {
             result.push('tab');
         } else if (char === '\r') {
-            result.push('return');
+            result.push('ret');
+        } else if (char.charCodeAt(0) > 255) {
+            result.push('uni');
         } else {
             result.push(char);
         }
     }
     return result;
 }
+
+// =============
+// now, after all variables are defined, we can start the main program
+
+processLines(callback);
+main();
+
+// results on some of my files
+// (real token count) (estimation with -e) (4/3 number of words) (filename)
+// 123491	103405	49453	allwithextension.css
+// 232691	243483	76931	allwithextension.html
+// 671616	757334	379725	allwithextension.java
+// 838884	825870	377397	allwithextension.js
+// 30054	28625	10501	allwithextension.jsp
+// 60583	59638	40700	allwithextension.md
+// 55594	56122	35131	allwithextension.properties
+// 14965	14280	6749	allwithextension.scss
+// 912672	857563	234644	allwithextension.xml
+// 3304048	3304144	1455413	alltogether
