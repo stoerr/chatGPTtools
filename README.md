@@ -8,7 +8,8 @@ If you'd like to know what I'm professionally doing with ChatGPT,
 [this](https://github.com/ist-dresden/composum-chatgpt-integration) might be more interesting for you.
 
 If you find something interesting, please [contact me](http://www.stoerr.net/)!
-You will also find many ChatGPT related things on [my Blog](http://www.stoerr.net/blog.html).
+You will also find many ChatGPT related things on [my Blog](http://www.stoerr.net/blog.html) , and there is also my
+[Developers Tool Bench](https://github.com/stoerr/DevelopersChatGPTToolBench) which I'm growing.
 
 Disclaimer: You know how it is - this is one of my sparetime projects and you're not paying me for that, so no 
 warranties. But please do send me bug reports and suggestions.
