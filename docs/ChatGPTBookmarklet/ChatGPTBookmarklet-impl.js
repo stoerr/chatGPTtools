@@ -142,11 +142,30 @@
             const maximizeButton = document.getElementById('hpsChatGPTMaximize');
             const isMaximized = dialogContainer.classList.toggle('hps-chatgpt-maximize-maximized');
             maximizeButton.innerText = isMaximized ? '[-]' : '[+]';
+            dialogContainer.classList.remove('hps-chatgpt-expand-left', 'hps-chatgpt-expand-right');
         },
 
         showHelp: function () {
             this.answerfield.innerHTML = hpsChatGPTBookmarklet.helptext;
-        }
+        },
+
+        expandLeft: function () {
+            const dialogContainer = document.querySelector('.hpsChatGPTDialog-container');
+            const isExpandedLeft = dialogContainer.classList.toggle('hps-chatgpt-expand-left');
+            if (isExpandedLeft) {
+                dialogContainer.classList.add('hps-chatgpt-maximize-maximized');
+            }
+            document.getElementById('hpsChatGPTMaximize').innerText = isExpandedLeft ? '[-]' : '[+]';
+        },
+
+        expandRight: function () {
+            const dialogContainer = document.querySelector('.hpsChatGPTDialog-container');
+            const isExpandedRight = dialogContainer.classList.toggle('hps-chatgpt-expand-right');
+            if (isExpandedRight) {
+                dialogContainer.classList.add('hps-chatgpt-maximize-maximized');
+            }
+            document.getElementById('hpsChatGPTMaximize').innerText = isExpandedRight ? '[-]' : '[+]';
+        },
 
         /** Used here but declared in another file:
          * Sends a chat request to the OpenAI ChatGPT API and retrieves the response, incl. retry logic.
