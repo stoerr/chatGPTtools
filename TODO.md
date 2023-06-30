@@ -6,6 +6,7 @@
 - tool to create function description from example (?)
 - Statistiken zu Token / Wort : https://platform.openai.com/tokenizer
 - automatic translation of my webpages
+- https://ai-anywhere.com/ extend bookmarklet to something like this.
 
 https://discord.com/channels/974519864045756446/1047565374645870743/1102540385726767104 changing files
 https://community.openai.com/t/how-to-generate-automatically-applicable-file-diffs-with-chatgpt/227822?u=hpstoerr
