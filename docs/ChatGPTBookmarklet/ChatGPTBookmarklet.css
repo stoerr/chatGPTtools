@@ -168,3 +168,9 @@
 .hps-chatgpt-dialog .hidden {
     display: none !important;
 }
+
+
+#hps-chatgpt-dragheader {
+  cursor: move;
+  user-select: none;
+}
