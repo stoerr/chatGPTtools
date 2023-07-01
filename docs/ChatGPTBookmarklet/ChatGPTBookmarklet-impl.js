@@ -7,6 +7,7 @@
         init: async function () {
             if (!this.initialized) {
                 this.initialized = true;
+                this.makeDialogDraggable();
                 // Detect user's preferred language
                 const userLang = navigator.language || navigator.userLanguage;
                 this.lang = userLang.startsWith('de') ? 'de' : 'en';
@@ -166,6 +167,42 @@
             }
             document.getElementById('hpsChatGPTMaximize').innerText = isExpandedRight ? '[-]' : '[+]';
         },
+
+        makeDialogDraggable: function () {
+            var dialog = document.getElementById('hpsChatGPTDialog');
+            var dragheader = document.getElementById('hps-chatgpt-dragheader');
+            var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+
+            dragheader.onmousedown = dragMouseDown;
+
+            function dragMouseDown(e) {
+                e = e || window.event;
+                // get the mouse cursor position at startup:
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                // call a function whenever the cursor moves:
+                document.onmousemove = elementDrag;
+            }
+
+            function elementDrag(e) {
+                e = e || window.event;
+                // calculate the new cursor position:
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                // set the element's new position:
+                dialog.style.top = (dialog.offsetTop - pos2) + "px";
+                dialog.style.left = (dialog.offsetLeft - pos1) + "px";
+            }
+
+            function closeDragElement() {
+                // stop moving when mouse button is released:
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
+        }
 
         /** Used here but declared in another file:
          * Sends a chat request to the OpenAI ChatGPT API and retrieves the response, incl. retry logic.
