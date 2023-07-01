@@ -12,7 +12,7 @@
 
 .hps-chatgpt-dialog {
     position: fixed !important;
-    top: 10% !important;
+    top: 5% !important;
     left: 50% !important;
     width: 50% !important;
     z-index: 9999 !important;
@@ -35,14 +35,11 @@
     transform: none !important;
     width: 100% !important;
     padding: 0 !important;
+    max-height: 100vh !important;
 }
 
 .hps-chatgpt-expand-right, .hps-chatgpt-expand-right .hps-chatgpt-dialog, .hps-chatgpt-expand-left, .hps-chatgpt-expand-left .hps-chatgpt-dialog {
     width: 30% !important;
-}
-
-.hps-chatgpt-maximize-maximized .hps-chatgpt-content {
-    overflow-y: auto !important;
 }
 
 .hps-chatgpt-expand-right .hps-chatgpt-dialog {
@@ -162,6 +159,7 @@
 
 .hps-chatgpt-answer {
     overflow-y: auto !important;
+    max-height: calc(100vh - 350px) !important;
 }
 
 .hps-chatgpt-dialog .hidden {
