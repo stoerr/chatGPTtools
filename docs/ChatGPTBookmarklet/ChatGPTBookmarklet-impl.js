@@ -143,7 +143,14 @@
             const maximizeButton = document.getElementById('hpsChatGPTMaximize');
             const isMaximized = dialogContainer.classList.toggle('hps-chatgpt-maximize-maximized');
             maximizeButton.innerText = isMaximized ? '[-]' : '[+]';
-            dialogContainer.classList.remove('hps-chatgpt-expand-left', 'hps-chatgpt-expand-right');
+            var dialog = document.getElementById('hpsChatGPTDialog');
+            if (isMaximized) {
+                this.savedDragPosition = dialog.style.cssText;
+                dialog.style.cssText = '';
+            } else {
+                dialogContainer.classList.remove('hps-chatgpt-expand-left', 'hps-chatgpt-expand-right');
+                dialog.style.cssText = this.savedDragPosition;
+            }
         },
 
         showHelp: function () {
@@ -152,20 +159,14 @@
 
         expandLeft: function () {
             const dialogContainer = document.querySelector('.hpsChatGPTDialog-container');
-            const isExpandedLeft = dialogContainer.classList.toggle('hps-chatgpt-expand-left');
-            if (isExpandedLeft) {
-                dialogContainer.classList.add('hps-chatgpt-maximize-maximized');
-            }
-            document.getElementById('hpsChatGPTMaximize').innerText = isExpandedLeft ? '[-]' : '[+]';
+            dialogContainer.classList.add('hps-chatgpt-expand-left');
+            this.toggleMaximize();
         },
 
         expandRight: function () {
             const dialogContainer = document.querySelector('.hpsChatGPTDialog-container');
-            const isExpandedRight = dialogContainer.classList.toggle('hps-chatgpt-expand-right');
-            if (isExpandedRight) {
-                dialogContainer.classList.add('hps-chatgpt-maximize-maximized');
-            }
-            document.getElementById('hpsChatGPTMaximize').innerText = isExpandedRight ? '[-]' : '[+]';
+            dialogContainer.classList.add('hps-chatgpt-expand-right');
+            this.toggleMaximize();
         },
 
         makeDialogDraggable: function () {
@@ -193,8 +194,8 @@
                 pos3 = e.clientX;
                 pos4 = e.clientY;
                 // set the element's new position:
-                dialog.style.top = (dialog.offsetTop - pos2) + "px";
-                dialog.style.left = (dialog.offsetLeft - pos1) + "px";
+                dialog.style.setProperty('top', `${dialog.offsetTop - pos2}px`, 'important');
+                dialog.style.setProperty('left', `${dialog.offsetLeft - pos1}px`, 'important');
             }
 
             function closeDragElement() {
