@@ -30,7 +30,7 @@
             this.init();
             this.showDialog();
             try {
-                this.answerfield.innerText = 'Contacting ChatGPT for summary...';
+                this.answerfield.innerHTML = 'Contacting ChatGPT for summary...<br/><br/>' + this.helptext;
                 const summary = await this.getSummary();
                 this.answerfield.innerText = summary;
             } catch (e) {
@@ -154,7 +154,7 @@
         },
 
         showHelp: function () {
-            this.answerfield.innerHTML = hpsChatGPTBookmarklet.helptext;
+            this.answerfield.innerHTML = this.helptext;
         },
 
         expandLeft: function () {
