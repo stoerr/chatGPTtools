@@ -6,6 +6,7 @@
 
         init: async function () {
             if (!this.initialized) {
+                const that = this;
                 this.initialized = true;
                 this.makeDialogDraggable();
                 // Detect user's preferred language
@@ -23,6 +24,13 @@
                 }
                 // set the focus on the textarea
                 document.getElementById('hpsChatGPTQuestion').focus();
+
+                document.getElementById('hpsChatGPTQuestion').addEventListener('keydown', function (event) {
+                    if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.metaKey) {
+                        event.preventDefault();
+                        that.submitQuestion();
+                    }
+                });
             }
         },
 
