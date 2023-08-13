@@ -11,5 +11,5 @@ Please also check the text for factual errors, and report them if you find any.
 Please report the most severe problems first, and then the less severe ones.
 For each problem cite at least the part of a sentence where the problem occurs to specify the location, give
 a description of the problem, and a suggestion for improvement. Please always make a suggestion how to phrase it better.
-Please be picky and critical, and don't hesitate to report even minor problems. Always Please be as specific as possible.
+Please be picky and critical, and don't hesitate to report even minor problems. Always be as specific as possible.
 Always report at least some problems or areas for improvement.
