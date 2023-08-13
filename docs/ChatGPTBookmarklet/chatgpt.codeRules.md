@@ -11,3 +11,7 @@
 - Print any explanations before executing the changes, and then change the code using the plugin. Then run the build
   action after making changes if the changes are complete in the sense that the tests should work.
 - At the end verify whether you have fulfilled your task.
+
+- The IDs in HTML should have the prefix hps-chatgpt-
+- When changing Javascript, please observe that there are several Javascript files and determine which of them is 
+  the right place to make changes to.

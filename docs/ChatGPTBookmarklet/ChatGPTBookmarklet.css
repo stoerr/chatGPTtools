@@ -65,13 +65,6 @@
     font-size: 18px !important;
 }
 
-.hps-chatgpt-header-controls button {
-    border: none !important;
-    font-size: 20px !important;
-    cursor: pointer !important;
-    padding: 0 5px !important;
-}
-
 /* Modal content */
 .hps-chatgpt-content {
     padding: 15px !important;
@@ -105,13 +98,20 @@
     border: none !important;
     padding: 5px 5px !important;
     border-radius: 5px !important;
-    font-size: 14px !important;
+    font-size: 15px !important;
     cursor: pointer !important;
 }
 
 .hps-chatgpt-dialog button:focus {
     outline: none !important;
     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+}
+
+.hps-chatgpt-header-controls button {
+    border: none !important;
+    font-size: 18px !important;
+    cursor: pointer !important;
+    padding: 0 5px !important;
 }
 
 .hps-chatgpt-dialog {

@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+console.error('CAUTION: the result is not quite correct yet - there is a merging process that is\'t implemented yet.');
+
 const usage = `
 Usage: ${process.argv[1].split('/').slice(-1)[0]} [option] inputfile
 
@@ -69,9 +71,10 @@ function tokenize(input) {
 }
 
 function decode(tokenNums) {
-    const tokens = tokenNums.trim().split(/\s+/);
+    const tokens = tokenNums.trim().split(/[^0-9]+/);
     let result = '';
     for (let i = 0; i < tokens.length; i++) {
+        if (tokens[i] === '') continue;
         const token = numberToToken.get(parseInt(tokens[i], 10));
         if (!token) {
             console.error('No token found for ', tokens[i]);
