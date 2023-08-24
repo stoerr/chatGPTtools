@@ -95,8 +95,10 @@
             // if thetext contains more than 2000 words, we remove the middle so that it's now 2000 words
             // this is to avoid hitting the API limit of 2048 tokens
             const whitespaceregex = /\s+/gm;
-            if (thetext.split(whitespaceregex).length > 1800) {
-                const words = thetext.trim().split(whitespaceregex);
+            const words = thetext.trim().split(whitespaceregex);
+            let wordcount = words.length;
+            if (wordcount > 1800) {
+                console.log('Clipping because of wordcount' + wordcount);
                 thetext = words.slice(0, 900).join(" ") + "\n...\n" + words.slice(words.length - 900).join(" ");
                 this.clipped = true;
                 if (document.getElementById('clipped')) {
