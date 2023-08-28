@@ -142,9 +142,10 @@
                 "\nBitte beantworte diese Frage in Bezug auf den folgenden Text auf Deutsch:\n" :
                 "\nPlease answer this question with regard to the following text:\n";
             let textinclude = this.threebackticks + "\n" + this.getIncludedText().trim() + "\n" + this.threebackticks + "\n\n";
+            const selectedModel = document.getElementById('hps-chatgpt-model-selector').value;
             const content = includePageContent ? question + instructions + textinclude : question;
             const messages = [{role: 'user', content: content}];
-            const answer = await this.sendChatGPTRequest(messages);
+            const answer = await this.sendChatGPTRequest(messages, selectedModel);
             return answer;
         },
 

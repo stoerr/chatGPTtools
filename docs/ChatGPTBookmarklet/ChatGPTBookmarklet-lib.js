@@ -14,7 +14,7 @@
          * @returns {Promise<string>} A promise that resolves to the content of the response message from the API.
          * @throws Will throw an error if the API limit is exceeded without a specified retry time or if there is a problem fetching data from the API.
          */
-        sendChatGPTRequest: async function (messages) {
+        sendChatGPTRequest: async function (messages, selectedModel = 'gpt-3.5-turbo') {
             const requestOptions = {
                 method: 'POST',
                 headers: {
@@ -22,7 +22,7 @@
                     'Authorization': `Bearer ${this.apikey}`,
                 },
                 body: JSON.stringify({
-                    model: 'gpt-3.5-turbo',
+                    model: selectedModel,
                     messages: messages,
                 }),
             };
