@@ -57,6 +57,12 @@
                    title="The maximum number of tokens to generate in the chat completion.">
             <input type="number" id="n" placeholder="n" value=""
                    title="How many chat completion choices to generate for each input message.">
+            <select id="modelSelector" style="margin-left: 10px;">
+                <option value="gpt-3.5-turbo">GPT-3.5</option>
+                <option value="gpt-3.5-turbo-16k">GPT-3.5-16k</option>
+                <option value="gpt-4">GPT-4</option>
+                <option value="gpt-4-32k">GPT-4-32k</option>
+            </select>
             <br>
             <!-- Drop down list for selecting an initial prompt. The first entry is an autoselected option with an empty value and description "default" -->
             <label for="initialprompt" class="mt-3">For fun, select a different system prompt:</label>
@@ -219,7 +225,7 @@
                 }
             }
 
-            var request = {model: "gpt-3.5-turbo", messages: messages}
+            var request = {model: document.getElementById("modelSelector").value, messages: messages}
             // add the input fields temperature , max_tokens and n to the request, if they are not empty, but converted to numbers.
             var temperature = $('#temperature').val();
             if (temperature) {
@@ -385,7 +391,7 @@
     /** Shrink the text area to it's actual size so that it just captures the text it has. */
     function shrinkOnBlur() {
         var that = this;
-        setTimeout(function() {
+        setTimeout(function () {
             that.rows = 1;
             while (that.scrollHeight > that.clientHeight) {
                 that.rows++;

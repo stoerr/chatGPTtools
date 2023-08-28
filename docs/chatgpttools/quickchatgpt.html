@@ -30,6 +30,12 @@
                     <span style="width: 1em; display: inline-block;"></span>
                     <button type="button" class="btn btn-primary" onclick="displayAsMarkdown()">Markdown</button>
                     <button type="button" class="btn btn-primary" onclick="displayAsPreformatted()">Raw text</button>
+                    <select id="modelSelector" class="form-select" style="margin-left: 10px; width: auto; display: inline-block;">
+                        <option value="gpt-3.5-turbo">GPT-3.5</option>
+                        <option value="gpt-3.5-turbo-16k">GPT-3.5-16k</option>
+                        <option value="gpt-4">GPT-4</option>
+                        <option value="gpt-4-32k">GPT-4-32k</option>
+                    </select>
                 </div>
             </div>
             <br>
@@ -115,7 +121,7 @@
                     'Content-Type': 'application/json',
                 },
                 data: JSON.stringify({
-                    model: "gpt-3.5-turbo",
+                    model: $('#modelSelector').val(),
                     messages: messages,
                 }),
                 success: resultcallback,
