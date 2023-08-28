@@ -92,14 +92,15 @@
 
         getIncludedText: function () {
             let thetext = this.selectedText || this.pageContent;
-            // if thetext contains more than 2000 words, we remove the middle so that it's now 2000 words
+            // if thetext contains more than data-clipwords words, we remove the middle so that it's now data-clipwords words
             // this is to avoid hitting the API limit of 2048 tokens
             const whitespaceregex = /\s+/gm;
             const words = thetext.trim().split(whitespaceregex);
             let wordcount = words.length;
-            if (wordcount > 1800) {
+            const clipwords = parseInt(document.getElementById('hps-chatgpt-model-selector').selectedOptions[0].dataset.clipwords);
+            if (wordcount > (clipwords - 200)) {
                 console.log('Clipping because of wordcount' + wordcount);
-                thetext = words.slice(0, 900).join(" ") + "\n...\n" + words.slice(words.length - 900).join(" ");
+                thetext = words.slice(0, clipwords / 2 - 100).join(" ") + "\n...\n" + words.slice(words.length - clipwords / 2 + 100).join(" ");
                 this.clipped = true;
                 if (document.getElementById('clipped')) {
                     document.getElementById('clipped').classList.remove('hidden');
