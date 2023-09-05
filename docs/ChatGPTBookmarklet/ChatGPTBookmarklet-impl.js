@@ -181,6 +181,21 @@
             this.toggleMaximize();
         },
 
+        /** Lets the page occupy 70% of the width at the left and the dialog the rest at the right. */
+        sidebyside: function () {
+            const fullframe = document.createElement('div');
+            fullframe.id = 'hpsChatGPTDialog-fullframe';
+            const origpage = document.createElement('div');
+            origpage.id = 'hpsChatGPTDialog-origpage';
+            fullframe.appendChild(origpage);
+            const body = document.body;
+            while (body.firstChild) {
+                origpage.appendChild(body.firstChild);
+            }
+            document.body.appendChild(fullframe);
+            this.expandRight();
+        },
+
         makeDialogDraggable: function () {
             var dialog = document.getElementById('hpsChatGPTDialog');
             var dragheader = document.getElementById('hps-chatgpt-dragheader');

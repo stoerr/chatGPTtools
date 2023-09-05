@@ -46,6 +46,10 @@
     left: 70% !important;
 }
 
+#hpsChatGPTDialog-origpage {
+    max-width: 70% !important;
+}
+
 .hps-chatgpt-dialog {
     font-family: Arial, sans-serif !important;
     position: fixed !important;
@@ -159,7 +163,7 @@
 
 .hps-chatgpt-answer {
     overflow-y: auto !important;
-    max-height: calc(100vh - 350px) !important;
+    max-height: calc(100vh - 300px) !important;
 }
 
 .hps-chatgpt-dialog .hidden {
@@ -170,9 +174,6 @@
     width: auto !important;
     margin-left: 10px !important;
 }
-    display: none !important;
-}
-
 
 #hps-chatgpt-dragheader {
   cursor: move;
