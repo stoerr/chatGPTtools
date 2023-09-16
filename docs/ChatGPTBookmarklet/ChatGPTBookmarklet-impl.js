@@ -55,6 +55,16 @@
         hideDialog: function () {
             if (this.dialog) {
                 this.dialog.style.display = 'none';
+                // also undo the effects of sidebyside, if that was applied
+                const fullframe = document.getElementById('hpsChatGPTDialog-fullframe');
+                if (fullframe) {
+                    const origpage = document.getElementById('hpsChatGPTDialog-origpage');
+                    // move all children of origpage back to body and then remove fullframe
+                    while (origpage.firstChild) {
+                        document.body.appendChild(origpage.firstChild);
+                    }
+                    document.body.removeChild(fullframe);
+                }
             }
         },
 
@@ -183,6 +193,10 @@
 
         /** Lets the page occupy 70% of the width at the left and the dialog the rest at the right. */
         sidebyside: function () {
+            // don't do anything if we are already in sidebyside mode
+            if (document.getElementById('hpsChatGPTDialog-fullframe')) {
+                return;
+            }
             const fullframe = document.createElement('div');
             fullframe.id = 'hpsChatGPTDialog-fullframe';
             const origpage = document.createElement('div');

@@ -56,3 +56,8 @@ The following text contains background information about the user, including per
 ## React
 
 https://til.simonwillison.net/llms/python-react-pattern
+
+
+## Bookmarklets
+
+https://github.com/mixmark-io/turndown -> Convert Webpage / Selection to Markdown and put into Clipboard.
