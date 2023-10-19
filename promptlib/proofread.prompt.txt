@@ -1,4 +1,4 @@
-CATEGORY=proofreading
+CATEGORY=writing
 DESCRIPTION=Proofread a text
 
 Please act as a proofreader and review the text for any spelling, grammar, or punctuation errors, typos and stylistic problems.
