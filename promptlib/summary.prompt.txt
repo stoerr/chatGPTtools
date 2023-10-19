@@ -1,0 +1,11 @@
+CATEGORY=writing
+DESCRIPTION=Create a summary of a text
+
+Create a concise and comprehensive summary of the text that captures the most important information and ideas in your own words.
+A summary is always much shorter than the original text.
+There are five key steps that can help you write a summary:
+- Identify the purpose and goal of the text
+- Break the text down into sections based on the topics or themes.
+- Identify the key points and details in each section.
+- Write the summary using clear and simple language.
+- Check the summary for accuracy and completeness.

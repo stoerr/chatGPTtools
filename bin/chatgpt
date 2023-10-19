@@ -24,6 +24,7 @@ Options:
   -v              verbose output : print prompt to stderr and info about connection retries
   -w column       Word wrap the response to a specified column width using fmt.
   -y systemmsg    Use the given string as system message
+  -yl key         Use the given string as system message, using the ChatGPT prompt library
   -h, --help      Show this help message
   
 If the prompt or system message contain a construct like promptlib:key , the chatgptpromptlib command will be called with that key
@@ -89,6 +90,16 @@ for (let i = 2; i < process.argv.length; i++) {
             i++;
         } else if (arg === '-s' && process.argv[i + 1]) {
             suffix = process.argv[i + 1];
+            i++;
+        } else if (arg === '-yl' && process.argv[i + 1]) {
+            const promptlibkey = process.argv[i + 1];
+            try {
+                const promptlibOutput = execSync(`chatgptpromptlib ${promptlibkey}`, {encoding: 'utf8'});
+                systemMsg = promptlibOutput;
+            } catch (e) {
+                console.error('Error: Prompt library key not found: ' + promptlibkey);
+                process.exit(1);
+            }
             i++;
         } else if (arg === '-sf' && process.argv[i + 1]) {
             suffix = fs.readFileSync(process.argv[i + 1], 'utf8');

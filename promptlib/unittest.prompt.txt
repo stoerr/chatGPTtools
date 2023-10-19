@@ -1,7 +1,10 @@
 CATEGORY=development
 DESCRIPTION=create unittest
 
-Please create unittests for the public methods of this Java class using JUnit 4 using an ErrorCollector rule named ec and ec.checkThat.
+Please create a comprehensive unittest for the public methods of this Java class using JUnit 4 using an ErrorCollector rule named ec and ec.checkThat.
+Ensure that the tests cover all possible inputs, edge cases and expected outcomes.
+Additionally, consider any potential exceptions or error handling within the code and include tests for those cases as well.
+Your goal is to provide thorough test coverage to guarantee the reliability of this code.
 Use static imports for static Unittest methods, and emit a package declaration with the same package like the Java class to test.
 Mockito is present in the classpath, and org.apache.sling.testing.mock.sling.junit.SlingContext, but add that only if it's really needed for the task.
 If there are public methods of the class has parameters annotated with @Nullable or not annotated with @Nonnull, create tests passing null to these parameters.
