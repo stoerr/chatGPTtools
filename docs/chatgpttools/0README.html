@@ -7,14 +7,19 @@
           content="Ask a quick question and get a response from ChatGPT, without actually having a chat. This is often much quicker than the chat.">
     <link href="//cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+    <link rel="canonical" href="https://stoerr.github.io/chatGPTtools/chatgpttools/0README.html" />
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-SL01MYCNDC"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
+        window.dataLayer = window.dataLayer || [];
 
-      gtag('config', 'G-SL01MYCNDC');
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-SL01MYCNDC');
     </script>
 </head>
 <body>
@@ -28,14 +33,17 @@
                 </div>
                 <div class="card-body">
                     <p>
-                        This is my personal experimental space for ChatGPT. So don't expect anything to work, or to be
-                        stable.
-                        But you're welcome to have fun with it, and I even more welcome feedback and fresh ideas for
+                        This is part of my personal playground with ChatGPT. These are toys but work, and
+                        you're welcome to have fun with it, and I even more welcome feedback and fresh ideas for
                         improvements.
                         Contact me <a href="http://www.stoerr.net/contact.html">here</a>.
+                        The sources for these are in my
+                        <a href="https://github.com/stoerr/chatGPTtools">chatGPTtools</a>
+                        project.
                     </p>
                     <p>
-                        Usage: when editing in textareas, you can often submit with enter, and insert a newline with shift+enter.
+                        Usage: when editing in textareas, you can often submit with enter, and insert a newline with
+                        shift+enter.
                     </p>
                     <p>
                         You'll need your own ChatGPT API key to run that, which you can get at <a
@@ -43,6 +51,28 @@
                         After logging in there with your ChatGPT credentials, you can create an API key in the
                         profile settings (top right corner) at "View API keys".
                     </p>
+                    <p>This is the list of tools:</p>
+                    <ul>
+                        <li>
+                            <a href="quickchatgpt.html">Quick question</a>:
+                            Ask a single question to ChatGPT without actually having a chat. This is often much quicker
+                            than a full chat session.
+                        </li>
+                        <li>
+                            <a href="multiplemessagechat.html">Multiple Message Chat</a>:
+                            A testbed for executing chats with several messages. It provides various options for
+                            simulating a chat with multiple messages between the user, the system, and the assistant.
+                        </li>
+                        <li>
+                            <a href="gptchatswithitself.html">ChatGPT Chats with Itself</a>:
+                            Allows two instances of ChatGPT with different settings to chat with each other.
+                        </li>
+                        <li>
+                            <a href="gptchatswithitself-advanced.html">ChatGPT Chats with Itself - Advanced</a>:
+                            A more advanced version of the tool that allows two instances of ChatGPT with different
+                            settings to chat with each other.
+                        </li>
+                    </ul>
                 </div>
             </div>
         </div>
