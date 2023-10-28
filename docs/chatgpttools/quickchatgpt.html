@@ -72,6 +72,33 @@
     });
     var converter = new showdown.Converter();
 
+    $question.blur(shrinkOnBlur);
+    $question.change(expandOnFocus);
+
+    function expandOnFocus() {
+        this.rows = 5;
+        while (this.scrollHeight > this.clientHeight) {
+            this.rows++;
+        }
+        this.rows += 5;
+        if (this.rows < 5) {
+            this.rows = 5;
+        }
+        this.scrollTop = this.scrollHeight;
+    }
+
+    /** Shrink the text area to it's actual size so that it just captures the text it has. */
+    function shrinkOnBlur() {
+        var that = this;
+        setTimeout(function () {
+            that.rows = 5;
+            while (that.scrollHeight > that.clientHeight) {
+                that.rows++;
+            }
+            that.rows++;
+        }, 100);
+    }
+
     function ask() {
         var question = $("#question").val();
         removeAnswers();
