@@ -19,9 +19,6 @@
 
                 this.answerfield = document.getElementById('hpsChatGPTAnswer');
                 this.getIncludedText(); // sets clipped to true if text was clipped
-                if (this.clipped) {
-                    document.getElementById('clipped').classList.remove('hidden');
-                }
                 // set the focus on the textarea
                 document.getElementById('hpsChatGPTQuestion').focus();
 
@@ -30,6 +27,9 @@
                         event.preventDefault();
                         that.submitQuestion();
                     }
+                });
+                document.getElementById('hps-chatgpt-model-selector').addEventListener('change', function (event) {
+                    this.getIncludedText();
                 });
             }
         },
@@ -116,6 +116,11 @@
                     document.getElementById('clipped').classList.remove('hidden');
                 }
             }
+            if (this.clipped) {
+                document.getElementById('clipped').classList.remove('hidden');
+            } else {
+                document.getElementById('clipped').classList.add('hidden');
+            }
             return thetext;
         },
 
@@ -139,25 +144,30 @@
         },
 
         getSummary: async function () {
-            let instructions = this.lang === 'de' ?
+            const instructions = this.lang === 'de' ?
                 "Erstelle eine Zusammenfassung des folgenden Texts auf Deutsch. Konzentriere dich auf neue oder überraschende Informationen.\n\n" :
                 "Create a summary of this text. Focus on new or surprising information.\n\n";
-            const content = instructions + this.threebackticks + "\n" + this.getIncludedText().trim() + "\n" + this.threebackticks;
+            const content = this.getIncludedText().trim();
             const messages = [{role: 'user', content: content}];
-            const summary = await this.sendChatGPTRequest(messages);
-            return summary;
+            const selectedModel = document.getElementById('hps-chatgpt-model-selector').value;
+            return this.promptOnText(instructions, content, selectedModel);
         },
 
         getAnswer: async function (question, includePageContent) {
-            let instructions = this.lang === 'de' ?
+            const instructions = this.lang === 'de' ?
                 "\nBitte beantworte diese Frage in Bezug auf den folgenden Text auf Deutsch:\n" :
                 "\nPlease answer this question with regard to the following text:\n";
-            let textinclude = this.threebackticks + "\n" + this.getIncludedText().trim() + "\n" + this.threebackticks + "\n\n";
-            const selectedModel = document.getElementById('hps-chatgpt-model-selector').value;
-            const content = includePageContent ? question + instructions + textinclude : question;
+            const content = includePageContent ? this.getIncludedText().trim() : '';
             const messages = [{role: 'user', content: content}];
-            const answer = await this.sendChatGPTRequest(messages, selectedModel);
-            return answer;
+            const selectedModel = document.getElementById('hps-chatgpt-model-selector').value;
+            return this.promptOnText(question, textinclude, selectedModel);
+        },
+
+        promptOnText: async function (prompt, text, model) {
+            const content = prompt + this.threebackticks + "\n" + text + "\n" + this.threebackticks;
+            const messages = [{role: 'user', content: prompt + "\n" + text}];
+            console.log('sent messages: ', messages);
+            return this.sendChatGPTRequest(messages, model);
         },
 
         toggleMaximize: function () {
