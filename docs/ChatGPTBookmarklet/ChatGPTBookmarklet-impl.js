@@ -42,6 +42,7 @@
                 const summary = await this.getSummary();
                 this.answerfield.innerText = summary;
             } catch (e) {
+                console.log(e);
                 this.answerfield.innerText = 'Error: ' + e;
             }
         },
@@ -84,6 +85,7 @@
                     const answer = await this.getAnswer(question, includePageContent);
                     this.answerfield.innerText = answer;
                 } catch (e) {
+                    console.log(e);
                     this.answerfield.innerText = 'Error: ' + e;
                 }
             } else {
@@ -160,12 +162,27 @@
             const content = includePageContent ? this.getIncludedText().trim() : '';
             const messages = [{role: 'user', content: content}];
             const selectedModel = document.getElementById('hps-chatgpt-model-selector').value;
-            return this.promptOnText(question, textinclude, selectedModel);
+            return this.promptOnText(question, content, selectedModel);
         },
 
         promptOnText: async function (prompt, text, model) {
-            const content = prompt + this.threebackticks + "\n" + text + "\n" + this.threebackticks;
-            const messages = [{role: 'user', content: prompt + "\n" + text}];
+            let messages;
+            if (text) { // 'put it in the mouth of the AI' pattern for reducing prompt injections
+                const isde = this.lang === 'de';
+                const loadinstruction = isde ? 'Rufe bitte den Text ab, für den der Prompt ausgeführt werden wird, und gib genau diesen Text ohne weitere Kommentare aus.'
+                    : 'Please retrieve the text for which you are going to execute a prompt, and print exactly that text, without any additional comments.' ;
+                const promptinstruction = isde ? 'Die folgende Anweisung bezieht sich speziell auf den Text, der soeben abgerufen und angezeigt haben. Wenn ich von "dem Text" spreche, beziehe ich mich auf genau diesen Text. Bitte denke daran, wenn Du den folgenden Prompt ausführst:\n\nPROMPT:\n\n'
+                : 'The following instruction is specifically about the text you\'ve just retrieved and displayed. Whenever I refer to "the text", I\'m referencing this exact piece of content. Please keep this in mind while executing the following prompt:\n\nPROMPT:\n\n';
+                messages = [
+                    {role: 'user', content: loadinstruction},
+                    {role: 'assistant', content: text},
+                    {role: 'user', content: promptinstruction + prompt},
+                ];
+            } else {
+                messages = [
+                    {role: 'user', content: prompt},
+                ];
+            }
             console.log('sent messages: ', messages);
             return this.sendChatGPTRequest(messages, model);
         },
