@@ -4,6 +4,10 @@ These are some of growing set of tools and experiments around ChatGPT.
 I started writing this for my own use in my sparetime and am extending it whenever I need something,
 but most of that is already pretty stable, so you are welcome to use them, too!
 I'll mark things that are new and thus unstable.
+As far as the tools are web-based, they are deployed at the
+[Github site](https://stoerr.github.io/chatGPTtools/) of this project.
+
+https://stoerr.github.io/chatGPTtools/chatgpttools/0README.html
 If you'd like to know what I'm professionally doing with ChatGPT,
 [this](https://github.com/ist-dresden/composum-chatgpt-integration) might be more interesting for you.
 
