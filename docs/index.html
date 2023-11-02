@@ -8,6 +8,7 @@
     <link href="//cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
     <link rel="shortcut icon" type="image/x-icon" href="/chatGPTtools/favicon.ico">
+    <link rel="canonical" href="https://stoerr.github.io/chatGPTtools/index.html" />
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-SL01MYCNDC"></script>
     <script>
@@ -34,9 +35,9 @@
                         In addition to the command line tools in
                         <a href="https://github.com/stoerr/chatGPTtools">https://github.com/stoerr/chatGPTtools</a>,
                         there are some more or less interesting
-                        <a href=""chatgpttools/0README.html>experiments and ChatGPT related toy applications</a> here, and I have
-                        some ChatGPT related bookmarklets - see below. These are hosted for your convenience on
-                        <a href="https://stoerr.github.io/chatGPTtools/">https://stoerr.github.io/chatGPTtools/</a> .
+                        <a href="chatgpttools/0README.html">experiments and ChatGPT related toy web applications</a> here, and I have
+                        some ChatGPT related bookmarklets - see below. (All this is hosted for your convenience here on
+                        <a href="https://stoerr.github.io/chatGPTtools/">https://stoerr.github.io/chatGPTtools/</a>).
                     </p>
                     <p class="card-text">
                         To install the bookmarklets in your browser, you can drag the following links into your
@@ -54,27 +55,10 @@
 
                     <hr>
 
-                    <h4 class="card-subtitle mb-2">Grab Styles Bookmarklet</h4>
+                    <h4 class="card-subtitle mb-2">Experiments and ChatGPT related toy web applications</h4>
                     <p class="card-text">
-                        This lets you select an element in the page and then copies out just that element and its
-                        subelements, and all CSS
-                        rules that apply to any of those. That way you can copy out the HTML and CSS needed to have
-                        ChatGPT answer questions
-                        about the CSS. Press 'h' to see the help.
-                        See also my blog entry <a href="http://www.stoerr.net/blog/2023-05-10-cssWithChatGPT.html">Some
-                        experiences using ChatGPT to develop CSS</a> for what this is good for.
+                        See <a href="chatgpttools/0README.html">here</a> for a list.
                     </p>
-
-                    <p class="card-text">Bookmarklet to drag: <a id="grabstyles"></a></p>
-
-                    <script>
-                        var bookmarklet = "javascript:(function()%7Bjavascript%3A%2F*net.stoerr.chatGPT.grabStyles*%2F(function () %7B%0A    function load(basePath) %7B%0A        if (!window.netStoerrGrabStyles) %7B%0A            var script %3D document.createElement(%27script%27)%3B%0A            script.type %3D %27text%2Fjavascript%27%3B%0A            script.src %3D basePath %2B %27%2FgrabStyles.js%27%3B%0A            script.onload %3D function () %7B%0A                window.netStoerrGrabStyles.init(basePath)%3B%0A                window.netStoerrGrabStyles.start()%3B%0A            %7D%3B%0A            document.body.appendChild(script)%3B%0A        %7D else %7B%0A            window.netStoerrGrabStyles.start()%3B%0A        %7D%0A    %7D%0A%0A    load(%27THEURL%27)%3B%0A%7D)()%3B%7D)()";
-                        // https%3A%2F%2Fstoerr.github.io%2FchatGPTtools%2FgrabStyles
-                        var url = baseurl + "grabStyles";
-                        var element = document.getElementById("grabstyles");
-                        element.setAttribute("href", bookmarklet.replace("THEURL", encodeURIComponent(url)));
-                        element.innerText = "Grab Styles";
-                    </script>
 
                     <hr>
 
@@ -125,6 +109,30 @@
                                 element.innerText = "Enter a ChatGPT API Key first.";
                             }
                         }
+                    </script>
+
+                    <hr>
+
+                    <h4 class="card-subtitle mb-2">Grab Styles Bookmarklet</h4>
+                    <p class="card-text">
+                        This lets you select an element in the page and then copies out just that element and its
+                        subelements, and all CSS
+                        rules that apply to any of those. That way you can copy out the HTML and CSS needed to have
+                        ChatGPT answer questions
+                        about the CSS. Press 'h' to see the help.
+                        See also my blog entry <a href="http://www.stoerr.net/blog/2023-05-10-cssWithChatGPT.html">Some
+                        experiences using ChatGPT to develop CSS</a> for what this is good for.
+                    </p>
+
+                    <p class="card-text">Bookmarklet to drag: <a id="grabstyles"></a></p>
+
+                    <script>
+                        var bookmarklet = "javascript:(function()%7Bjavascript%3A%2F*net.stoerr.chatGPT.grabStyles*%2F(function () %7B%0A    function load(basePath) %7B%0A        if (!window.netStoerrGrabStyles) %7B%0A            var script %3D document.createElement(%27script%27)%3B%0A            script.type %3D %27text%2Fjavascript%27%3B%0A            script.src %3D basePath %2B %27%2FgrabStyles.js%27%3B%0A            script.onload %3D function () %7B%0A                window.netStoerrGrabStyles.init(basePath)%3B%0A                window.netStoerrGrabStyles.start()%3B%0A            %7D%3B%0A            document.body.appendChild(script)%3B%0A        %7D else %7B%0A            window.netStoerrGrabStyles.start()%3B%0A        %7D%0A    %7D%0A%0A    load(%27THEURL%27)%3B%0A%7D)()%3B%7D)()";
+                        // https%3A%2F%2Fstoerr.github.io%2FchatGPTtools%2FgrabStyles
+                        var url = baseurl + "grabStyles";
+                        var element = document.getElementById("grabstyles");
+                        element.setAttribute("href", bookmarklet.replace("THEURL", encodeURIComponent(url)));
+                        element.innerText = "Grab Styles";
                     </script>
 
                 </div>
