@@ -12,6 +12,8 @@ Usage: chatgpt [options] [prompt]
 Options:
   -               Reads prompt from stdin, instead of as an argument
   -f filename     Includes the content of the given file as codeblock, together with the filename. Can be given multiple times.
+  -i imagefile    Includes the given image file as image, together with the filename. Can be given multiple times.
+  -iu imageurl    Includes the given image url as image, together with the url. Can be given multiple times.
   -p prefix       Prefix the prompt with a string. Use this or -pf, not both.
   -pf prefixfile  Prefix the prompt with the contents of a file
   -pl key         Add a prompt from the ChatGPT prompt library using the given key (see script chatgptpromptlib)
@@ -53,6 +55,8 @@ let suffix = '';
 let files = [];
 let wordWrapColumn;
 let systemMsg = '';
+let imageFiles = [];
+let imageUrls = [];
 
 for (let i = 2; i < process.argv.length; i++) {
     const arg = process.argv[i];
@@ -114,6 +118,12 @@ for (let i = 2; i < process.argv.length; i++) {
             i++;
         } else if (arg === '-m16k') {
             model = model + '-16k';
+        } else if (arg === '-i' && process.argv[i + 1]) {
+            imageFiles.push(process.argv[i + 1]);
+            i++;
+        } else if (arg === '-iu' && process.argv[i + 1]) {
+            imageUrls.push(process.argv[i + 1]);
+            i++;
         } else if (!arg.startsWith('-')) {
             inOptions = false;
             prompt += arg;
@@ -176,11 +186,49 @@ if (verbose) {
     console.error("---------------------------------------------\n\n");
 }
 
+let content = prompt;
+let detailparam;
+if (imageFiles.length > 0 || imageUrls.length > 0) {
+    content = [
+        {
+            "type": "text",
+            "text": prompt
+        }
+    ];
+    for (let i = 0; i < imageFiles.length; i++) {
+        const imageFile = imageFiles[i];
+        const filename = path.basename(imageFile);
+
+        const imageFileContent = execSync(`convert '${imageFile}' -resize '512x512>' - | base64`, { encoding: 'utf8' });
+        const imageBase64 = `data:image/jpeg;base64,${imageFileContent.trim()}`;
+        content.push({
+            "type": "image_url",
+            "image_url": {
+                "url": imageBase64
+            }
+        });
+        detailparam = 'low';
+    }
+    for (let i = 0; i < imageUrls.length; i++) {
+        const imageUrl = imageUrls[i];
+        content.push({
+            "type": "image_url",
+            "image_url": {
+                "url": imageUrl
+            }
+        });
+    }
+}
+
 const requestData = {
     model: model,
     user: 'chatgpt script',
-    messages: [{role: 'user', content: prompt}],
+    messages: [{role: 'user', content: content}],
 };
+
+if (detailparam && !imageFiles) { // if imageFiles is used, detail seems not allowed, might be a bug. TODO: recheck later
+    requestData.detail = detailparam;
+}
 
 if (systemMsg) {
     requestData.messages.unshift({role: 'system', content: replacePromptlibKey(systemMsg)});
@@ -206,7 +254,7 @@ function replacePromptlibKey(inputString) {
 
 async function requestChatGPT(attempt = 1) {
     try {
-        if (verbose) console.error("Requesting with messages ", JSON.stringify(requestData.messages));
+        if (verbose) console.error("Request: ", JSON.stringify(requestData));
         const response = await fetch(apiURL, {
             method: 'POST',
             headers,
@@ -235,7 +283,7 @@ async function requestChatGPT(attempt = 1) {
             const assistantMessage = responseData.choices[0].message;
             const finishReason = responseData.choices[0].finish_reason;
 
-            if (finishReason === 'stop') {
+            if (finishReason === 'stop' || !finishReason) {
                 let output = assistantMessage.content;
                 if (wordWrapColumn) {
                     const fmt = spawnSync('fmt', ['-w', wordWrapColumn, '-p'], {input: output, encoding: 'utf8'});
