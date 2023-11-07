@@ -1,0 +1,92 @@
+#!/bin/bash
+
+# Function to show the usage of the script
+show_usage() {
+    echo "Usage: $0 -m model -l language -p prompt -r response_format -o output_file <audio_file>"
+    echo "  -m  Model ID to use for transcription. Default is 'whisper-1'."
+    echo "  -l  Language code of the input audio. Optional but improves accuracy."
+    echo "  -p  Text to guide the model's style. Optional."
+    echo "  -r  Response format of the transcript output. Options: json, text, srt, verbose_json, vtt. Default is 'text'."
+    echo "  -o  Output file to write the response to. If not provided, the response will be printed to stdout."
+    echo "  -h  Show this help message and exit."
+    echo "  <audio_file> The audio file to transcribe."
+    exit 1
+}
+
+# Initialize default values
+model="whisper-1"
+response_format="text"
+output_file=""
+
+# Parse options
+while getopts ":m:l:p:r:o:h" opt; do
+  case $opt in
+    m) model="$OPTARG"
+    ;;
+    l) language="$OPTARG"
+    ;;
+    p) prompt="$OPTARG"
+    ;;
+    r) response_format="$OPTARG"
+    ;;
+    o) output_file="$OPTARG"
+    ;;
+    h) show_usage
+    ;;
+    \?) echo "Invalid option -$OPTARG" >&2
+        show_usage
+    ;;
+    :) echo "Option -$OPTARG requires an argument." >&2
+       show_usage
+    ;;
+  esac
+done
+
+# Remove the options from the positional parameters
+shift $((OPTIND -1))
+
+# Check for the audio file argument
+if [ "$#" -ne 1 ]; then
+    echo "Error: You must provide an audio file to transcribe."
+    show_usage
+fi
+
+audio_file=$1
+
+# Verify that the audio file exists
+if [ ! -f "$audio_file" ]; then
+    echo "Error: The file $audio_file does not exist."
+    exit 1
+fi
+
+# Read the OpenAI API key
+if [ -z "$OPENAI_API_KEY" ]; then
+    if [ -f "$HOME/.openaiapi" ]; then
+        OPENAI_API_KEY=$(cat "$HOME/.openaiapi")
+    else
+        echo "Error: OPENAI_API_KEY is not set and no config file found at $HOME/.openaiapi."
+        exit 1
+    fi
+fi
+
+# Build the curl command
+curl_command="curl -X POST 'https://api.openai.com/v1/audio/transcriptions' -s -S"
+curl_command+=" -H 'Authorization: Bearer $OPENAI_API_KEY'"
+curl_command+=" -H 'Content-Type: multipart/form-data'"
+curl_command+=" -F 'file=@$audio_file'"
+curl_command+=" -F 'model=$model'"
+
+# Add optional parameters if provided
+[ -n "$language" ] && curl_command+=" -F 'language=$language'"
+[ -n "$prompt" ] && curl_command+=" -F 'prompt=$prompt'"
+curl_command+=" -F 'response_format=$response_format'"
+
+# Execute the curl command and handle the response
+if [ -n "$output_file" ]; then
+    eval "$curl_command" -o "$output_file"
+    echo "Response written to $output_file"
+else
+    eval "$curl_command"
+fi
+
+exit 0

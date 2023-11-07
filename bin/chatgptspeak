@@ -1,0 +1,106 @@
+#!/bin/bash
+
+# Default values
+model="tts-1"
+voice="shimmer"
+format="mp3"
+speed="1"
+output_file=""
+text_file=""
+input_text=""
+
+# Function to display usage
+usage() {
+  echo "Usage: $0 [-m model] [-v voice] [-r format] [-s speed] [-o output_file] [-f text_file] [input_text]"
+  echo
+  echo "Generates audio from input text using OpenAI's TTS models."
+  echo
+  echo "Arguments:"
+  echo "  input_text           The text input to generate audio for (if -f is not used). Read from stdin if not provided."
+  echo
+  echo "Options:"
+  echo "  -m model             Model ID to use for text-to-speech. Default is '$model'."
+  echo "  -v voice             Voice to use for the generated audio. Default is '$voice'. Supported voices are alloy, echo, fable, onyx, nova, and shimmer."
+  echo "  -r format            Audio format of the response. Default is '$format'."
+  echo "  -s speed             Speed of the generated audio, from 0.25 to 4.0. Default is 1."
+  echo "  -o output_file       Output file to write the audio to. If not provided, audio will be played using afplay."
+  echo "  -f text_file         Read input text from a file instead of stdin or command argument."
+  echo
+  echo "If no output file is specified with -o, the generated speech will be played immediately using the 'afplay' command."
+  echo "The script requires an OpenAI API key, which it will attempt to read from the OPENAI_API_KEY environment variable or the file \$HOME/.openaiapi."
+  exit 1
+}
+
+# Parse options
+while getopts "m:v:r:s:o:f:h?" opt; do
+  case "$opt" in
+    m) model="$OPTARG" ;;
+    v) voice="$OPTARG" ;;
+    r) format="$OPTARG" ;;
+    s) speed="$OPTARG" ;;
+    o) output_file="$OPTARG" ;;
+    f) text_file="$OPTARG" ;;
+    h|\?) usage ;;
+    *) usage ;;
+  esac
+done
+
+# Check for input text if no file is provided
+if [ -z "$text_file" ]; then
+  shift $((OPTIND -1))
+  input_text="$*"
+  if [ -z "$input_text" ]; then
+    if [ -t 0 ]; then  # Check if stdin is a terminal
+      usage
+    else
+      input_text=$(cat) # Read input from stdin
+    fi
+  fi
+else
+  if [ ! -f "$text_file" ]; then
+    echo "Error: Text file does not exist."
+    exit 2
+  fi
+  input_text=$(<"$text_file")
+fi
+
+# Prepare data payload
+json_payload=$(jq -n \
+                  --arg model "$model" \
+                  --arg input "$input_text" \
+                  --arg voice "$voice" \
+                  --argjson speed "$speed" \
+                  '{model: $model, input: $input, voice: $voice, speed: $speed}')
+
+# Check for API Key
+if [ -z "$OPENAI_API_KEY" ]; then
+  if [ -f "$HOME/.openaiapi" ]; then
+    OPENAI_API_KEY=$(cat "$HOME/.openaiapi")
+  fi
+fi
+
+if [ -z "$OPENAI_API_KEY" ]; then
+  echo "Error: OPENAI_API_KEY is not set."
+  exit 3
+fi
+
+# Curl command
+if [ -z "$output_file" ]; then
+  # create temporary file ending with .$format , delete it using trap on exit
+  output_file="$(mktemp -u).$format"
+  trap "rm -f $output_file" EXIT
+  curl "https://api.openai.com/v1/audio/speech" -s -S \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -H "Content-Type: application/json" \
+    -d "$json_payload" \
+    --output "$output_file"
+  afplay "$output_file"
+else
+  curl "https://api.openai.com/v1/audio/speech" -s -S \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -H "Content-Type: application/json" \
+    -d "$json_payload" \
+    --output "$output_file"
+fi
+
+exit 0
