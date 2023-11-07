@@ -292,6 +292,7 @@
                 messages.push({"role": type, "content": message});
             }
         });
+        removeEmptyMessages();
         adjustTextAreas();
         submitToGPT(messages, processResult, onError);
     }
