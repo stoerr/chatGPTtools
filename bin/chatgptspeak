@@ -11,7 +11,7 @@ input_text=""
 
 # Function to display usage
 usage() {
-  echo "Usage: $0 [-m model] [-v voice] [-r format] [-s speed] [-o output_file] [-f text_file] [input_text]"
+  echo "Usage: $(basename $0) [-m model] [-v voice] [-r format] [-s speed] [-o output_file] [-f text_file] [input_text]"
   echo
   echo "Generates audio from input text using OpenAI's TTS models."
   echo

@@ -2,7 +2,7 @@
 
 # Function to show the usage of the script
 show_usage() {
-    echo "Usage: $0 -m model -l language -p prompt -r response_format -o output_file <audio_file>"
+    echo "Usage: $(basename $0) -m model -l language -p prompt -r response_format -o output_file <audio_file>"
     echo "  -m  Model ID to use for transcription. Default is 'whisper-1'."
     echo "  -l  Language code of the input audio. Optional but improves accuracy."
     echo "  -p  Text to guide the model's style. Optional."
