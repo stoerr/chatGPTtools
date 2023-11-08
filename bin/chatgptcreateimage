@@ -1,0 +1,174 @@
+#!/bin/bash
+
+function print_usage() {
+    echo "Usage: chatgptimage [options] [prompt]"
+    echo
+    echo "Generates an image based on a textual prompt using OpenAI's DALL-E 3 model."
+    echo
+    echo "If no prompt is given in the command line, -f must be used to specify a file containing the prompt."
+    echo "If no output file is given, the raw json response is printed to stdout."
+    echo
+    echo "Options:"
+    echo "  -h                       Show this help message and exit."
+    echo "  -m <model>               Model to use for image generation (defaults to dall-e-3)."
+    echo "  -q <quality>             Image quality: standard or hd (Optional, defaults to standard)."
+    echo "  -s <size>                Image size (Optional, overrides -p and -l if used)."
+    echo "  -p                       Use portrait orientation (1024x1792)."
+    echo "  -l                       Use landscape orientation (1792x1024)."
+    echo "  -f <file>                Read prompt from a file. Use '-' to read from stdin."
+    echo "  -r <format>              Response format url or b64_json (Optional, defaults to url)."
+    echo "  -o <file>                Output file to write the image to (format .webp). Implies response_format b64_json."
+    echo "  -u                       Just prints the url to stdout. (Implies response_format url)."
+    echo
+    echo "Environment:"
+    echo "  OPENAI_API_KEY           API key for OpenAI. Sourced from this environment variable, or \$HOME/.openaiapi file."
+    echo
+    echo "Examples:"
+    echo "  chatgptimage \"A panoramic view of Mount Everest\""
+    echo "  chatgptimage -p -m dall-e-3 \"A portrait of a young artist as a refined gentleman\""
+    echo "  chatgptimage -l -q hd -f prompts.txt"
+    echo "  echo \"A still life of various fruits on a table\" | chatgptimage -f -"
+}
+
+# Check if no arguments
+if [ $# -eq 0 ]; then
+    print_usage
+    exit 1
+fi
+
+# Initialize default values
+MODEL="dall-e-3"
+QUALITY="standard"
+SIZE="1024x1024"
+FILE_MODE=0
+PROMPT_FILE=""
+PROMPT=""
+RESPONSE_FORMAT="url"
+OUTPUT_FILE=""
+PRINT_URL=""
+
+# Function to load OPENAI_API_KEY
+function load_api_key() {
+    if [ ! -z "$OPENAI_API_KEY" ]; then
+        API_KEY=$OPENAI_API_KEY
+    elif [ -f "$HOME/.openaiapi" ]; then
+        API_KEY=$(cat "$HOME/.openaiapi")
+    else
+        echo "Error: OPENAI_API_KEY not set and no config file found at \$HOME/.openaiapi"
+        exit 1
+    fi
+}
+
+# Parse options
+while getopts ':hlm:q:s:pf:r:o:u' option; do
+  case "$option" in
+    h) print_usage
+       exit
+       ;;
+    m) MODEL=$OPTARG
+       ;;
+    q) QUALITY=$OPTARG
+       ;;
+    s) SIZE=$OPTARG
+       ;;
+    p) SIZE="1024x1792"
+       ;;
+    l) SIZE="1792x1024"
+       ;;
+    f) FILE_MODE=1
+       PROMPT_FILE=$OPTARG
+       ;;
+    r) RESPONSE_FORMAT=$OPTARG
+        ;;
+    o) OUTPUT_FILE=$OPTARG
+        RESPONSE_FORMAT="b64_json"
+        ;;
+    u) PRINT_URL="1"
+        RESPONSE_FORMAT="url"
+        ;;
+    :) printf "Missing argument for -%s\n" "$OPTARG" >&2
+       print_usage
+       exit 1
+       ;;
+    \?) printf "Illegal option: -%s\n" "$OPTARG" >&2
+       print_usage
+       exit 1
+       ;;
+  esac
+done
+
+shift $((OPTIND - 1))
+
+# Read prompt from file/stdin if -f is used
+if [ $FILE_MODE -eq 1 ]; then
+    if [ "$PROMPT_FILE" == "-" ]; then
+        read -d '' -r PROMPT
+    else
+        if [ ! -f "$PROMPT_FILE" ]; then
+            echo "Error: File $PROMPT_FILE does not exist."
+            exit 1
+        fi
+        PROMPT=$(cat "$PROMPT_FILE")
+    fi
+elif [ $# -eq 0 ]; then
+    echo "Error: No prompt provided."
+    print_usage
+    exit 1
+else
+    PROMPT=$*
+fi
+
+# Load API key
+load_api_key
+
+# Check prompt length
+if [ ${#PROMPT} -gt 4000 ]; then
+    echo "Error: Prompt exceeds maximum length of 4000 characters."
+    exit 1
+fi
+
+# Function to generate image with OpenAI API
+function generate_image() {
+    RESPONSE=$(curl -s -S -X POST "https://api.openai.com/v1/images/generations" \
+        -H "Authorization: Bearer $API_KEY" \
+        -H "Content-Type: application/json" \
+        -d @- <<EOF
+{
+  "model": "$MODEL",
+  "prompt": "$PROMPT",
+  "n": 1,
+  "size": "$SIZE",
+  "quality": "$QUALITY",
+  "response_format": "$RESPONSE_FORMAT"
+}
+EOF
+    )
+
+    # Check for curl errors (network problems, etc.)
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to connect to the OpenAI API."
+        exit 1
+    fi
+
+    # Check if the response contains an error message
+    if echo "$RESPONSE" | grep -q "error"; then
+        echo "Error: The API returned an error message:"
+        echo $RESPONSE # | jq '.error'
+        exit 1
+    fi
+
+    if [ ! -z "$OUTPUT_FILE" ]; then
+        echo "$RESPONSE" | jq -r '.data[].b64_json' | base64 -d > "$OUTPUT_FILE"
+        REVISED_PROMPT=$(echo "$RESPONSE" | jq -r '.data[].revised_prompt')
+        exiftool -P -overwrite_original -ImageDescription="$PROMPT" "$OUTPUT_FILE"
+        exiftool -P -overwrite_original -UserComment="Revised Prompt: $REVISED_PROMPT" "$OUTPUT_FILE"
+    elif [ ! -z "$PRINT_URL" ]; then
+        echo "$RESPONSE" | jq -r '.data[].url'
+    else
+        echo "$RESPONSE"
+    fi
+
+}
+
+# Call the generate_image function
+generate_image
