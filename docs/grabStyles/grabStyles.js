@@ -163,14 +163,12 @@
                         resetElement(highlightedElement);
                     }
                 } else if (event.key === 'ArrowUp' || event.key === 'p') {
-                    event.preventDefault();
                     if (highlightedElement && highlightedElement.parentElement) {
                         resetElement(highlightedElement);
                         highlightedElement = highlightedElement.parentElement;
                         highlightElement(highlightedElement);
                     }
                 } else if (event.key === 'Enter') {
-                    event.preventDefault();
                     if (highlightedElement !== null) {
                         resetElement(highlightedElement);
                         selectedElement = highlightedElement;
@@ -179,7 +177,6 @@
                         callback(selectedElement);
                     }
                 } else if (event.key === 'd') {
-                    event.preventDefault();
                     if (highlightedElement !== null) {
                         const parent = highlightedElement.parentElement;
                         resetElement(highlightedElement);
@@ -188,14 +185,18 @@
                         highlightElement(highlightedElement);
                     }
                 } else if (event.key === 'D') {
-                    event.preventDefault();
                     if (highlightedElement !== null) {
                         deleteAllExceptSelectedAndAncestors(highlightedElement);
                     }
                 } else if (event.key === '?' || event.key === 'h') {
-                    event.preventDefault();
                     showHelp();
+                } else { // not really for us, let others handle it
+                    return false;
                 }
+                // we have handled it; don't let others destroy that.
+                event.preventDefault();
+                event.stopPropagation();
+                return true;
             }
 
             function showHelp() {
