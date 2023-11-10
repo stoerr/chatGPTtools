@@ -21,14 +21,16 @@ chatgptlistmodels lists all models available for chatgpt
 
 
 # chatgpttokentool
+CAUTION: the result is not quite correct yet - there is a merging process that is't implemented yet.
 
 Usage: chatgpttokentool [option] inputfile
 
 Options:
   -h or --help  Show this help message and exit
   -c            prints the token count for the input file
-  -e            prints the token numbers for the input file separated by one space
-  -ev           prints the tokens for the input as token number, tab, token, newline
+  -e            prints a quick estimation of the token count for the input file (faster than -c)
+  -n            prints the token numbers for the input file separated by one space
+  -nv           prints the tokens for the input as token number, tab, token, newline
   -d            the input file must be a whitespace separated token list; decodes that into the original text and prints it
   -sm number    shortens the input file to at most the given number of tokens by cutting off the middle
   -ss number    shortens the input file to at most the given number of tokens by cutting off the start
@@ -40,6 +42,27 @@ Description:
   If the input file is given as - then the input is read from stdin.
   If the input file is shortened, the removed part is replaced by ' ... ' . If there is no need for shortening, the input is printed as is.
 
+
+
+# chatgptspeak
+./chatgptspeak: illegal option -- -
+Usage: chatgptspeak [-m model] [-v voice] [-r format] [-s speed] [-o output_file] [-f text_file] [input_text]
+
+Generates audio from input text using OpenAI's TTS models.
+
+Arguments:
+  input_text           The text input to generate audio for (if -f is not used). Read from stdin if not provided.
+
+Options:
+  -m model             Model ID to use for text-to-speech. Default is 'tts-1'.
+  -v voice             Voice to use for the generated audio. Default is 'shimmer'. Supported voices are alloy, echo, fable, onyx, nova, and shimmer.
+  -r format            Audio format of the response. Default is 'mp3'.
+  -s speed             Speed of the generated audio, from 0.25 to 4.0. Default is 1.
+  -o output_file       Output file to write the audio to. If not provided, audio will be played using afplay.
+  -f text_file         Read input text from a file instead of stdin or command argument.
+
+If no output file is specified with -o, the generated speech will be played immediately using the 'afplay' command.
+The script requires an OpenAI API key, which it will attempt to read from the OPENAI_API_KEY environment variable or the file $HOME/.openaiapi.
 
 
 # chatgptsummarizeurl
@@ -61,6 +84,49 @@ Options:
 Description:
   This script sends a task description to ChatGPT, which returns a fish
   command line for the given task and prints it.
+
+
+# chatgpttranscription
+Invalid option --
+Usage: chatgpttranscription [-m model] [-l language] [-p prompt] [-r response_format] [-o output_file] <audio_file>
+  -m  Model ID to use for transcription. Default is 'whisper-1'.
+  -l  Language code of the input audio. Optional but improves accuracy.
+  -p  Text to guide the model's style. Optional.
+  -r  Response format of the transcript output. Options: json, text, srt, verbose_json, vtt. Default is 'text'.
+  -o  Output file to write the response to. If not provided, the response will be printed to stdout.
+  -h  Show this help message and exit.
+  <audio_file> The audio file to transcribe.
+
+
+# chatgptcreateimage
+Illegal option: --
+Usage: chatgptimage [options] [prompt]
+
+Generates an image based on a textual prompt using OpenAI's DALL-E 3 model.
+
+If no prompt is given in the command line, -f must be used to specify a file containing the prompt.
+If no output file is given, the raw json response is printed to stdout.
+
+Options:
+  -h                       Show this help message and exit.
+  -m <model>               Model to use for image generation (defaults to dall-e-3).
+  -q <quality>             Image quality: standard or hd (Optional, defaults to standard).
+  -s <size>                Image size (Optional, overrides -p and -l if used).
+  -p                       Use portrait orientation (1024x1792).
+  -l                       Use landscape orientation (1792x1024).
+  -f <file>                Read prompt from a file. Use '-' to read from stdin.
+  -r <format>              Response format url or b64_json (Optional, defaults to url).
+  -o <file>                Output file to write the image to (format .webp). Implies response_format b64_json.
+  -u                       Just prints the url to stdout. (Implies response_format url).
+
+Environment:
+  OPENAI_API_KEY           API key for OpenAI. Sourced from this environment variable, or $HOME/.openaiapi file.
+
+Examples:
+  chatgptimage "A panoramic view of Mount Everest"
+  chatgptimage -p -m dall-e-3 "A portrait of a young artist as a refined gentleman"
+  chatgptimage -l -q hd -f prompts.txt
+  echo "A still life of various fruits on a table" | chatgptimage -f -
 
 
 # chatgptextractcodeblock
@@ -127,18 +193,20 @@ Usage: chatgpt [options] [prompt]
 Options:
   -               Reads prompt from stdin, instead of as an argument
   -f filename     Includes the content of the given file as codeblock, together with the filename. Can be given multiple times.
+  -i imagefile    Includes the given image file as image, together with the filename. Can be given multiple times.
+  -iu imageurl    Includes the given image url as image, together with the url. Can be given multiple times.
   -p prefix       Prefix the prompt with a string. Use this or -pf, not both.
   -pf prefixfile  Prefix the prompt with the contents of a file
   -pl key         Add a prompt from the ChatGPT prompt library using the given key (see script chatgptpromptlib)
   -s suffix       Suffix the prompt with a string. Use this or -sf, not both.
   -sf suffixfile  Suffix the prompt with the contents of a file
   -m modelname    Use a specific model (default: gpt-3.5-turbo)
-  -m32k           Use the 32k model instead of the default (that'll bee gpt-3.5-turbo-32k)
-  -m32kif tokens  Use the 32k model if the prompt has more than the given number of tokens
+  -m16k           Use the 16k model instead of the default (that'll be gpt-3.5-turbo-16k)
   -t number       Set max tokens for response (default: no limit)
   -v              verbose output : print prompt to stderr and info about connection retries
   -w column       Word wrap the response to a specified column width using fmt.
   -y systemmsg    Use the given string as system message
+  -yl key         Use the given string as system message, using the ChatGPT prompt library
   -h, --help      Show this help message
   
 If the prompt or system message contain a construct like promptlib:key , the chatgptpromptlib command will be called with that key
@@ -162,6 +230,7 @@ Usage: createJavaUnittest [options] [Java file] [optional additional instruction
 
 Options:
   -f              Overwrite existing test file if it exists
+  -y systemmsg    Use the given string as system message (compare -y for chatgpt script)
   --help          Show this help message and exit
 
 Description:

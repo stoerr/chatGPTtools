@@ -87,7 +87,7 @@ for (let i = 2; i < process.argv.length; i++) {
                 const promptlibOutput = execSync(`chatgptpromptlib ${promptlibkey}`, {encoding: 'utf8'});
                 prompt += '\n' + promptlibOutput + '\n';
             } catch (e) {
-                console.error('Error: Prompt library key not found: ' + promptlibkey);
+                console.error('Error: Prompt library key not found (1): ' + promptlibkey);
                 process.exit(1);
             }
             i++;
@@ -100,7 +100,7 @@ for (let i = 2; i < process.argv.length; i++) {
                 const promptlibOutput = execSync(`chatgptpromptlib ${promptlibkey}`, {encoding: 'utf8'});
                 systemMsg = promptlibOutput;
             } catch (e) {
-                console.error('Error: Prompt library key not found: ' + promptlibkey);
+                console.error('Error: Prompt library key not found (2): ' + promptlibkey);
                 process.exit(1);
             }
             i++;
@@ -246,7 +246,7 @@ function replacePromptlibKey(inputString) {
         try {
             return execSync(`chatgptpromptlib ${key}`, {encoding: 'utf8'});
         } catch (e) {
-            console.error('Error: Prompt library key not found: ' + key);
+            console.error('Error: Prompt library key not found (3): ' + key);
             process.exit(1);
         }
     });
