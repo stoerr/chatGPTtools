@@ -19,6 +19,7 @@ function print_usage() {
     echo "  -r <format>              Response format url or b64_json (Optional, defaults to url)."
     echo "  -o <file>                Output file to write the image to (format .webp). Implies response_format b64_json."
     echo "  -u                       Just prints the url to stdout. (Implies response_format url)."
+    echo "  -v                       View in a file viewer (MacOS open -W); if no -o is given, the file is deleted after viewing (temporary file)."
     echo
     echo "Environment:"
     echo "  OPENAI_API_KEY           API key for OpenAI. Sourced from this environment variable, or \$HOME/.openaiapi file."
@@ -46,6 +47,7 @@ PROMPT=""
 RESPONSE_FORMAT="url"
 OUTPUT_FILE=""
 PRINT_URL=""
+VIEW_FILE=""
 
 # Function to load OPENAI_API_KEY
 function load_api_key() {
@@ -60,7 +62,7 @@ function load_api_key() {
 }
 
 # Parse options
-while getopts ':hlm:q:s:pf:r:o:u' option; do
+while getopts ':hlm:q:s:pf:r:o:uv' option; do
   case "$option" in
     h) print_usage
        exit
@@ -86,6 +88,9 @@ while getopts ':hlm:q:s:pf:r:o:u' option; do
     u) PRINT_URL="1"
         RESPONSE_FORMAT="url"
         ;;
+    v) VIEW_FILE="1"
+      RESPONSE_FORMAT="b64_json"
+      ;;
     :) printf "Missing argument for -%s\n" "$OPTARG" >&2
        print_usage
        exit 1
@@ -96,6 +101,13 @@ while getopts ':hlm:q:s:pf:r:o:u' option; do
        ;;
   esac
 done
+
+if [ ! -z "$VIEW_FILE" ]; then
+  if [ -z "$OUTPUT_FILE" ]; then
+    OUTPUT_FILE="$(mktemp -u).webp"
+    trap "rm -f $OUTPUT_FILE" EXIT
+  fi
+fi
 
 shift $((OPTIND - 1))
 
@@ -166,6 +178,10 @@ EOF
         echo "$RESPONSE" | jq -r '.data[].url'
     else
         echo "$RESPONSE"
+    fi
+
+    if [ ! -z "$VIEW_FILE" ]; then
+      open -W "$OUTPUT_FILE"
     fi
 
 }
