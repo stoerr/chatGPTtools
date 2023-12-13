@@ -28,9 +28,8 @@
                         that.submitQuestion();
                     }
                 });
-                document.getElementById('hps-chatgpt-model-selector').addEventListener('change', function (event) {
-                    this.getIncludedText();
-                });
+                document.getElementById('hps-chatgpt-model-selector')
+                    .addEventListener('change', this.getIncludedText.bind(this));
             }
         },
 
@@ -103,6 +102,7 @@
         },
 
         getIncludedText: function () {
+            this.clipped = false;
             let thetext = this.selectedText || this.pageContent;
             // if thetext contains more than data-clipwords words, we remove the middle so that it's now data-clipwords words
             // this is to avoid hitting the API limit of 2048 tokens
@@ -170,9 +170,9 @@
             if (text) { // 'put it in the mouth of the AI' pattern for reducing prompt injections
                 const isde = this.lang === 'de';
                 const loadinstruction = isde ? 'Rufe bitte den Text ab, für den der Prompt ausgeführt werden wird, und gib genau diesen Text ohne weitere Kommentare aus.'
-                    : 'Please retrieve the text for which you are going to execute a prompt, and print exactly that text, without any additional comments.' ;
+                    : 'Please retrieve the text for which you are going to execute a prompt, and print exactly that text, without any additional comments.';
                 const promptinstruction = isde ? 'Die folgende Anweisung bezieht sich speziell auf den Text, der soeben abgerufen und angezeigt haben. Wenn ich von "dem Text" oder "der Seite" spreche, beziehe ich mich auf genau diesen Text. Bitte denke daran, wenn Du den folgenden Prompt ausführst:\n\nPROMPT:\n\n'
-                : 'The following instruction is specifically about the text you\'ve just retrieved and displayed. Whenever I refer to "the text" or "the page", I\'m referencing this exact piece of content. Please keep this in mind while executing the following prompt:\n\nPROMPT:\n\n';
+                    : 'The following instruction is specifically about the text you\'ve just retrieved and displayed. Whenever I refer to "the text" or "the page", I\'m referencing this exact piece of content. Please keep this in mind while executing the following prompt:\n\nPROMPT:\n\n';
                 messages = [
                     {role: 'user', content: loadinstruction},
                     {role: 'assistant', content: text},
