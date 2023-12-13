@@ -30,6 +30,8 @@
                 });
                 document.getElementById('hps-chatgpt-model-selector')
                     .addEventListener('change', this.getIncludedText.bind(this));
+
+                setTimeout(this.sidebyside.bind(this), 0);
             }
         },
 
