@@ -1,6 +1,6 @@
 
 /* To create actual bookmarklet use e.g. https://www.shareprogress.org/bookmarklet/, or,
-even better, open https://stoerr.github.io/chatGPTtools/ in the browser and grab it from there. */
+even better, open https://chatGPTtools.stoerr.net/ in the browser and grab it from there. */
 
 javascript:/*ChatGPTBookmarklet*/(function() {
   function load(basePath, apikey) {
@@ -16,7 +16,7 @@ javascript:/*ChatGPTBookmarklet*/(function() {
       window.hpsChatGPTBookmarklet.openDialog();
     }
   }
-  load('https://stoerr.github.io/chatGPTtools/ChatGPTBookmarklet', 'XXX');
+  load('https://chatGPTtools.stoerr.net/ChatGPTBookmarklet', 'XXX');
 })();
 
 // locally from IntelliJ: 'http://localhost:63342/chatgpt/docs/ChatGPTBookmarklet'

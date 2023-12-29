@@ -5,9 +5,9 @@ I started writing this for my own use in my sparetime and am extending it whenev
 but most of that is already pretty stable, so you are welcome to use them, too!
 I'll mark things that are new and thus unstable.
 As far as the tools are web-based, they are deployed at the
-[Github site](https://stoerr.github.io/chatGPTtools/) of this project.
+[Github site](https://chatGPTtools.stoerr.net/) of this project.
 
-https://stoerr.github.io/chatGPTtools/chatgpttools/0README.html
+https://chatGPTtools.stoerr.net/chatgpttools/0README.html
 If you'd like to know what I'm professionally doing with ChatGPT,
 [this](https://github.com/ist-dresden/composum-chatgpt-integration) might be more interesting for you.
 
@@ -35,10 +35,10 @@ somewhere. :-)
   basically an extended prompt with examples for ChatGPT to do something given a file.
 - [personal/] contains an experiment to create a quick chat interface that supplies ChatGPT with a kind of long term
   memory.
-- [docs/](docs/) has stuff that will be available at https://stoerr.github.io/chatGPTtools/ , nothing really useable
+- [docs/](docs/) has stuff that will be available at https://chatGPTtools.stoerr.net/ , nothing really useable
   yet.
 
-## Bookmarklets deployed at https://stoerr.github.io/chatGPTtools/
+## Bookmarklets deployed at https://chatGPTtools.stoerr.net/
 
 - The ChatGPT Bookmarklet lets you summarize any webpage using ChatGPT, ask questions and more.
 - The Grab Styles Bookmarklet lets you select an element from a page and extract it's HTML and applying CSS rules,

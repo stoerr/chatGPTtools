@@ -2,7 +2,7 @@
  * I create a separate loader so that I can easily fix things without having to edit the bookmark. */
 
 /* To create actual bookmarklet use e.g. https://www.shareprogress.org/bookmarklet/, or,
-even better, open https://stoerr.github.io/chatGPTtools/ in the browser and grab it from there. */
+even better, open https://chatGPTtools.stoerr.net/ in the browser and grab it from there. */
 
 javascript:/*net.stoerr.chatGPT.grabStyles*/(function () {
     function load(basePath) {
@@ -20,6 +20,6 @@ javascript:/*net.stoerr.chatGPT.grabStyles*/(function () {
         }
     }
 
-    // load('https://stoerr.github.io/chatGPTtools/grabStyles');
+    // load('https://chatGPTtools.stoerr.net/grabStyles');
     load('http://localhost:63342/chatgpt/docs/grabStyles');
 })();

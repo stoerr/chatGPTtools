@@ -7,7 +7,7 @@ javascript:/*ChatGPTBookmarkletV1GPT*/(function() {
   if (!window.hpsChatGPTBookmarklet) {
     // Set the path to the application
     // var basePath = 'http://localhost:63342/chatgpt/docs/ChatGPTBookmarklet';
-    var basePath = 'https://stoerr.github.io/chatGPTtools/ChatGptBookmarklet-V1GPT';
+    var basePath = 'https://chatGPTtools.stoerr.net/ChatGptBookmarklet-V1GPT';
 
     // Load the ChatGPTBookmarklet JavaScript
     var script = document.createElement('script');
