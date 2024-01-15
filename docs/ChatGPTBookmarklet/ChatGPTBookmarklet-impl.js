@@ -104,28 +104,16 @@
         },
 
         getIncludedText: function () {
-            this.clipped = false;
-            let thetext = this.selectedText || this.pageContent;
-            // if thetext contains more than data-clipwords words, we remove the middle so that it's now data-clipwords words
-            // this is to avoid hitting the API limit of 2048 tokens
-            const whitespaceregex = /\s+/gm;
-            const words = thetext.trim().split(whitespaceregex);
-            let wordcount = words.length;
-            const clipwords = parseInt(document.getElementById('hps-chatgpt-model-selector').selectedOptions[0].dataset.clipwords);
-            if (wordcount > (clipwords - 200)) {
-                console.log('Clipping because of wordcount' + wordcount);
-                thetext = words.slice(0, clipwords / 2 - 100).join(" ") + "\n...\n" + words.slice(words.length - clipwords / 2 + 100).join(" ");
-                this.clipped = true;
-                if (document.getElementById('clipped')) {
-                    document.getElementById('clipped').classList.remove('hidden');
-                }
-            }
-            if (this.clipped) {
-                document.getElementById('clipped').classList.remove('hidden');
+            return this.selectedText || this.pageContent;
+        },
+
+        setClipped(isClipped) {
+            const clippedIndicator = document.getElementById('clipped');
+            if (isClipped) {
+                clippedIndicator.classList.remove('hidden');
             } else {
-                document.getElementById('clipped').classList.add('hidden');
+                clippedIndicator.classList.add('hidden');
             }
-            return thetext;
         },
 
         copyToClipboard: function () {
@@ -186,7 +174,7 @@
                 ];
             }
             console.log('sent messages: ', messages);
-            return this.sendChatGPTRequest(messages, model);
+            return this.sendChatGPTRequestWithClipping(messages, this.setClipped.bind(this), model);
         },
 
         toggleMaximize: function () {
