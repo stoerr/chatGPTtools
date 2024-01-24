@@ -17,6 +17,9 @@
     width: 50% !important;
     z-index: 9999 !important;
     box-sizing: border-box !important;
+    font-family: Arial, sans-serif !important;
+    border-radius: 5px !important;
+    box-shadow: 0 3px 9px rgba(0, 0, 0, 0.5) !important;
 }
 
 .hps-chatgpt-maximize-maximized {
@@ -50,11 +53,8 @@
     max-width: 70% !important;
 }
 
-.hps-chatgpt-dialog {
-    font-family: Arial, sans-serif !important;
-    position: fixed !important;
-    border-radius: 5px !important;
-    box-shadow: 0 3px 9px rgba(0, 0, 0, 0.5) !important;
+.hps-chatgpt-header-controls {
+    white-space: nowrap;
 }
 
 .hps-chatgpt-header {
@@ -115,7 +115,7 @@
     border: none !important;
     font-size: 18px !important;
     cursor: pointer !important;
-    padding: 0 5px !important;
+    padding: 0 3px !important;
 }
 
 .hps-chatgpt-dialog {
