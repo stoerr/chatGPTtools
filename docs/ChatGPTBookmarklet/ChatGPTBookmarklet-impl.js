@@ -61,16 +61,6 @@
         hideDialog: function () {
             if (this.dialog) {
                 this.dialog.style.display = 'none';
-                // also undo the effects of sidebyside, if that was applied
-                const fullframe = document.getElementById('hpsChatGPTDialog-fullframe');
-                if (fullframe) {
-                    const origpage = document.getElementById('hpsChatGPTDialog-origpage');
-                    // move all children of origpage back to body and then remove fullframe
-                    while (origpage.firstChild) {
-                        document.body.appendChild(origpage.firstChild);
-                    }
-                    document.body.removeChild(fullframe);
-                }
             }
         },
 
@@ -183,6 +173,7 @@
         },
 
         toggleMaximize: function () {
+            this.undoFraming();
             const dialogContainer = document.querySelector('.hpsChatGPTDialog-container');
             const maximizeButton = document.getElementById('hpsChatGPTMaximize');
             const isMaximized = dialogContainer.classList.toggle('hps-chatgpt-maximize-maximized');
@@ -202,12 +193,14 @@
         },
 
         expandLeft: function () {
+            this.undoFraming();
             const dialogContainer = document.querySelector('.hpsChatGPTDialog-container');
             dialogContainer.classList.add('hps-chatgpt-expand-left');
             this.toggleMaximize();
         },
 
         expandRight: function () {
+            this.undoFraming();
             const dialogContainer = document.querySelector('.hpsChatGPTDialog-container');
             dialogContainer.classList.add('hps-chatgpt-expand-right');
             this.toggleMaximize();
@@ -215,6 +208,17 @@
 
         /** Lets the page occupy 70% of the width at the left and the dialog the rest at the right. */
         sidebyside: function () {
+            if (document.getElementById('hpsChatGPTDialog-fullframe')) {
+                this.undoFraming();
+                this.toggleMaximize();
+            } else{
+                this.expandRight();
+                this.wrapIntoFullframe();
+            }
+        },
+
+        /** Introduce a frame to move document content to the right side out of the way of the dialog. */
+        wrapIntoFullframe() {
             // don't do anything if we are already in sidebyside mode
             if (document.getElementById('hpsChatGPTDialog-fullframe')) {
                 return;
@@ -229,7 +233,19 @@
                 origpage.appendChild(body.firstChild);
             }
             document.body.appendChild(fullframe);
-            this.expandRight();
+        },
+
+        /* Undo the effects of wrapIntoFullframe for sidebyside, if that was applied */
+        undoFraming() {
+            const fullframe = document.getElementById('hpsChatGPTDialog-fullframe');
+            if (fullframe) {
+                const origpage = document.getElementById('hpsChatGPTDialog-origpage');
+                // move all children of origpage back to body and then remove fullframe
+                while (origpage.firstChild) {
+                    document.body.appendChild(origpage.firstChild);
+                }
+                document.body.removeChild(fullframe);
+            }
         },
 
         makeDialogDraggable: function () {
