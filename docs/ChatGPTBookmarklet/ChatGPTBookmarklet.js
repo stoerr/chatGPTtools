@@ -2,10 +2,10 @@
 (function (window) {
     window.hpsChatGPTBookmarklet = window.hpsChatGPTBookmarklet || {};
 
-    window.hpsChatGPTBookmarklet.init = async function (basePath, apikey, callbackWhenHTMLLoaded) {
-        try {
-            const that = window.hpsChatGPTBookmarklet;
+    const that = window.hpsChatGPTBookmarklet;
 
+    that.init = async function (basePath, apikey, callbackWhenHTMLLoaded) {
+        try {
             that.basePath = basePath;
             // remove trailing slash
 
@@ -52,10 +52,9 @@
         }
     };
 
-    window.hpsChatGPTBookmarklet.openDialog = async function () {
+    that.openDialog = async function () {
         // forward to implementation in other javascript file
-        window.hpsChatGPTBookmarklet.openDialogImpl();
+        that.openDialogImpl();
     };
-
 })
 (window);

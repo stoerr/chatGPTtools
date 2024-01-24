@@ -50,12 +50,16 @@
                 </div>
             </div>
             <div class="hps-chatgpt-controls">
-                <button id="hpsChatGPTCopyToClipboard" onclick="window.hpsChatGPTBookmarklet.copyToClipboard()">Copy to
-                    clipboard
+                <button id="hpsChatGPTCopyToClipboard" onclick="window.hpsChatGPTBookmarklet.copyToClipboard()">To
+                    Clipboard
                 </button>
-                <button id="hpsChatGPTCloseBottom" onclick="window.hpsChatGPTBookmarklet.hideDialog()">Close Dialog
+                <button id="hpsChatGPTCloseBottom" onclick="window.hpsChatGPTBookmarklet.hideDialog()">Close
                 </button>
                 <button id="hpsChatGPTHelp" onclick="window.hpsChatGPTBookmarklet.showHelp()">Help</button>
+                <button id="hpsChatGPTHistoryBack" onclick="window.hpsChatGPTBookmarklet.historyBack()"
+                title="Backward in history">&lt;H</button>
+                <button id="hpsChatGPTHistoryForward" onclick="window.hpsChatGPTBookmarklet.historyForward()"
+                title="Forward in history">H&gt;</button>
             </div>
         </div>
     </div>

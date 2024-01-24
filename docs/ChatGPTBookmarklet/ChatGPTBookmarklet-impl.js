@@ -16,13 +16,16 @@
                 this.selectedText = this.getSelectedText();
                 this.pageContent = this.getPageContent();
                 this.clipped = false;
+                this.history = [];
+                this.historyIndex = -1;
 
                 this.answerfield = document.getElementById('hpsChatGPTAnswer');
+                this.questionField = document.getElementById('hpsChatGPTQuestion');
                 this.getIncludedText(); // sets clipped to true if text was clipped
                 // set the focus on the textarea
-                document.getElementById('hpsChatGPTQuestion').focus();
+                this.questionField.focus();
 
-                document.getElementById('hpsChatGPTQuestion').addEventListener('keydown', function (event) {
+                this.questionField.addEventListener('keydown', function (event) {
                     if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.metaKey) {
                         event.preventDefault();
                         that.submitQuestion();
@@ -42,6 +45,7 @@
                 this.answerfield.innerHTML = 'Contacting ChatGPT for summary...<br/><br/>' + this.helptext;
                 const summary = await this.getSummary();
                 this.answerfield.innerText = summary;
+                this.saveToHistory();
             } catch (e) {
                 console.log(e);
                 this.answerfield.innerText = 'Error: ' + e;
@@ -77,7 +81,7 @@
         },
 
         submitQuestion: async function () {
-            const question = document.getElementById('hpsChatGPTQuestion').value;
+            const question = this.questionField.value;
             const includePageContent = document.getElementById('hpsChatGPTIncludePageContent').checked;
 
             if (question.trim() !== '') {
@@ -85,6 +89,7 @@
                 try {
                     const answer = await this.getAnswer(question, includePageContent);
                     this.answerfield.innerText = answer;
+                    this.saveToHistory();
                 } catch (e) {
                     console.log(e);
                     this.answerfield.innerText = 'Error: ' + e;
@@ -261,7 +266,41 @@
                 document.onmouseup = null;
                 document.onmousemove = null;
             }
-        }
+        },
+
+        // Implement this:
+        //                 <button id="hpsChatGPTHistoryBack" onclick="window.hpsChatGPTBookmarklet.historyBack()"
+        //                 title="Backward in history">&lt;H</button>
+        //                 <button id="hpsChatGPTHistoryForward" onclick="window.hpsChatGPTBookmarklet.historyForward()"
+        //                 title="Forward in history">H&gt;</button>
+
+        saveToHistory: function () {
+            let state = {
+                // save the question and the answer
+                question: this.questionField.value,
+                answer: this.answerfield.innerText,
+            };
+            this.history.push(state);
+        },
+
+        restore: function (state) {
+            this.questionField.value = state.question;
+            this.answerfield.innerText = state.answer;
+        },
+
+        historyBack: function () {
+            if (this.historyIndex > 0) {
+                this.restore(this.history[--this.historyIndex]);
+            } else if (this.historyIndex < 0) { // last state
+                this.restore(this.history[this.historyIndex = this.history.length - 1]);
+            }
+        },
+
+        historyForward: function () {
+            if (this.historyIndex < this.history.length - 1) {
+                this.restore(this.history[++this.historyIndex]);
+            }
+        },
 
         /** Used here but declared in another file:
          * Sends a chat request to the OpenAI ChatGPT API and retrieves the response, incl. retry logic.
