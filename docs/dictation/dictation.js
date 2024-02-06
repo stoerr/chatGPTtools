@@ -18,6 +18,7 @@ const startRecording = async () => {
     const input = audioContext.createMediaStreamSource(audioStream);
     recorder = new Recorder(input, { numChannels: 1 });
     recorder.record();
+    setTimeout(stopRecording, 300000); // Stop recording after 5 minutes
 };
 
 // Stop recording and handle audio
@@ -47,7 +48,7 @@ const stopRecording = async () => {
                 const cursorPosition = textarea.selectionStart;
                 const textBefore = textarea.value.substring(0, cursorPosition);
                 const textAfter = textarea.value.substring(cursorPosition);
-                textarea.value = `${textBefore}${data.text}${textAfter}`;
+                textarea.value = `${textBefore}${textBefore.endsWith(' ') ? '' : ' '}${data.text}${textAfter.startsWith(' ') ? '' : ' '}${textAfter}`;
             } else {
                 throw new Error(data.error);
             }
@@ -57,6 +58,20 @@ const stopRecording = async () => {
     });
 };
 
+// Hotkey for dictation
+window.addEventListener('keydown', function(e) {
+  if (e.metaKey && e.ctrlKey && e.key === 't') {
+    startRecording();
+    e.preventDefault();
+  }
+});
+
+window.addEventListener('keyup', function(e) {
+  if (e.key === 't' && e.metaKey && e.ctrlKey) {
+    stopRecording();
+  }
+});
+
 // Event listeners
 const attachEventListeners = () => {
     dictateButton.addEventListener('mousedown', startRecording);
@@ -64,8 +79,9 @@ const attachEventListeners = () => {
 
     // Help dialog
     helpButton.addEventListener('click', () => {
-        var helpModal = new bootstrap.Modal(document.getElementById('helpModal'), {keyboard: true});
-helpModal.show();
+        document.getElementById('dictation-help').addEventListener('click', function() {
+    $('#helpModal').modal('show'); // Using jQuery for Bootstrap 4 compatibility
+});
     });
 };
 

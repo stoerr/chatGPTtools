@@ -13,8 +13,8 @@ the language parameter of the Whisper API.
 
 Using Bootstrap - a card spanning the whole browser window with headline "Dictation" , at the bottom
 there is a button row with 3 buttons: "Dictate" and "Help".
-The design should be modern, with rounded edges and light bright slivery metallic, a bit like MacOS, with 
-a bit of 3D effect. 
+The design should be modern, with rounded edges and light bright slivery metallic, a bit like MacOS, with
+a bit of 3D effect.
 There should be some space between the buttons.
 The rest of the screen is filled with a textarea.
 It should load dictation.js and the library recorder.js from
@@ -39,6 +39,10 @@ sent to the OpenAI whisper API and the result should be inserted into the textar
 In file [whisperspec.html](whisperspec.html) there is a specification for the
 [OpenAI whisper API](https://platform.openai.com/docs/api-reference/audio/createTranscription).
 The optional parameter prompt should be filled with the entire text in the textarea up to the current cursor position.
+
+When inserting the new dictation into the text - make sure that a space (or other whitespace) separates the text before
+the new transcribed text fragment, and a space (or other whitespace) separates the transcribed text fragment from the
+rest of the text.
 
 The "Help" button should open the help dialog with a summary of the functionality of the app and a button to close it.
 
