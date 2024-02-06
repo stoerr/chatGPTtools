@@ -1,7 +1,0 @@
-# Things to solve here:
-
-- export more CSS rules heuristically: e.g. that apply to classes present in the element and descendants, as a new modus
-- delete CSS variables that aren't used in any of the rules
-- export media rules that do currently apply.
-- options what to export?
-- make it work with frames if possible.

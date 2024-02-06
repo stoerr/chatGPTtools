@@ -35,14 +35,15 @@ somewhere. :-)
   basically an extended prompt with examples for ChatGPT to do something given a file.
 - [personal/] contains an experiment to create a quick chat interface that supplies ChatGPT with a kind of long term
   memory.
-- [docs/](docs/) has stuff that will be available at https://chatGPTtools.stoerr.net/ , nothing really useable
-  yet.
+- [docs/](docs/) has stuff that is available at https://chatGPTtools.stoerr.net/ - see below. 
 
 ## Bookmarklets deployed at https://chatGPTtools.stoerr.net/
 
 - The ChatGPT Bookmarklet lets you summarize any webpage using ChatGPT, ask questions and more.
 - The Grab Styles Bookmarklet lets you select an element from a page and extract it's HTML and applying CSS rules,
 - e.g. to ask ChatGPT questions about it.
+- There is also a [Dictation App](https://chatGPTtools.stoerr.net/dictation/index.html) that uses the OpenAI whisper 
+  API to transcribe your speech into a textarea.
 
 ## Script list in bin/
 

@@ -36,7 +36,7 @@ headline and the buttons should be visible.
 
 The "Dictate" button should start recording the audio when pressed, and stop when released. The audio should be
 sent to the OpenAI whisper API and the result should be inserted into the textarea at the current cursor position.
-In file [whisperspec.html](whisperspec.html) there is a specification for the
+In file [whisperspec.md](whisperspec.md) there is a specification for the
 [OpenAI whisper API](https://platform.openai.com/docs/api-reference/audio/createTranscription).
 The optional parameter prompt should be filled with the entire text in the textarea up to the current cursor position.
 
