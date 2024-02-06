@@ -31,6 +31,7 @@ const startRecording = async () => {
 const stopRecording = async () => {
     if (!isrecording) return;
     console.log('Stopping recording');
+    dictateButton.disabled = true;
     recorder.stop();
     clearTimeout(timeoutCall);
     audioStream.getTracks().forEach(track => track.stop());
@@ -63,10 +64,12 @@ const stopRecording = async () => {
             }
         } catch (error) {
             alert(`Error: ${error.message}`);
+        } finally {
+            dictateButton.disabled = false;
+            recorder = null;
+            isrecording = false;
         }
     });
-    recorder = null;
-    isrecording = false;
 };
 
 // Hotkey for dictation
