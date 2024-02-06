@@ -11,12 +11,13 @@ const helpButton = document.getElementById('dictation-help');
 let recorder;
 let audioStream;
 let timeoutCall;
-let isrecording = false;
+let isRecording = false;
+let isStoppingRecording = false;
 
 // Start recording
 const startRecording = async () => {
-    if (!isrecording) {
-        isrecording = true;
+    if (!isRecording && !isStoppingRecording) {
+        isRecording = true;
         console.log('Recording...');
         audioStream = await navigator.mediaDevices.getUserMedia({audio: true});
         const audioContext = new AudioContext();
@@ -29,7 +30,8 @@ const startRecording = async () => {
 
 // Stop recording and handle audio
 const stopRecording = async () => {
-    if (!isrecording) return;
+    if (!isRecording || isStoppingRecording) return;
+    isStoppingRecording = true;
     console.log('Stopping recording');
     dictateButton.disabled = true;
     recorder.stop();
@@ -59,6 +61,9 @@ const stopRecording = async () => {
                 const textBefore = textarea.value.substring(0, cursorPosition);
                 const textAfter = textarea.value.substring(cursorPosition);
                 textarea.value = `${textBefore}${textBefore.endsWith(' ') ? '' : ' '}${data.text}${textAfter.startsWith(' ') ? '' : ' '}${textAfter}`;
+                // set the cursor position just after the inserted text . Observe the possibly inserted space after textBefore, and before textAfter
+                textarea.selectionStart = cursorPosition + (textBefore.endsWith(' ') ? 0 : 1) + data.text.length + (textAfter.startsWith(' ') ? 0 : 1);
+                textarea.selectionEnd = textarea.selectionStart;
             } else {
                 throw new Error(data.error);
             }
@@ -67,7 +72,8 @@ const stopRecording = async () => {
         } finally {
             dictateButton.disabled = false;
             recorder = null;
-            isrecording = false;
+            isRecording = false;
+            isStoppingRecording = false;
         }
     });
 };
@@ -81,7 +87,9 @@ window.addEventListener('keydown', function (e) {
 });
 
 window.addEventListener('keyup', function (e) {
+    if (!isStoppingRecording) {
         stopRecording();
+    }
 });
 
 // Event listeners
