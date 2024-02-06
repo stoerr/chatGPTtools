@@ -1,0 +1,237 @@
+<div class="section endpoint">
+    <div class="section-left">
+        <div class="anchor-heading-root"><a class="anchor-heading-link"
+                                            href="/docs/api-reference/audio/createTranscription">
+            <h2 class="anchor-heading" data-name="audio/createTranscription">Create transcription
+                <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 20 20" aria-hidden="true"
+                     class="anchor-heading-icon" height="15px" width="15px" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd"
+                          d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z"
+                          clip-rule="evenodd"></path>
+                </svg>
+            </h2>
+        </a></div>
+        <p><span class="endpoint-text"><span class="endpoint-method endpoint-method-post">post</span>&nbsp;<span
+                class="endpoint-path">https://api.openai.com/v1/audio/transcriptions</span></span></p>
+        <div class="endpoint-summary"><p>
+            Transcribes audio into the input language.</p></div>
+        <div class="param-section"><h3>Request body</h3>
+            <div class="param-table" id="audio-createtranscription__table">
+                <div class="param-row">
+                    <div class="param-row-header api-ref-anchor-link-hover"><a href="#audio-createtranscription-file"
+                                                                               data-anchor="audio-createtranscription-file"
+                                                                               class="api-ref-anchor-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor"
+                             viewBox="0 0 24 24">
+                            <path fill-rule="evenodd"
+                                  d="M18.293 5.707a4.657 4.657 0 0 0-6.586 0l-1 1a1 1 0 1 1-1.414-1.414l1-1a6.657 6.657 0 1 1 9.414 9.414l-1 1a1 1 0 0 1-1.414-1.414l1-1a4.657 4.657 0 0 0 0-6.586Zm-2.586 2.586a1 1 0 0 1 0 1.414l-6 6a1 1 0 0 1-1.414-1.414l6-6a1 1 0 0 1 1.414 0Zm-9 1a1 1 0 0 1 0 1.414l-1 1a4.657 4.657 0 0 0 6.586 6.586l1-1a1 1 0 0 1 1.414 1.414l-1 1a6.657 6.657 0 1 1-9.414-9.414l1-1a1 1 0 0 1 1.414 0Z"
+                                  clip-rule="evenodd"></path>
+                        </svg>
+                    </a>
+                        <div class="param-name">file</div>
+                        <div class="param-type">file</div>
+                        <div class="param-reqd">Required</div>
+                    </div>
+                    <div class="param-desc">
+                        <div class="markdown-content"><p>The audio file object (not file name) to transcribe, in one of
+                            these formats: flac, mp3, mp4, mpeg, mpga, m4a, ogg, wav, or webm.</p></div>
+                    </div>
+                </div>
+                <div class="param-row">
+                    <div class="param-row-header api-ref-anchor-link-hover"><a href="#audio-createtranscription-model"
+                                                                               data-anchor="audio-createtranscription-model"
+                                                                               class="api-ref-anchor-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor"
+                             viewBox="0 0 24 24">
+                            <path fill-rule="evenodd"
+                                  d="M18.293 5.707a4.657 4.657 0 0 0-6.586 0l-1 1a1 1 0 1 1-1.414-1.414l1-1a6.657 6.657 0 1 1 9.414 9.414l-1 1a1 1 0 0 1-1.414-1.414l1-1a4.657 4.657 0 0 0 0-6.586Zm-2.586 2.586a1 1 0 0 1 0 1.414l-6 6a1 1 0 0 1-1.414-1.414l6-6a1 1 0 0 1 1.414 0Zm-9 1a1 1 0 0 1 0 1.414l-1 1a4.657 4.657 0 0 0 6.586 6.586l1-1a1 1 0 0 1 1.414 1.414l-1 1a6.657 6.657 0 1 1-9.414-9.414l1-1a1 1 0 0 1 1.414 0Z"
+                                  clip-rule="evenodd"></path>
+                        </svg>
+                    </a>
+                        <div class="param-name">model</div>
+                        <div class="param-type">string</div>
+                        <div class="param-reqd">Required</div>
+                    </div>
+                    <div class="param-desc">
+                        <div class="markdown-content"><p>ID of the model to use. Only <code>whisper-1</code> is
+                            currently available.</p></div>
+                    </div>
+                </div>
+                <div class="param-row">
+                    <div class="param-row-header api-ref-anchor-link-hover"><a
+                            href="#audio-createtranscription-language" data-anchor="audio-createtranscription-language"
+                            class="api-ref-anchor-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor"
+                             viewBox="0 0 24 24">
+                            <path fill-rule="evenodd"
+                                  d="M18.293 5.707a4.657 4.657 0 0 0-6.586 0l-1 1a1 1 0 1 1-1.414-1.414l1-1a6.657 6.657 0 1 1 9.414 9.414l-1 1a1 1 0 0 1-1.414-1.414l1-1a4.657 4.657 0 0 0 0-6.586Zm-2.586 2.586a1 1 0 0 1 0 1.414l-6 6a1 1 0 0 1-1.414-1.414l6-6a1 1 0 0 1 1.414 0Zm-9 1a1 1 0 0 1 0 1.414l-1 1a4.657 4.657 0 0 0 6.586 6.586l1-1a1 1 0 0 1 1.414 1.414l-1 1a6.657 6.657 0 1 1-9.414-9.414l1-1a1 1 0 0 1 1.414 0Z"
+                                  clip-rule="evenodd"></path>
+                        </svg>
+                    </a>
+                        <div class="param-name">language</div>
+                        <div class="param-type">string</div>
+                        <div class="param-optl">Optional</div>
+                    </div>
+                    <div class="param-desc">
+                        <div class="markdown-content"><p>The language of the input audio. Supplying the input language
+                            in <a href="https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes" target="_blank"
+                                  rel="noopener noreferrer">ISO-639-1</a> format will improve accuracy and latency.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="param-row">
+                    <div class="param-row-header api-ref-anchor-link-hover"><a href="#audio-createtranscription-prompt"
+                                                                               data-anchor="audio-createtranscription-prompt"
+                                                                               class="api-ref-anchor-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor"
+                             viewBox="0 0 24 24">
+                            <path fill-rule="evenodd"
+                                  d="M18.293 5.707a4.657 4.657 0 0 0-6.586 0l-1 1a1 1 0 1 1-1.414-1.414l1-1a6.657 6.657 0 1 1 9.414 9.414l-1 1a1 1 0 0 1-1.414-1.414l1-1a4.657 4.657 0 0 0 0-6.586Zm-2.586 2.586a1 1 0 0 1 0 1.414l-6 6a1 1 0 0 1-1.414-1.414l6-6a1 1 0 0 1 1.414 0Zm-9 1a1 1 0 0 1 0 1.414l-1 1a4.657 4.657 0 0 0 6.586 6.586l1-1a1 1 0 0 1 1.414 1.414l-1 1a6.657 6.657 0 1 1-9.414-9.414l1-1a1 1 0 0 1 1.414 0Z"
+                                  clip-rule="evenodd"></path>
+                        </svg>
+                    </a>
+                        <div class="param-name">prompt</div>
+                        <div class="param-type">string</div>
+                        <div class="param-optl">Optional</div>
+                    </div>
+                    <div class="param-desc">
+                        <div class="markdown-content"><p>An optional text to guide the model's style or continue a
+                            previous audio segment. The <a href="/docs/guides/speech-to-text/prompting">prompt</a>
+                            should match the audio language.</p></div>
+                    </div>
+                </div>
+                <div class="param-row">
+                    <div class="param-row-header api-ref-anchor-link-hover"><a
+                            href="#audio-createtranscription-response_format"
+                            data-anchor="audio-createtranscription-response_format" class="api-ref-anchor-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor"
+                             viewBox="0 0 24 24">
+                            <path fill-rule="evenodd"
+                                  d="M18.293 5.707a4.657 4.657 0 0 0-6.586 0l-1 1a1 1 0 1 1-1.414-1.414l1-1a6.657 6.657 0 1 1 9.414 9.414l-1 1a1 1 0 0 1-1.414-1.414l1-1a4.657 4.657 0 0 0 0-6.586Zm-2.586 2.586a1 1 0 0 1 0 1.414l-6 6a1 1 0 0 1-1.414-1.414l6-6a1 1 0 0 1 1.414 0Zm-9 1a1 1 0 0 1 0 1.414l-1 1a4.657 4.657 0 0 0 6.586 6.586l1-1a1 1 0 0 1 1.414 1.414l-1 1a6.657 6.657 0 1 1-9.414-9.414l1-1a1 1 0 0 1 1.414 0Z"
+                                  clip-rule="evenodd"></path>
+                        </svg>
+                    </a>
+                        <div class="param-name">response_format</div>
+                        <div class="param-type">string</div>
+                        <div class="param-optl">Optional</div>
+                        <div class="param-default">Defaults to json</div>
+                    </div>
+                    <div class="param-desc">
+                        <div class="markdown-content"><p>The format of the transcript output, in one of these options:
+                            <code>json</code>, <code>text</code>, <code>srt</code>, <code>verbose_json</code>, or <code>vtt</code>.
+                        </p></div>
+                    </div>
+                </div>
+                <div class="param-row">
+                    <div class="param-row-header api-ref-anchor-link-hover"><a
+                            href="#audio-createtranscription-temperature"
+                            data-anchor="audio-createtranscription-temperature" class="api-ref-anchor-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor"
+                             viewBox="0 0 24 24">
+                            <path fill-rule="evenodd"
+                                  d="M18.293 5.707a4.657 4.657 0 0 0-6.586 0l-1 1a1 1 0 1 1-1.414-1.414l1-1a6.657 6.657 0 1 1 9.414 9.414l-1 1a1 1 0 0 1-1.414-1.414l1-1a4.657 4.657 0 0 0 0-6.586Zm-2.586 2.586a1 1 0 0 1 0 1.414l-6 6a1 1 0 0 1-1.414-1.414l6-6a1 1 0 0 1 1.414 0Zm-9 1a1 1 0 0 1 0 1.414l-1 1a4.657 4.657 0 0 0 6.586 6.586l1-1a1 1 0 0 1 1.414 1.414l-1 1a6.657 6.657 0 1 1-9.414-9.414l1-1a1 1 0 0 1 1.414 0Z"
+                                  clip-rule="evenodd"></path>
+                        </svg>
+                    </a>
+                        <div class="param-name">temperature</div>
+                        <div class="param-type">number</div>
+                        <div class="param-optl">Optional</div>
+                        <div class="param-default">Defaults to 0</div>
+                    </div>
+                    <div class="param-desc">
+                        <div class="markdown-content"><p>The sampling temperature, between 0 and 1. Higher values like
+                            0.8 will make the output more random, while lower values like 0.2 will make it more focused
+                            and deterministic. If set to 0, the model will use <a
+                                    href="https://en.wikipedia.org/wiki/Log_probability" target="_blank"
+                                    rel="noopener noreferrer">log probability</a> to automatically increase the
+                            temperature until certain thresholds are hit.</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="param-section"><h3>Returns</h3>
+            <div class="param-table">
+                <div class="param-row">
+                    <div class="markdown-content"><p>The transcribed text.</p></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="section-right">
+        <div class="code-sample">
+            <div class="code-sample-header">
+                <div class="code-sample-title body-small">Example request</div>
+                <div class="code-sample-select-wrap">
+                    <div class="code-sample-select-val">curl</div>
+                    <select class="code-sample-select api-code-lang-select">
+                        <option disabled="" value="">Select library</option>
+                        <option value="curl">curl</option>
+                        <option value="python">python</option>
+                        <option value="node">node</option>
+                    </select>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor"
+                         viewBox="0 0 24 24">
+                        <path fill-rule="evenodd"
+                              d="M4.293 8.293a1 1 0 0 1 1.414 0L12 14.586l6.293-6.293a1 1 0 1 1 1.414 1.414l-7 7a1 1 0 0 1-1.414 0l-7-7a1 1 0 0 1 0-1.414Z"
+                              clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+                <div class="code-sample-copy">
+                    <button type="button" tabindex="0" class="btn btn-sm btn-minimal btn-neutral"><span
+                            class="btn-label-wrap"><span class="btn-node"><svg xmlns="http://www.w3.org/2000/svg"
+                                                                               width="18px" height="18px"
+                                                                               fill="currentColor" viewBox="0 0 24 24"><path
+                            fill-rule="evenodd"
+                            d="M7 5a3 3 0 0 1 3-3h9a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-2v2a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3v-9a3 3 0 0 1 3-3h2V5Zm2 2h5a3 3 0 0 1 3 3v5h2a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1h-9a1 1 0 0 0-1 1v2ZM5 9a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1H5Z"
+                            clip-rule="evenodd"></path></svg></span><span class="btn-label-inner">Copy‍</span></span>
+                    </button>
+                </div>
+            </div>
+            <div class="code-sample-body code-sample-body-small"><pre
+                    class="hljs syntax-highlighter dark code-sample-pre"><code class="language-bash"
+                                                                               style="white-space: pre;"><code><span
+                    class="react-syntax-highlighter-line-number">1
+</span><span class="react-syntax-highlighter-line-number">2
+</span><span class="react-syntax-highlighter-line-number">3
+</span><span class="react-syntax-highlighter-line-number">4
+</span><span class="react-syntax-highlighter-line-number">5
+</span></code><span class=""><span class="">curl https://api.openai.com/v1/audio/transcriptions \
+</span></span><span class=""><span class="">  -H </span><span class="hljs-string">"Authorization: Bearer </span><span
+                    class="hljs-string hljs-variable">$OPENAI_API_KEY</span><span class="hljs-string">"</span><span
+                    class=""> \
+</span></span><span class=""><span class="">  -H </span><span
+                    class="hljs-string">"Content-Type: multipart/form-data"</span><span class=""> \
+</span></span><span class=""><span class="">  -F file=</span><span class="hljs-string">"@/path/to/file/audio.mp3"</span><span
+                    class=""> \
+</span></span><span class=""><span class="">  -F model=</span><span class="hljs-string">"whisper-1"</span></span></code></pre>
+            </div>
+        </div>
+        <div class="code-sample">
+            <div class="code-sample-header">
+                <div class="code-sample-title body-small">Response</div>
+                <div class="code-sample-copy">
+                    <button type="button" tabindex="0" class="btn btn-sm btn-minimal btn-neutral"><span
+                            class="btn-label-wrap"><span class="btn-node"><svg xmlns="http://www.w3.org/2000/svg"
+                                                                               width="18px" height="18px"
+                                                                               fill="currentColor" viewBox="0 0 24 24"><path
+                            fill-rule="evenodd"
+                            d="M7 5a3 3 0 0 1 3-3h9a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-2v2a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3v-9a3 3 0 0 1 3-3h2V5Zm2 2h5a3 3 0 0 1 3 3v5h2a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1h-9a1 1 0 0 0-1 1v2ZM5 9a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1H5Z"
+                            clip-rule="evenodd"></path></svg></span><span class="btn-label-inner">Copy‍</span></span>
+                    </button>
+                </div>
+            </div>
+            <div class="code-sample-body code-sample-body-small"><pre
+                    class="hljs syntax-highlighter dark code-sample-pre"><code class="language-json"
+                                                                               style="white-space: pre;"><code><span
+                    class="react-syntax-highlighter-line-number">1
+</span><span class="react-syntax-highlighter-line-number">2
+</span><span class="react-syntax-highlighter-line-number">3
+</span></code><span class=""><span class="">{
+</span></span><span class=""><span class="">  </span><span class="hljs-string">"text"</span><span
+                    class="">: </span><span class="hljs-string">"Imagine the wildest idea that you've ever had, and you're curious about how it might scale to something that's a 100, a 1,000 times bigger. This is a place where you can get to do that."</span><span
+                    class="">
+</span></span><span class="">}</span></code></pre>
+            </div>
+        </div>
+    </div>
+</div>
