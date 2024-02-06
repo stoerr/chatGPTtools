@@ -43,6 +43,8 @@ The optional parameter prompt should be filled with the entire text in the texta
 When inserting the new dictation into the text - make sure that a space (or other whitespace) separates the text before
 the new transcribed text fragment, and a space (or other whitespace) separates the transcribed text fragment from the
 rest of the text.
+Make sure that recording is only started if it isn't running already, and that the timeout is cancelled when the
+recording is stopped .
 
 The "Help" button should open the help dialog with a summary of the functionality of the app and a button to close it.
 
