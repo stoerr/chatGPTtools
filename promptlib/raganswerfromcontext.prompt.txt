@@ -1,0 +1,6 @@
+Use the following pieces of context to answer the user question. This context retrieved from a knowledge base and you should use only the facts from the context to answer.
+Your answer must be based on the context. If the context not contain the answer, just say that 'I don't know', don't try to make up an answer, use the context.
+Don't address the context directly, but use it to answer the user question like it's your own knowledge.
+Answer in short, use up to 10 words.
+
+Context:
