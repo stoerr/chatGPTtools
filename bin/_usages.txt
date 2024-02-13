@@ -118,6 +118,7 @@ Options:
   -r <format>              Response format url or b64_json (Optional, defaults to url).
   -o <file>                Output file to write the image to (format .webp). Implies response_format b64_json.
   -u                       Just prints the url to stdout. (Implies response_format url).
+  -v                       View in a file viewer (MacOS open -W); if no -o is given, the file is deleted after viewing (temporary file).
 
 Environment:
   OPENAI_API_KEY           API key for OpenAI. Sourced from this environment variable, or $HOME/.openaiapi file.
@@ -191,7 +192,7 @@ chatgpt - Submit a prompt to ChatGPT conversation and print the response to stdo
 Usage: chatgpt [options] [prompt]
 
 Options:
-  -               Reads prompt from stdin, instead of as an argument
+  -               Reads prompt from stdin; if a prompt is given on the command line it is appended
   -f filename     Includes the content of the given file as codeblock, together with the filename. Can be given multiple times.
   -i imagefile    Includes the given image file as image, together with the filename. Can be given multiple times.
   -iu imageurl    Includes the given image url as image, together with the url. Can be given multiple times.
@@ -203,10 +204,10 @@ Options:
   -m modelname    Use a specific model (default: gpt-3.5-turbo)
   -m16k           Use the 16k model instead of the default (that'll be gpt-3.5-turbo-16k)
   -t number       Set max tokens for response (default: no limit)
-  -v              verbose output : print prompt to stderr and info about connection retries
+  -v              verbose output : prints the sent json message to stderr and gives info about connection retries
   -w column       Word wrap the response to a specified column width using fmt.
   -y systemmsg    Use the given string as system message
-  -yl key         Use the given string as system message, using the ChatGPT prompt library
+  -yl key         Add a system message from the ChatGPT prompt library using the given key with chatgptpromptlib
   -h, --help      Show this help message
   
 If the prompt or system message contain a construct like promptlib:key , the chatgptpromptlib command will be called with that key
