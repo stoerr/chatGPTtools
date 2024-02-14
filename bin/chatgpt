@@ -264,7 +264,14 @@ async function requestChatGPT(attempt = 1) {
 
         if (response.status === 429) {
             const retryMessage = await response.text();
-            const waitTime = parseInt(retryMessage.match(/(\d+)s/)[1], 10);
+            var waitTime;
+            try {
+                waitTime = parseInt(retryMessage.match(/(\d+)s/)[1], 10);
+            } catch (e) {}
+            if (!waitTime || waitTime < 1 || waitTime > 60) {
+                console.error('Error: Rate limit exceeded, but no valid retry-after found', retryMessage);
+                process.exit(3);
+            }
 
             if (attempt < 5) {
                 if (verbose) {
