@@ -15,7 +15,7 @@
     top: 5% !important;
     left: 50% !important;
     width: 50% !important;
-    z-index: 9999 !important;
+    z-index: 999999999 !important;
     box-sizing: border-box !important;
     font-family: Arial, sans-serif !important;
     border-radius: 5px !important;
@@ -29,7 +29,7 @@
     width: 100% !important;
     padding: 20px !important;
     box-sizing: border-box !important;
-    z-index: 9999 !important;
+    z-index: 999999999 !important;
 }
 
 .hps-chatgpt-maximize-maximized .hps-chatgpt-dialog {
