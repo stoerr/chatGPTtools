@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# collects all urls of a site into one file, suitable for a GPT.
+
+function usage() {
+  cat <<EOF
+Usage: $(basename $0) url
+
+Options:
+  --help          Show this help message and exit
+
+Description:
+  Spiders all URLs of a site and collects them into one text file, suitable for a GPT as knowledge base.
+EOF
+}
+
+
+if [ "$1" = "--help" ]; then
+  usage
+  exit 0
+fi
+
+url=$1
+if [ -z "$url" ]; then
+  usage
+  exit 1
+fi
+
+(
+for page in $(wget --spider --recursive --level=inf -nv -A html,htm $url 2>&1 | grep -Eo 'https?://[^ ]+'); do
+  echo ------------------ $page ------------------
+  urltotext $page
+done
+)

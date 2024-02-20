@@ -1,0 +1,22 @@
+#!/bin/bash
+
+if [ "$#" -eq 0 ] || [ "$1" = "--help" ]; then
+  echo "Usage: $(basename $0) url"
+  echo ""
+  echo "Options:"
+  echo "  --help          Show this help message and exit"
+  echo ""
+  echo "Description:"
+  echo "  This script fetches the content of an URL (returning html) and outputs it as text, incl. some metadata."
+  exit 0
+fi
+
+URL=$1
+if [ -z "$URL" ]; then
+  echo "Usage: $0 URL"
+  exit 1
+fi
+
+# curl -fsSL $URL | html2text | chatgpt - "TL;DR:"
+
+(echo '---'; curl -s -L "$1" | pup 'head title,head meta[property=og:title],head meta[name=og:title],head meta[name=description],head meta[property=og:description],head meta[property=og:type]' ; echo '---'; echo; curl -s -L "$1" | html2text 2>/dev/null)

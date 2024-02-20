@@ -16,4 +16,8 @@ if [ -z "$URL" ]; then
   echo "Usage: $0 URL"
   exit 1
 fi
-curl -fsSL $URL | html2text | chatgpt - "TL;DR:"
+
+# curl -fsSL $URL | html2text | chatgpt - "TL;DR:"
+
+(echo '---'; curl -s -L "$1" | pup 'head title,head meta[property=og:title],head meta[name=og:title],head meta[name=description],head meta[property=og:description],head meta[property=og:type]' ; echo '---'; echo; curl -s -L "$1" | html2text 2>/dev/null) |
+  chatgpt - "TL;DR:"

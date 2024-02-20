@@ -22,7 +22,7 @@ Options:
   -m modelname    Use a specific model (default: gpt-3.5-turbo)
   -m16k           Use the 16k model instead of the default (that'll be gpt-3.5-turbo-16k)
   -t number       Set max tokens for response (default: no limit)
-  -v              verbose output : prints the sent json message to stderr and gives info about connection retries
+  -v              verbose output : prints the sent and received json message to stderr and gives info about connection retries
   -w column       Word wrap the response to a specified column width using fmt.
   -y systemmsg    Use the given string as system message
   -yl key         Add a system message from the ChatGPT prompt library using the given key with chatgptpromptlib
@@ -62,7 +62,7 @@ for (let i = 2; i < process.argv.length; i++) {
     const arg = process.argv[i];
 
     if (inOptions) {
-        if (arg === '--help' || arg === '-h') {
+        if (arg === '--help' || arg === '-h' || arg == ' -?') {
             console.log(helpMessage);
             process.exit(0);
         } else if (arg === '-m' && process.argv[i + 1]) {
@@ -175,6 +175,7 @@ if (filecontents) {
 
 if (!prompt) {
     console.error('Error: No prompt provided');
+    console.error(helpMessage);
     process.exit(1);
 }
 
@@ -264,6 +265,7 @@ async function requestChatGPT(attempt = 1) {
 
         if (response.status === 429) {
             const retryMessage = await response.text();
+            if (verbose) console.error("Retry message: ", retryMessage);
             var waitTime;
             try {
                 waitTime = parseInt(retryMessage.match(/(\d+)s/)[1], 10);
@@ -287,6 +289,7 @@ async function requestChatGPT(attempt = 1) {
             process.exit(5);
         } else {
             const responseData = await response.json();
+            if (verbose) console.error("Response: ", JSON.stringify(responseData));
             const assistantMessage = responseData.choices[0].message;
             const finishReason = responseData.choices[0].finish_reason;
 
