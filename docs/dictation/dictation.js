@@ -1,7 +1,3 @@
-// Retrieve OPENAI_API_KEY from localStorage or prompt the user
-const OPENAI_API_KEY = localStorage.getItem('chatgpt_api_key') || prompt('Enter OpenAI API Key:', '');
-if (OPENAI_API_KEY) localStorage.setItem('chatgpt_api_key', OPENAI_API_KEY);
-
 // Elements
 const textarea = document.getElementById('dictation-textarea');
 const dictateButton = document.getElementById('dictation-dictate');
@@ -13,6 +9,17 @@ let audioStream;
 let timeoutCall;
 let isRecording = false;
 let isStoppingRecording = false;
+let openaiAPIKey;
+
+const getOpenAIKey = () => {
+    openaiAPIKey = localStorage.getItem('openai_api_key');
+    if (!openaiAPIKey) {
+        openaiAPIKey = prompt('Enter OpenAI API Key:', '');
+        if (openaiAPIKey) localStorage.setItem('openai_api_key', openaiAPIKey);
+    }
+    return openaiAPIKey;
+
+};
 
 // Start recording
 const startRecording = async () => {
@@ -50,7 +57,7 @@ const stopRecording = async () => {
             const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${OPENAI_API_KEY}`
+                    'Authorization': `Bearer ${getOpenAIKey()}`
                 },
                 body: formData
             });
@@ -60,9 +67,9 @@ const stopRecording = async () => {
                 const cursorPosition = textarea.selectionStart;
                 const textBefore = textarea.value.substring(0, cursorPosition);
                 const textAfter = textarea.value.substring(cursorPosition);
-                textarea.value = `${textBefore}${textBefore.endsWith(' ') ? '' : ' '}${data.text}${textAfter.startsWith(' ') ? '' : ' '}${textAfter}`;
+                textarea.value = `${textBefore}${/\s$/.test(textBefore) ? '' : ' '}${data.text}${/^\s/.test(textAfter) ? '' : ' '}${textAfter}`;
                 // set the cursor position just after the inserted text . Observe the possibly inserted space after textBefore, and before textAfter
-                textarea.selectionStart = cursorPosition + (textBefore.endsWith(' ') ? 0 : 1) + data.text.length + (textAfter.startsWith(' ') ? 0 : 1);
+                textarea.selectionStart = cursorPosition + (/\s$/.test(textBefore) ? 0 : 1) + data.text.length + (/^\s/.test(textAfter) ? 0 : 1);
                 textarea.selectionEnd = textarea.selectionStart;
             } else {
                 throw new Error(data.error);
