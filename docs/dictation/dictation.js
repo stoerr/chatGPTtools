@@ -103,6 +103,7 @@ window.addEventListener('keyup', function (e) {
 const attachEventListeners = () => {
     dictateButton.addEventListener('mousedown', startRecording);
     dictateButton.addEventListener('mouseup', stopRecording);
+    fixupButton.addEventListener('click', fixupText);
 
     // Help dialog
     helpButton.addEventListener('click', () => {
@@ -123,5 +124,49 @@ function resizeTextarea() {
 
 window.addEventListener('resize', resizeTextarea);
 document.addEventListener('DOMContentLoaded', resizeTextarea);
+
+const fixupButton = document.getElementById('dictation-fixup');
+
+const fixupText = async () => {
+    const text = textarea.value;
+    const requestBody = {
+        model: "gpt-3.5-turbo",
+        messages: [{
+            "role": "system",
+            "content": "Your are a professional dictation assistant and your task is to fix up the retrieved text into a cohesive well formatted text, correcting dictation errors like spelled-out punctuation, repeated words, grammar errors and other inconsistencies, and inserting line breaks to create paragraphs. The corrections must not distort the intended meaning. If there are dictation correction instructions in the text (e.g. 'Correction: remove last sentence'), they should be executed on the text."
+        }, {
+            "role": "user",
+            "content": "Print the text to fix without any comments."
+        }, {
+            "role": "assistant",
+            "content": "${text}"
+        }, {
+            "role": "user",
+            "content": "Fix the text and print it without any comments, and format the text appropriately by separating it into paragraphs for readability and as appropriate for the intended format."
+        }]
+    };
+    fixupButton.disabled = true;
+
+    try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getOpenAIKey()}`
+            },
+            body: JSON.stringify(requestBody)
+        });
+        const data = await response.json();
+        if (response.ok && data.choices[0].finish_reason === "stop" && data.choices[0].message.content) {
+            textarea.value = data.choices[0].message.content.trim();
+        } else {
+            throw new Error(`API Error or unexpected response: ${JSON.stringify(data)}`);
+        }
+    } catch (error) {
+        alert(`Error: ${error.message}`);
+    } finally {
+        fixupButton.disabled = false;
+    }
+};
 
 attachEventListeners();
