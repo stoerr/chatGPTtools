@@ -139,12 +139,13 @@ const fixupText = async () => {
             "content": "Print the text to fix without any comments."
         }, {
             "role": "assistant",
-            "content": "${text}"
+            "content": `${text}`
         }, {
             "role": "user",
             "content": "Fix the text and print it without any comments, and format the text appropriately by separating it into paragraphs for readability and as appropriate for the intended format."
         }]
     };
+    console.log(requestBody.messages);
     fixupButton.disabled = true;
 
     try {
