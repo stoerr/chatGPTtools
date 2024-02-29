@@ -10,6 +10,7 @@ let timeoutCall;
 let isRecording = false;
 let isStoppingRecording = false;
 let openaiAPIKey;
+let lastTexts = [];
 
 const getOpenAIKey = () => {
     openaiAPIKey = localStorage.getItem('openai_api_key');
@@ -63,6 +64,7 @@ const stopRecording = async () => {
             });
             const data = await response.json();
             if (response.ok) {
+                lastTexts.push(textarea.value);
                 // Insert transcription at current cursor position
                 const cursorPosition = textarea.selectionStart;
                 const textBefore = textarea.value.substring(0, cursorPosition);
@@ -104,6 +106,7 @@ const attachEventListeners = () => {
     dictateButton.addEventListener('mousedown', startRecording);
     dictateButton.addEventListener('mouseup', stopRecording);
     fixupButton.addEventListener('click', fixupText);
+    undoButton.addEventListener('click', undo);
 
     // Help dialog
     helpButton.addEventListener('click', () => {
@@ -126,6 +129,13 @@ window.addEventListener('resize', resizeTextarea);
 document.addEventListener('DOMContentLoaded', resizeTextarea);
 
 const fixupButton = document.getElementById('dictation-fixup');
+const undoButton = document.getElementById('dictation-undo');
+
+function undo() {
+    if (lastTexts.length > 0) {
+        textarea.value = lastTexts.pop();
+    }
+}
 
 const fixupText = async () => {
     const text = textarea.value;
@@ -159,6 +169,7 @@ const fixupText = async () => {
         });
         const data = await response.json();
         if (response.ok && data.choices[0].finish_reason === "stop" && data.choices[0].message.content) {
+            lastTexts.push(textarea.value);
             textarea.value = data.choices[0].message.content.trim();
         } else {
             throw new Error(`API Error or unexpected response: ${JSON.stringify(data)}`);

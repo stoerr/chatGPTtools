@@ -23,6 +23,7 @@ IDs for the relevant elements are:
 - "dictation-textarea" for the textarea
 - "dictation-dictate" for the "Dictate" button
 - "dictation-fixup" for the "Fixup" button
+- "dictation-undo" for the "Undo" button
 - "dictation-help" for the "Help" button
 
 There should also be the help dialog with a description of how to use the app, including the new "Fixup" feature, and a
@@ -46,6 +47,8 @@ rest of the text.
 
 Make sure that recording is only started if it isn't running already, and that the timeout is cancelled when the
 recording is stopped.
+
+The "Undo" button should undo the last change in the textarea that is done by either the "Dictate" or the "Fixup".
 
 The "Help" button should open the help dialog with a summary of the functionality of the app, including the new "Fixup"
 feature, and a button to close it.
