@@ -34,7 +34,7 @@
         },
 
         relevantHTML: function (element, css) {
-            var html = element.outerHTML.trim() + "\n";
+            var html = netStoerrGrabStyles.htmlWithoutClassesNotUsedInCSS(element, css).trim() + "\n";
             let ancestor = element.parentElement;
             while (ancestor.tagName.toUpperCase() !== 'HTML') {
                 html = `<${ancestor.tagName.toLowerCase()}${(ancestor.id ? ` id="${ancestor.id}"` : '')}${(ancestor.className ? ` class="${ancestor.className}"` : '')}>\n${html}</${ancestor.tagName.toLowerCase()}>`;
@@ -42,6 +42,21 @@
             }
             html = `<${ancestor.tagName.toLowerCase()}${(ancestor.id ? ` id="${ancestor.id}"` : '')}${(ancestor.className ? ` class="${ancestor.className}"` : '')}>\n<head><style>\n${css}\n</style></head>${html}</${ancestor.tagName.toLowerCase()}>`;
             return html.replace(/<!--(.*?)-->/sg, '').replace(/\n(\s*\n)+/gm, '\n').replace(/\s+$/, ' ');
+        },
+
+        /** Copies element, removes all classes that don't appear in css and returns the outerHTML of that, deleting the copy again. */
+        htmlWithoutClassesNotUsedInCSS: function (element, css) {
+            var clone = element.cloneNode(true);
+            var classes = Array.from(new Set(css.match(/\.[a-zA-Z0-9_-]+/g).map(s => s.substring(1))));
+            for (const child of clone.querySelectorAll('*')) {
+                var classlist = child.classList;
+                for (const cl of classlist) {
+                    if (!classes.includes(cl)) {
+                        classlist.remove(cl);
+                    }
+                }
+            }
+            return clone.outerHTML;
         },
 
         copyToClipboard: function (text, callback) {
