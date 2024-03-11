@@ -406,7 +406,17 @@
     function importJson() {
         var json = $('#json').val();
         if (json) {
-            var messages = JSON.parse(json);
+            var request = JSON.parse(json);
+            var messages = request;
+            if (request && request.messages) {
+                messages = request.messages;
+                if (request.model) {
+                    $('#modelSelector').val(request.model);
+                }
+                if (request["max_tokens"]) {
+                    $('#max_tokens').val(request["max_tokens"]);
+                }
+            }
             reset(" ");
             var first = true;
             for (const message of messages) {

@@ -49,3 +49,9 @@ in token tool and modified merging
 ## PDFtext
 
 https://pypi.org/project/pdfminer/ hält das Layout etwas besser zusammen
+
+## Azure
+
+https://portal.azure.com/#home
+https://portal.azure.com/#view/Microsoft_Azure_ProjectOxford/CognitiveServicesHub/~/OpenAI create service
+request access necessary.
