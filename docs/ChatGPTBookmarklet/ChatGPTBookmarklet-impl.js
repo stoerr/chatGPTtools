@@ -59,6 +59,7 @@
         },
 
         hideDialog: function () {
+            this.undoFraming();
             if (this.dialog) {
                 this.dialog.style.display = 'none';
             }
