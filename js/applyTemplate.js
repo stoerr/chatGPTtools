@@ -1,6 +1,6 @@
 // command line example:
 // node applyTemplate.js <templatename> <inputfile>
-// Needs an API key in ~/.openaiapi , see https://beta.openai.com/docs/api-reference/authentication
+// Needs an API key in ~/.openai-api-key.txt , see https://beta.openai.com/docs/api-reference/authentication
 // #!/bin/bash
 // node "$(dirname "$(readlink -f "$0")")/applyTemplate.js" "$@"
 

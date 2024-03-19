@@ -22,7 +22,7 @@ function print_usage() {
     echo "  -v                       View in a file viewer (MacOS open -W); if no -o is given, the file is deleted after viewing (temporary file)."
     echo
     echo "Environment:"
-    echo "  OPENAI_API_KEY           API key for OpenAI. Sourced from this environment variable, or \$HOME/.openaiapi file."
+    echo "  OPENAI_API_KEY           API key for OpenAI. Sourced from this environment variable, or \$HOME/.openai-api-key.txt file."
     echo
     echo "Examples:"
     echo "  chatgptimage \"A panoramic view of Mount Everest\""
@@ -53,10 +53,10 @@ VIEW_FILE=""
 function load_api_key() {
     if [ ! -z "$OPENAI_API_KEY" ]; then
         API_KEY=$OPENAI_API_KEY
-    elif [ -f "$HOME/.openaiapi" ]; then
-        API_KEY=$(cat "$HOME/.openaiapi")
+    elif [ -f "$HOME/.openai-api-key.txt" ]; then
+        API_KEY=$(cat "$HOME/.openai-api-key.txt")
     else
-        echo "Error: OPENAI_API_KEY not set and no config file found at \$HOME/.openaiapi"
+        echo "Error: OPENAI_API_KEY not set and no config file found at \$HOME/.openai-api-key.txt"
         exit 1
     fi
 }

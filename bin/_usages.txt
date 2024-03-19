@@ -62,7 +62,7 @@ Options:
   -f text_file         Read input text from a file instead of stdin or command argument.
 
 If no output file is specified with -o, the generated speech will be played immediately using the 'afplay' command.
-The script requires an OpenAI API key, which it will attempt to read from the OPENAI_API_KEY environment variable or the file $HOME/.openaiapi.
+The script requires an OpenAI API key, which it will attempt to read from the OPENAI_API_KEY environment variable or the file $HOME/.openai-api-key.txt.
 
 
 # chatgptsummarizeurl
@@ -121,7 +121,7 @@ Options:
   -v                       View in a file viewer (MacOS open -W); if no -o is given, the file is deleted after viewing (temporary file).
 
 Environment:
-  OPENAI_API_KEY           API key for OpenAI. Sourced from this environment variable, or $HOME/.openaiapi file.
+  OPENAI_API_KEY           API key for OpenAI. Sourced from this environment variable, or $HOME/.openai-api-key.txt file.
 
 Examples:
   chatgptimage "A panoramic view of Mount Everest"
@@ -238,5 +238,3 @@ Description:
   This script generates a JUnit 4 test for the given Java file using ChatGPT.
   The output test file is placed in the corresponding 'src/test/java'
   directory with a 'Test.java' suffix.
-
-

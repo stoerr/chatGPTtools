@@ -38,7 +38,7 @@ if (process.argv.length < 3) {
     process.exit(0);
 }
 
-const apiKeyFile = `${process.env.HOME}/.openaiapi`;
+const apiKeyFile = `${process.env.HOME}/.openai-api-key.txt`;
 const apiURL = 'https://api.openai.com/v1/chat/completions';
 const headers = {
     'Content-Type': 'application/json',

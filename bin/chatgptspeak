@@ -27,7 +27,7 @@ usage() {
   echo "  -f text_file         Read input text from a file instead of stdin or command argument."
   echo
   echo "If no output file is specified with -o, the generated speech will be played immediately using the 'afplay' command."
-  echo "The script requires an OpenAI API key, which it will attempt to read from the OPENAI_API_KEY environment variable or the file \$HOME/.openaiapi."
+  echo "The script requires an OpenAI API key, which it will attempt to read from the OPENAI_API_KEY environment variable or the file \$HOME/.openai-api-key.txt."
   exit 1
 }
 
@@ -74,8 +74,8 @@ json_payload=$(jq -n \
 
 # Check for API Key
 if [ -z "$OPENAI_API_KEY" ]; then
-  if [ -f "$HOME/.openaiapi" ]; then
-    OPENAI_API_KEY=$(cat "$HOME/.openaiapi")
+  if [ -f "$HOME/.openai-api-key.txt" ]; then
+    OPENAI_API_KEY=$(cat "$HOME/.openai-api-key.txt")
   fi
 fi
 

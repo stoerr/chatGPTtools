@@ -4,7 +4,7 @@ def templateFileName = "personalChatGPTTemplate.html"
 
 def templateText = new File(templateFileName).text
 
-def apikey = new File(System.getProperty("user.home") + "/.openaiapi").text.trim()
+def apikey = new File(System.getProperty("user.home") + "/.openai-api-key.txt").text.trim()
 
 new File(".").eachFileMatch(~/\w+\.properties/) { propertiesFile ->
     def targetFileName = propertiesFile.name - ".properties" + ".html"

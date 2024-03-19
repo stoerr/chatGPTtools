@@ -3,7 +3,7 @@
 // see also https://platform.openai.com/playground?mode=complete
 // command line example:
 // node suggestCommand.js "Write a bash command line to do the following: log the last 3 git commits"
-// Needs an API key in ~/.openaiapi , see https://beta.openai.com/docs/api-reference/authentication
+// Needs an API key in ~/.openai-api-key.txt , see https://beta.openai.com/docs/api-reference/authentication
 // Idea for a shellscript calling that. You could also add things to the prompt there.
 // #!/bin/bash
 // node "$(dirname "$(readlink -f "$0")")/suggestCommand.js" "$*"
@@ -11,7 +11,7 @@
 const fs = require('fs');
 
 // Read the API key from the file
-const api_key = fs.readFileSync(`${process.env.HOME}/.openaiapi`, 'utf-8').trim();
+const api_key = fs.readFileSync(`${process.env.HOME}/.openai-api-key.txt`, 'utf-8').trim();
 
 /** Submits a message array via $.ajax to https://api.openai.com/v1/chat/completions .
  * @param messages array of  in the format {"role": type, "content": message}

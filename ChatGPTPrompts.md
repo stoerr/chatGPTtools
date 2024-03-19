@@ -23,7 +23,7 @@ In addition to option --help, it should have the following command line argument
 - if it gets `-t number` it should transmit the given number as 'max_tokens' in the request.
 
 It should access the ChatGPT chat completions API at https://api.openai.com/v1/chat/completions . The API key should 
-  be read from file ~/.openaiapi .
+  be read from file ~/.openai-api-key.txt .
 
 The request looks like:
 {"model":"gpt-3.5-turbo","messages":[{"role":"user","content":"This is the promt to submit to ChatGPT"}]}
