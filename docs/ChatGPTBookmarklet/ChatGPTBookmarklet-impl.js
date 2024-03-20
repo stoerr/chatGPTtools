@@ -34,8 +34,30 @@
                 document.getElementById('hps-chatgpt-model-selector')
                     .addEventListener('change', this.getIncludedText.bind(this));
 
+                this.dictateButton = document.getElementById('hpsChatGPTRecord');
+                this.dictateButton.addEventListener('mousedown', this.startDictation.bind(this));
+                this.dictateButton.addEventListener('mouseup', this.stopDictation.bind(this));
+
                 setTimeout(this.sidebyside.bind(this), 0);
             }
+        },
+
+        startDictation: async function () {
+            // if Recorder is not defined then add the following line to the head:
+            // <script src="https://cdnjs.cloudflare.com/ajax/libs/recorderjs/0.1.0/recorder.js"></script>
+            // and call this.startRecording() only when it's loaded.
+            if (typeof Recorder === 'undefined') {
+                document.body.appendChild(Object.assign(document.createElement('script'), {
+                    src: 'https://cdnjs.cloudflare.com/ajax/libs/recorderjs/0.1.0/recorder.js',
+                    onload: this.startRecording.bind(this)
+                }));
+            } else {
+                this.startRecording();
+            }
+        },
+
+        stopDictation: function () {
+            this.stopRecording(this.questionField, this.dictateButton);
         },
 
         openDialogImpl: async function () {
@@ -46,6 +68,7 @@
                 const summary = await this.getSummary();
                 this.answerfield.innerText = summary;
                 this.saveToHistory();
+                this.stopDictation(); // dialog changes size -> button moves.
             } catch (e) {
                 console.log(e);
                 this.answerfield.innerText = 'Error: ' + e;
@@ -81,6 +104,7 @@
                     const answer = await this.getAnswer(question, includePageContent);
                     this.answerfield.innerText = answer;
                     this.saveToHistory();
+                    this.stopDictation(); // dialog changes size -> button moves.
                 } catch (e) {
                     console.log(e);
                     this.answerfield.innerText = 'Error: ' + e;
@@ -212,7 +236,7 @@
             if (document.getElementById('hpsChatGPTDialog-fullframe')) {
                 this.undoFraming();
                 this.toggleMaximize();
-            } else{
+            } else {
                 this.expandRight();
                 this.wrapIntoFullframe();
             }

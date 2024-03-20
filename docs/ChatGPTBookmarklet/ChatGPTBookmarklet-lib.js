@@ -2,6 +2,12 @@
 (function (window) {
     window.hpsChatGPTBookmarklet = window.hpsChatGPTBookmarklet || {};
 
+    let recorder;
+    let audioStream;
+    let timeoutCall;
+    let isRecording = false;
+    let isStoppingRecording = false;
+
     /** Splits the message into words and replaces the middle 10% of the words by " ... [message truncated] ... " */
     function shortenBy10Percent(message) {
         const words = message.split(/\b/);
@@ -110,6 +116,72 @@
             };
 
             return sendRequest();
+        },
+
+        /** Start recording */
+        async startRecording() {
+            if (!isRecording && !isStoppingRecording) {
+                isRecording = true;
+                console.log('Recording...');
+                audioStream = await navigator.mediaDevices.getUserMedia({audio: true});
+                const audioContext = new AudioContext();
+                const input = audioContext.createMediaStreamSource(audioStream);
+                recorder = new Recorder(input, {numChannels: 1});
+                recorder.record();
+                timeoutCall = setTimeout(this.stopRecording, 300000); // Stop recording after 5 minutes
+            }
+        },
+
+        /** Stop recording and handle audio */
+        async stopRecording(textarea, dictateButton, language) {
+            if (!isRecording || isStoppingRecording) return;
+            isStoppingRecording = true;
+            console.log('Stopping recording');
+            dictateButton.disabled = true;
+            recorder.stop();
+            clearTimeout(timeoutCall);
+            audioStream.getTracks().forEach(track => track.stop());
+            recorder.exportWAV(async (blob) => {
+                const formData = new FormData();
+                formData.append('file', blob);
+                formData.append('model', 'whisper-1');
+                if (language) {
+                    formData.append('language', language);
+                }
+                // Optionally append the prompt
+                const promptText = textarea.value.substring(0, textarea.selectionStart);
+                formData.append('prompt', promptText);
+
+                try {
+                    const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${this.apikey}`
+                        },
+                        body: formData
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                        // Insert transcription at current cursor position
+                        const cursorPosition = textarea.selectionStart;
+                        const textBefore = textarea.value.substring(0, cursorPosition);
+                        const textAfter = textarea.value.substring(cursorPosition);
+                        textarea.value = `${textBefore}${/\s$/.test(textBefore) ? '' : ' '}${data.text}${/^\s/.test(textAfter) ? '' : ' '}${textAfter}`;
+                        // set the cursor position just after the inserted text . Observe the possibly inserted space after textBefore, and before textAfter
+                        textarea.selectionStart = cursorPosition + (/\s$/.test(textBefore) ? 0 : 1) + data.text.length + (/^\s/.test(textAfter) ? 0 : 1);
+                        textarea.selectionEnd = textarea.selectionStart;
+                    } else {
+                        throw new Error(data.error);
+                    }
+                } catch (error) {
+                    alert(`Error: ${error.message}`);
+                } finally {
+                    dictateButton.disabled = false;
+                    recorder = null;
+                    isRecording = false;
+                    isStoppingRecording = false;
+                }
+            });
         }
 
     };
