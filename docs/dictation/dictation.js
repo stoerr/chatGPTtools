@@ -11,6 +11,7 @@ let isRecording = false;
 let isStoppingRecording = false;
 let openaiAPIKey;
 let lastTexts = [];
+let lastPosition;
 
 const getOpenAIKey = () => {
     openaiAPIKey = localStorage.getItem('openai_api_key');
@@ -65,14 +66,7 @@ const stopRecording = async () => {
             const data = await response.json();
             if (response.ok) {
                 lastTexts.push(textarea.value);
-                // Insert transcription at current cursor position
-                const cursorPosition = textarea.selectionStart;
-                const textBefore = textarea.value.substring(0, cursorPosition);
-                const textAfter = textarea.value.substring(cursorPosition);
-                textarea.value = `${textBefore}${/\s$/.test(textBefore) ? '' : ' '}${data.text}${/^\s/.test(textAfter) ? '' : ' '}${textAfter}`;
-                // set the cursor position just after the inserted text . Observe the possibly inserted space after textBefore, and before textAfter
-                textarea.selectionStart = cursorPosition + (/\s$/.test(textBefore) ? 0 : 1) + data.text.length + (/^\s/.test(textAfter) ? 0 : 1);
-                textarea.selectionEnd = textarea.selectionStart;
+                insertResult(data);
             } else {
                 throw new Error(data.error);
             }
@@ -86,6 +80,23 @@ const stopRecording = async () => {
         }
     });
 };
+
+// Insert result into textarea
+const insertResult = (data) => {
+    // Insert transcription at current cursor position
+    // set cursorPosition to textarea.selectionStart if textarea is focussed, otherwise to lastPosition
+    let cursorPosition = document.activeElement === textarea ? textarea.selectionStart : lastPosition;
+    const textBefore = textarea.value.substring(0, cursorPosition);
+    const textAfter = textarea.value.substring(cursorPosition);
+    textarea.value = `${textBefore}${/\s$/.test(textBefore) ? '' : ' '}${data.text}${/^\s/.test(textAfter) ? '' : ' '}${textAfter}`;
+    // set the cursor position just after the inserted text . Observe the possibly inserted space after textBefore, and before textAfter
+    textarea.selectionStart = cursorPosition + (/\s$/.test(textBefore) ? 0 : 1) + data.text.length + (/^\s/.test(textAfter) ? 0 : 1);
+    textarea.selectionEnd = textarea.selectionStart;
+}
+
+textarea.addEventListener('blur', () => {
+    lastPosition = textarea.selectionStart;
+});
 
 // Hotkey for dictation
 window.addEventListener('keydown', function (e) {
