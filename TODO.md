@@ -17,7 +17,7 @@ https://www.promptingguide.ai/techniques/react
 
 ### chatgpt possible additional options
 -c number Set the number of responses to generate (default: 1)
--s number Set the temperature for response generation
+-temp number Set the temperature for response generation
 Not: -u url read content of url and pipe it through texttohtml
 -L List available models and their capabilities
 -t template

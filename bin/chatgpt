@@ -18,15 +18,15 @@ Options:
   -p prefix       Prefix the prompt with a string. Use this or -pf, not both.
   -pf prefixfile  Prefix the prompt with the contents of a file
   -pl key         Add a prompt from the ChatGPT prompt library using the given key (see script chatgptpromptlib)
-  -s suffix       Suffix the prompt with a string. Use this or -sf, not both.
-  -sf suffixfile  Suffix the prompt with the contents of a file
+  -u suffix       Suffix the prompt with a string. Use this or -sf, not both.
+  -uf suffixfile  Suffix the prompt with the contents of a file
   -m modelname    Use a specific model (default: gpt-3.5-turbo)
   -m16k           Use the 16k model instead of the default (that'll be gpt-3.5-turbo-16k)
   -t number       Set max tokens for response (default: no limit)
   -v              verbose output : prints the sent and received json message to stderr and gives info about connection retries
   -w column       Word wrap the response to a specified column width using fmt.
-  -y systemmsg    Use the given string as system message
-  -yl key         Add a system message from the ChatGPT prompt library using the given key with chatgptpromptlib
+  -s systemmsg    Use the given string as system message
+  -sl key         Add a system message from the ChatGPT prompt library using the given key with chatgptpromptlib
   -h, --help      Show this help message
   
 If the prompt or system message contain a construct like promptlib:key , the chatgptpromptlib command will be called with that key
@@ -93,10 +93,16 @@ for (let i = 2; i < process.argv.length; i++) {
                 process.exit(1);
             }
             i++;
-        } else if (arg === '-s' && process.argv[i + 1]) {
+        } else if (arg === '-u' && process.argv[i + 1]) {
             suffix = process.argv[i + 1];
             i++;
-        } else if (arg === '-yl' && process.argv[i + 1]) {
+        } else if (arg === '-uf' && process.argv[i + 1]) {
+            suffix = fs.readFileSync(process.argv[i + 1], 'utf8');
+            i++;
+        } else if (arg === '-s' && process.argv[i + 1]) {
+            systemMsg = process.argv[i + 1];
+            i++;
+        } else if (arg === '-sl' && process.argv[i + 1]) {
             const promptlibkey = process.argv[i + 1];
             try {
                 const promptlibOutput = execSync(`chatgptpromptlib ${promptlibkey}`, {encoding: 'utf8'});
@@ -105,9 +111,6 @@ for (let i = 2; i < process.argv.length; i++) {
                 console.error('Error: Prompt library key not found (2): ' + promptlibkey);
                 process.exit(1);
             }
-            i++;
-        } else if (arg === '-sf' && process.argv[i + 1]) {
-            suffix = fs.readFileSync(process.argv[i + 1], 'utf8');
             i++;
         } else if (arg === '-f' && process.argv[i + 1]) {
             files.push(process.argv[i + 1]);

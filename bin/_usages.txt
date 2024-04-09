@@ -27,7 +27,7 @@ Usage: chatgpttokentool [option] inputfile
 
 Options:
   -h or --help  Show this help message and exit
-  -c            prints the token count for the input file
+  -c            prints the token count for the input file (NOT QUITE CORRECT - merging not implemented yet)
   -e            prints a quick estimation of the token count for the input file (faster than -c)
   -n            prints the token numbers for the input file separated by one space
   -nv           prints the tokens for the input as token number, tab, token, newline
@@ -84,6 +84,16 @@ Options:
 Description:
   This script sends a task description to ChatGPT, which returns a fish
   command line for the given task and prints it.
+
+
+# urltotext
+Usage: urltotext url
+
+Options:
+  --help          Show this help message and exit
+
+Description:
+  This script fetches the content of an URL (returning html) and outputs it as text, incl. some metadata.
 
 
 # chatgpttranscription
@@ -149,6 +159,7 @@ A script to modify a file using the ChatGPT API and display the differences.
 
 Options:
   -f <additionalfile>  Add an additional file to be passed to ChatGPT with -f option (can be used multiple times)
+  -m <modelname>       Use a specific model (default: gpt-3.5-turbo)
   --help               Display this help text and exit
 
 Arguments:
@@ -196,18 +207,19 @@ Options:
   -f filename     Includes the content of the given file as codeblock, together with the filename. Can be given multiple times.
   -i imagefile    Includes the given image file as image, together with the filename. Can be given multiple times.
   -iu imageurl    Includes the given image url as image, together with the url. Can be given multiple times.
+  -id detaillevel Sets the detail level for the image. Can be 'low', 'high', or 'auto'. Default is 'low'.
   -p prefix       Prefix the prompt with a string. Use this or -pf, not both.
   -pf prefixfile  Prefix the prompt with the contents of a file
   -pl key         Add a prompt from the ChatGPT prompt library using the given key (see script chatgptpromptlib)
-  -s suffix       Suffix the prompt with a string. Use this or -sf, not both.
-  -sf suffixfile  Suffix the prompt with the contents of a file
+  -u suffix       Suffix the prompt with a string. Use this or -sf, not both.
+  -uf suffixfile  Suffix the prompt with the contents of a file
   -m modelname    Use a specific model (default: gpt-3.5-turbo)
   -m16k           Use the 16k model instead of the default (that'll be gpt-3.5-turbo-16k)
   -t number       Set max tokens for response (default: no limit)
-  -v              verbose output : prints the sent json message to stderr and gives info about connection retries
+  -v              verbose output : prints the sent and received json message to stderr and gives info about connection retries
   -w column       Word wrap the response to a specified column width using fmt.
-  -y systemmsg    Use the given string as system message
-  -yl key         Add a system message from the ChatGPT prompt library using the given key with chatgptpromptlib
+  -s systemmsg    Use the given string as system message
+  -sl key         Add a system message from the ChatGPT prompt library using the given key with chatgptpromptlib
   -h, --help      Show this help message
   
 If the prompt or system message contain a construct like promptlib:key , the chatgptpromptlib command will be called with that key
@@ -238,3 +250,5 @@ Description:
   This script generates a JUnit 4 test for the given Java file using ChatGPT.
   The output test file is placed in the corresponding 'src/test/java'
   directory with a 'Test.java' suffix.
+
+

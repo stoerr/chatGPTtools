@@ -6,6 +6,7 @@ print_help() {
   echo ""
   echo "Options:"
   echo "  -f <additionalfile>  Add an additional file to be passed to ChatGPT with -f option (can be used multiple times)"
+  echo "  -m <modelname>       Use a specific model (default: gpt-3.5-turbo)"
   echo "  --help               Display this help text and exit"
   echo ""
   echo "Arguments:"
@@ -28,12 +29,17 @@ if [[ $# -lt 2 ]]; then
   exit 1
 fi
 
+modelname="gpt-3.5-turbo"
+
 # Parse options
 additional_files=()
-while getopts "f:" opt; do
+while getopts "f:m:" opt; do
   case $opt in
     f)
       additional_files+=("$OPTARG")
+      ;;
+    m)
+      modelname=$OPTARG
       ;;
     *)
       print_help
@@ -53,7 +59,7 @@ prompt="$prompt
 $(chatgptpromptlib -d "mainfile=$filepath" fixSingleFile)"
 
 # Call chatgpt with the file and prompt
-chatgpt_args=("-v" "-f" "$filepath" -y 'promptlib:programmersys')
+chatgpt_args=("-v" "-f" "$filepath" -y 'promptlib:programmersys' -m "$modelname")
 for file in "${additional_files[@]}"; do
   chatgpt_args+=("-f" "$file")
 done
