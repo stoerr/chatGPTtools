@@ -21,12 +21,12 @@ Options:
   -u suffix       Suffix the prompt with a string. Use this or -sf, not both.
   -uf suffixfile  Suffix the prompt with the contents of a file
   -m modelname    Use a specific model (default: gpt-3.5-turbo)
-  -m16k           Use the 16k model instead of the default (that'll be gpt-3.5-turbo-16k)
   -t number       Set max tokens for response (default: no limit)
   -v              verbose output : prints the sent and received json message to stderr and gives info about connection retries
   -w column       Word wrap the response to a specified column width using fmt.
   -s systemmsg    Use the given string as system message
   -sl key         Add a system message from the ChatGPT prompt library using the given key with chatgptpromptlib
+  -a              Abbreviate the message in the middle if it's too long for the model context window
   -h, --help      Show this help message
   
 If the prompt or system message contain a construct like promptlib:key , the chatgptpromptlib command will be called with that key
@@ -59,6 +59,7 @@ let systemMsg = '';
 let imageFiles = [];
 let imageUrls = [];
 let detailparam = 'low';
+let abbreviateMiddle = false;
 
 for (let i = 2; i < process.argv.length; i++) {
     const arg = process.argv[i];
@@ -121,8 +122,6 @@ for (let i = 2; i < process.argv.length; i++) {
         } else if (arg === '-y' && process.argv[i + 1]) {
             systemMsg = process.argv[i + 1];
             i++;
-        } else if (arg === '-m16k') {
-            model = model + '-16k';
         } else if (arg === '-i' && process.argv[i + 1]) {
             imageFiles.push(process.argv[i + 1]);
             i++;
@@ -132,6 +131,8 @@ for (let i = 2; i < process.argv.length; i++) {
         } else if (arg === '-id' && process.argv[i + 1]) {
             detailparam = process.argv[i + 1];
             i++;
+        } else if (arg === '-a') {
+            abbreviateMiddle = true;
         } else if (!arg.startsWith('-')) {
             inOptions = false;
             prompt += arg;
@@ -209,9 +210,9 @@ if (imageFiles.length > 0 || imageUrls.length > 0) {
 
         let imageFileContent;
         if (detailparam === 'low') {
-            imageFileContent = execSync(`convert '${imageFile}' -resize '512x512>' - | base64`, { encoding: 'utf8' });
+            imageFileContent = execSync(`convert '${imageFile}' -resize '512x512>' - | base64`, {encoding: 'utf8'});
         } else { // let OpenAI handle the resizing to avoid losing details, but make sure we don't submit huge images
-            imageFileContent = execSync(`convert '${imageFile}' -resize '8000x8000>' - | base64`, { encoding: 'utf8' });
+            imageFileContent = execSync(`convert '${imageFile}' -resize '8000x8000>' - | base64`, {encoding: 'utf8'});
         }
         const imageBase64 = `data:image/jpeg;base64,${imageFileContent.trim()}`;
         content.push({
@@ -247,6 +248,32 @@ if (maxTokens) {
     requestData.max_tokens = maxTokens;
 }
 
+/** When we receive a message from chatgpt that the request is too long and if the user requested that,
+ *  we will replace the middle of the message with " [...] " to make it shorter - we assume that usually the start and the end contain the most information. Since we don't want to bother with tokens here, we will estimate the needed length by the number of characters. */
+// example too long errorMsg: This model's maximum context length is 16385 tokens. However, your messages resulted in 31506 tokens. Please reduce the length of the messages.
+function abbreviateMessage(errorMsg) {
+    const tooLongMatch = errorMsg.match(/maximum context length is (\d+) tokens.*messages resulted in (\d+) tokens/);
+    if (!tooLongMatch) { // message format changed - bug, need to fix that
+        console.error('Error: Unexpected error message format: ' + errorMsg);
+        process.exit(6);
+    }
+    const modelMaxTokens = parseInt(tooLongMatch[1], 10);
+    const messageTokens = parseInt(tooLongMatch[2], 10);
+    const messageLength = content.length;
+    const wantedLength = (0.9 * modelMaxTokens / messageTokens) * messageLength - 5; // safety margin
+    const start = content.slice(0, wantedLength / 2);
+    const end = content.slice(-wantedLength / 2);
+    var oldcontent = content;
+    content = start + " [...] " + end;
+    // find the message having oldcontent as content and change to the new content - might not be the first message
+    for (let i = 0; i < requestData.messages.length; i++) {
+        if (requestData.messages[i].content === oldcontent) {
+            requestData.messages[i].content = content;
+            break;
+        }
+    }
+}
+
 /** Helper function to replace promptlib:key constructs with library entry */
 function replacePromptlibKey(inputString) {
     if (!inputString) return inputString;
@@ -277,7 +304,8 @@ async function requestChatGPT(attempt = 1) {
             var waitTime;
             try {
                 waitTime = parseInt(retryMessage.match(/(\d+)s/)[1], 10);
-            } catch (e) {}
+            } catch (e) {
+            }
             if (!waitTime || waitTime < 1 || waitTime > 60) {
                 console.error('Error: Rate limit exceeded, but no valid retry-after found', retryMessage);
                 process.exit(3);
@@ -292,8 +320,18 @@ async function requestChatGPT(attempt = 1) {
                 console.error('Error: Too many retries');
                 process.exit(4);
             }
+        } else if (response.status === 400) {
+            var body = await response.text();
+            if (abbreviateMiddle && body.includes("reduce the length of the messages")
+                && body.includes("context_length_exceeded")) {
+                abbreviateMessage(body);
+                setTimeout(() => requestChatGPT(attempt + 1), 10);
+            } else {
+                console.error('Error: Request failed with status', response.status, 'and message', response.statusText, 'and body', body);
+                process.exit(5);
+            }
         } else if (!response.ok) {
-            console.error('Error: Request failed with status', response.status, 'and message', await response.statusText, 'and body', await response.text());
+            console.error('Error: Request failed with status', response.status, 'and message', response.statusText, 'and body', await response.text());
             process.exit(5);
         } else {
             const responseData = await response.json();
