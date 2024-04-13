@@ -17,7 +17,7 @@ function print_usage() {
     echo "  -l                       Use landscape orientation (1792x1024)."
     echo "  -f <file>                Read prompt from a file. Use '-' to read from stdin."
     echo "  -r <format>              Response format url or b64_json (Optional, defaults to url)."
-    echo "  -o <file>                Output file to write the image to (format .webp). Implies response_format b64_json."
+    echo "  -o <file>                Output file to write the image to (format .png). Implies response_format b64_json."
     echo "  -u                       Just prints the url to stdout. (Implies response_format url)."
     echo "  -v                       View in a file viewer (MacOS open -W); if no -o is given, the file is deleted after viewing (temporary file)."
     echo
@@ -104,7 +104,7 @@ done
 
 if [ ! -z "$VIEW_FILE" ]; then
   if [ -z "$OUTPUT_FILE" ]; then
-    OUTPUT_FILE="$(mktemp -u).webp"
+    OUTPUT_FILE="$(mktemp -u).png"
     trap "rm -f $OUTPUT_FILE" EXIT
   fi
 fi
