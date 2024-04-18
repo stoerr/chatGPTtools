@@ -12,6 +12,7 @@ Usage: chatgpt [options] [prompt]
 Options:
   -               Reads prompt from stdin; if a prompt is given on the command line it is appended
   -f filename     Includes the content of the given file as codeblock, together with the filename. Can be given multiple times.
+  -fm filename    Includes the content of the given file as additional message in https://www.stoerr.net/blog/aimouth pattern. Can be given multiple times.
   -i imagefile    Includes the given image file as image, together with the filename. Can be given multiple times.
   -iu imageurl    Includes the given image url as image, together with the url. Can be given multiple times.
   -id detaillevel Sets the detail level for the image. Can be 'low', 'high', or 'auto'. Default is 'low'.
@@ -54,6 +55,8 @@ let verbose = false;
 let prefix = '';
 let suffix = '';
 let files = [];
+let fmfiles = [];
+let fmfilemessages = [];
 let wordWrapColumn;
 let systemMsg = '';
 let imageFiles = [];
@@ -116,6 +119,9 @@ for (let i = 2; i < process.argv.length; i++) {
         } else if (arg === '-f' && process.argv[i + 1]) {
             files.push(process.argv[i + 1]);
             i++;
+        } else if (arg === '-fm' && process.argv[i + 1]) {
+            fmfiles.push(process.argv[i + 1]);
+            i++;
         } else if (arg === '-w' && process.argv[i + 1]) {
             wordWrapColumn = parseInt(process.argv[i + 1], 10);
             i++;
@@ -159,11 +165,23 @@ if (suffix) {
 
 let filecontents = "";
 
-for (let i = 0; i < files.length; i++) {
-    const file = files[i];
+function resolveFile(file) {
     let filename = file;
     const homeDir = process.env.HOME;
-    filename = filename.replace(homeDir, '~');
+    return filename.replace(homeDir, '~');
+}
+
+for (let i = 0; i < fmfiles.length; i++) {
+    const file = fmfiles[i];
+    let filename = resolveFile(file);
+    const filecontent = fs.readFileSync(file, 'utf-8');
+    fmfilemessages.push({role: 'user', content: "Print the current raw content of the file " + filename});
+    fmfilemessages.push({role: 'assistant', content: filecontent});
+}
+
+for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    let filename = resolveFile(file);
     const filePrompt = fs.readFileSync(file, 'utf-8');
 
     if (files.length > 1) {
@@ -239,6 +257,10 @@ const requestData = {
     user: 'chatgpt script',
     messages: [{role: 'user', content: content}],
 };
+
+if (fmfilemessages.length > 0) {
+    requestData.messages = fmfilemessages.concat(requestData.messages);
+}
 
 if (systemMsg) {
     requestData.messages.unshift({role: 'system', content: replacePromptlibKey(systemMsg)});
