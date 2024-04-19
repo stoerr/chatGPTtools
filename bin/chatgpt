@@ -12,7 +12,8 @@ Usage: chatgpt [options] [prompt]
 Options:
   -               Reads prompt from stdin; if a prompt is given on the command line it is appended
   -f filename     Includes the content of the given file as codeblock, together with the filename. Can be given multiple times.
-  -fm filename    Includes the content of the given file as additional message in https://www.stoerr.net/blog/aimouth pattern. Can be given multiple times.
+  -fm filename    Includes the content of the given file as additional message in https://www.stoerr.net/blog/aimouth pattern. 
+                  Can be given multiple times. if - is given as filename, the content is read from stdin.
   -i imagefile    Includes the given image file as image, together with the filename. Can be given multiple times.
   -iu imageurl    Includes the given image url as image, together with the url. Can be given multiple times.
   -id detaillevel Sets the detail level for the image. Can be 'low', 'high', or 'auto'. Default is 'low'.
@@ -173,10 +174,15 @@ function resolveFile(file) {
 
 for (let i = 0; i < fmfiles.length; i++) {
     const file = fmfiles[i];
-    let filename = resolveFile(file);
-    const filecontent = fs.readFileSync(file, 'utf-8');
-    fmfilemessages.push({role: 'user', content: "Print the current raw content of the file " + filename});
-    fmfilemessages.push({role: 'assistant', content: filecontent});
+    if (file === '-') {
+        const filecontent = fs.readFileSync(0, 'utf-8');
+        fmfilemessages.push({role: 'user', content: "Print the raw input text the instructions will apply to."});
+        fmfilemessages.push({role: 'assistant', content: filecontent});
+    } else {
+        const filecontent = fs.readFileSync(resolveFile(file), 'utf-8');
+        fmfilemessages.push({role: 'user', content: "Print the current raw content of the file " + file});
+        fmfilemessages.push({role: 'assistant', content: filecontent});
+    }
 }
 
 for (let i = 0; i < files.length; i++) {
