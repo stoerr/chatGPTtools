@@ -13,20 +13,17 @@ if [ "$#" -gt 0 ] && [ "$1" = "--help" ]; then
   exit 0
 fi
 
+# set -vx
+
 script_dir="$(dirname "$(realpath "$0")")"
 usage_file="${script_dir}/_usages.txt"
 
-# if the file does not exist or is empty, create it
-if [ ! -s "$usage_file" ]; then
-  touch -t 197001010000 "$usage_file" # Create _usages.txt with an old timestamp if it doesn't exist
-fi
-
-if [ -n "$(find . -maxdepth 1 -type f -perm -u=x ! -name "_*" -newer "$usage_file")" ]; then
+if [ -n "$(find ${script_dir} -maxdepth 1 -type f -perm -u=x ! -name "_*")" ]; then
   rm "$usage_file" && touch "$usage_file" # Remove old _usages.txt and create a new one
-  for exe in $(find . -maxdepth 1 -type f -perm -u=x ! -name "_*"); do
+  for exe in $(find ${script_dir} -maxdepth 1 -type f -perm -u=x ! -name "_*" | sort); do
     exe_name=$(basename "$exe")
     echo "# $exe_name" >> "$usage_file"
-    ./"$exe_name" --help >> "$usage_file" 2>&1
+    ${script_dir}/"$exe_name" --help >> "$usage_file" 2>&1
     echo >> "$usage_file"
     echo >> "$usage_file"
   done

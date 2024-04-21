@@ -5,7 +5,10 @@ tmp_script=$(mktemp)
 
 trap "rm $tmp_result; rm $tmp_script" EXIT
 
-chatgpt -f bin/_usages.txt - > $tmp_script <<EOF
+echo "<!-- Start scriptlist -->" > $tmp_script
+echo >> $tmp_script
+
+(chatgpt -f bin/_usages.txt - <<EOF
 Discard previous instructions.
 
 # Instructions
@@ -18,10 +21,19 @@ so this would add no information. Rather explain what the script does, without m
 Never ever include fragments of the bin/_usages.txt file in the output.
 The only exception where the word ChatGPT is permitted are the scripts chatgpt, chatgptapplytemplate, chatgptsummarizeurl.
 
-The output should be in markdown format. Here are examples, which also should be used for the corresponding scripts:
+The output should be a list with the script name bold. Here are examples, which also should be used for the corresponding scripts:
 - \`chatgptsearchascript\`: searches this toolbox for a suitable command line utility to perform a task described in the command line
 - \`suggestbash\`: prints a bash command line for a problem described on it's command line
 EOF
+) >> $tmp_script
 
-sed -e '/Start of scriptlist/,/End of scriptlist/!b' -e "/End of scriptlist/r $tmp_script" -e 'd' README.md > $tmp_result
+echo >> $tmp_script
+echo "<!-- End scriptlist -->" >> $tmp_script
+
+sed -e '/Start scriptlist/,/End scriptlist/!b' -e "/End scriptlist/r $tmp_script" -e 'd' README.md > $tmp_result
+
 cat $tmp_result > README.md
+
+cat $tmp_script
+echo
+echo "The README.md was updated with the script list."

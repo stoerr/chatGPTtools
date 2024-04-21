@@ -1,5 +1,6 @@
 # TODOs
 
+Check out competitors, e.g. https://gamma.app/
 ## Next plans:
 - functions into multiplemessagechat
 - functions into chatgpt

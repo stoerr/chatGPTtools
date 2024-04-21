@@ -35,7 +35,7 @@ function processArgs() {
 
 function extractCodeBlock(fileContent, invert) {
     // split the fileContent at triple backticks as multline regex
-    const regex = /```\n?/gm;
+    const regex = /```[a-z]+\n?/gm;
     const parts = fileContent.split(regex);
     if (parts.length < 3 ) {
         console.error('Error: No code block found in\n', fileContent);
