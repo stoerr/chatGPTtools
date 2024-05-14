@@ -18,7 +18,7 @@ Options:
   -u suffix       Suffix the prompt with a string. Use this or -sf, not both.
   -uf suffixfile  Suffix the prompt with the contents of a file
   -m modelname    Use a specific model (default: gpt-3.5-turbo)
-  -4              Use the "gpt-4-turbo" model
+  -4              Use the "gpt-4o" model
   -t number       Set max tokens for response (default: no limit)
   -v              verbose output : prints the sent and received json message to stderr and gives info about connection retries
   -w column       Word wrap the response to a specified column width using fmt.
@@ -253,5 +253,3 @@ Options:
 
 Description:
   This script fetches the content of an URL (returning html) and outputs it as text, incl. some metadata.
-
-

@@ -23,7 +23,7 @@ Options:
   -u suffix       Suffix the prompt with a string. Use this or -sf, not both.
   -uf suffixfile  Suffix the prompt with the contents of a file
   -m modelname    Use a specific model (default: gpt-3.5-turbo)
-  -4              Use the "gpt-4-turbo" model
+  -4              Use the "gpt-4o" model
   -t number       Set max tokens for response (default: no limit)
   -v              verbose output : prints the sent and received json message to stderr and gives info about connection retries
   -w column       Word wrap the response to a specified column width using fmt.
@@ -77,7 +77,7 @@ for (let i = 2; i < process.argv.length; i++) {
             model = process.argv[i + 1];
             i++;
         } else if (arg === '-4') {
-            model = 'gpt-4-turbo';
+            model = 'gpt-4o';
         } else if (arg === '-t' && process.argv[i + 1]) {
             maxTokens = parseInt(process.argv[i + 1], 10);
             i++;

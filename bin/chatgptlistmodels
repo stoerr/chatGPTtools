@@ -5,8 +5,15 @@ if [[ "$1" == "--help" ]]; then
   exit 0
 fi
 
-# read OPENAI_API_KEY from file $HOME/.openai-api-key.txt
-OPENAI_API_KEY=$(cat $HOME/.openai-api-key.txt)
+# read OPENAI_API_KEY from file $HOME/.openai-api-key.txt if it's not already set
+if [[ -z "$OPENAI_API_KEY" ]]; then
+  if [[ -f $HOME/.openai-api-key.txt ]]; then
+    OPENAI_API_KEY=$(cat $HOME/.openai-api-key.txt)
+  else
+    echo "Please set the OPENAI_API_KEY environment variable or create a file $HOME/.openai-api-key.txt with the API key"
+    exit 1
+  fi
+fi
 
 curl -s https://api.openai.com/v1/models -H "Authorization: Bearer $OPENAI_API_KEY" | jq '.data[] | del(.permission)' | jq .id | sort | less
 
