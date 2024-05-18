@@ -1,0 +1,156 @@
+#!/usr/bin/env node
+/* Generated code using https://aigenpipeline.stoerr.net/ with aigenpipeline -os chatgptextractcodeblock
+AIGenPromptStart(marker)
+
+Print a nodejs script that does not use any external libraries not delivered with nodejs.
+It should be a command line script with the following options:
+-h, --help should print a Unix style help message with the usage
+-m, --model <model> specifies the embedding model to use. Default is text-embedding-3-small
+And then there is exactly one argument - a file to generate embeddings for.
+The script should read the file, sent the content to the model and print the resulting embeddings as a JSON array.
+If the file is larger than 50kb, the script should print an error message and exit with a non-zero exit code.
+Assume the OpenAI API key is set in the environment variable OPENAI_API_KEY, but print an error if it isn't.
+For now just parse the output as JSON and print output.data[0].embedding.
+
+The API with curl is as follows. Implement that in Javascript.
+```shell
+curl https://api.openai.com/v1/embeddings \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -d '{
+    "input": "Your text string goes here",
+    "model": "text-embedding-3-small"
+  }'
+```
+
+AIGenCommand(marker)
+-m gpt-4o
+AIGenPromptEnd(marker) */
+/* AIGenVersion(1aab453c, chatgptembedding-26f7e6f3) */
+const fs = require('fs');
+const https = require('https');
+const { argv } = require('process');
+
+const DEFAULT_MODEL = 'text-embedding-3-small';
+const MAX_FILE_SIZE = 50 * 1024; // 50kb
+
+function printHelp() {
+  console.log(`Usage: ${argv[1]} [options] <file>
+Options:
+  -h, --help          Show this help message
+  -m, --model <model> Specify the embedding model to use. Default is ${DEFAULT_MODEL}`);
+}
+
+function parseArgs() {
+  const args = {
+    model: DEFAULT_MODEL,
+    file: null
+  };
+
+  for (let i = 2; i < argv.length; i++) {
+    switch (argv[i]) {
+      case '-h':
+      case '--help':
+        printHelp();
+        process.exit(0);
+      case '-m':
+      case '--model':
+        if (i + 1 < argv.length) {
+          args.model = argv[++i];
+        } else {
+          console.error('Error: --model option requires a value');
+          process.exit(1);
+        }
+        break;
+      default:
+        if (!args.file) {
+          args.file = argv[i];
+        } else {
+          console.error('Error: Only one file argument is allowed');
+          process.exit(1);
+        }
+    }
+  }
+
+  if (!args.file) {
+    console.error('Error: No file specified');
+    process.exit(1);
+  }
+
+  return args;
+}
+
+function readFile(filePath) {
+  try {
+    const stats = fs.statSync(filePath);
+    if (stats.size > MAX_FILE_SIZE) {
+      console.error('Error: File size exceeds 50kb');
+      process.exit(1);
+    }
+    return fs.readFileSync(filePath, 'utf8');
+  } catch (err) {
+    console.error(`Error: Unable to read file - ${err.message}`);
+    process.exit(1);
+  }
+}
+
+function getOpenAIKey() {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    console.error('Error: OPENAI_API_KEY environment variable is not set');
+    process.exit(1);
+  }
+  return apiKey;
+}
+
+function generateEmbeddings(apiKey, model, input) {
+  const data = JSON.stringify({
+    input: input,
+    model: model
+  });
+
+  const options = {
+    hostname: 'api.openai.com',
+    path: '/v1/embeddings',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    }
+  };
+
+  const req = https.request(options, (res) => {
+    let responseData = '';
+
+    res.on('data', (chunk) => {
+      responseData += chunk;
+    });
+
+    res.on('end', () => {
+      try {
+        const jsonResponse = JSON.parse(responseData);
+        console.log(JSON.stringify(jsonResponse.data[0].embedding));
+      } catch (err) {
+        console.error(`Error: Failed to parse response - ${err.message}`);
+        process.exit(1);
+      }
+    });
+  });
+
+  req.on('error', (err) => {
+    console.error(`Error: Request failed - ${err.message}`);
+    process.exit(1);
+  });
+
+  req.write(data);
+  req.end();
+}
+
+function main() {
+  const args = parseArgs();
+  const fileContent = readFile(args.file);
+  const apiKey = getOpenAIKey();
+  generateEmbeddings(apiKey, args.model, fileContent);
+}
+
+main();
