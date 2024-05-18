@@ -283,19 +283,27 @@ if (maxTokens) {
  *  we will replace the middle of the message with " [...] " to make it shorter - we assume that usually the start and the end contain the most information. Since we don't want to bother with tokens here, we will estimate the needed length by the number of characters. */
 // example too long errorMsg: This model's maximum context length is 16385 tokens. However, your messages resulted in 31506 tokens. Please reduce the length of the messages.
 function abbreviateMessage(errorMsg) {
-    const tooLongMatch = errorMsg.match(/maximum context length is (\d+) tokens.*messages resulted in (\d+) tokens/);
-    if (!tooLongMatch) { // message format changed - bug, need to fix that
-        console.error('Error: Unexpected error message format: ' + errorMsg);
-        process.exit(6);
+    let start;
+    let end;
+    if (errorMsg) {
+        const tooLongMatch = errorMsg.match(/maximum context length is (\d+) tokens.*messages resulted in (\d+) tokens/);
+        if (!tooLongMatch) { // message format changed - bug, need to fix that
+            console.error('Error: Unexpected error message format: ' + errorMsg);
+            process.exit(6);
+        }
+        const modelMaxTokens = parseInt(tooLongMatch[1], 10);
+        const messageTokens = parseInt(tooLongMatch[2], 10);
+        const messageLength = content.length;
+        const wantedLength = (0.9 * modelMaxTokens / messageTokens) * messageLength - 5; // safety margin
+        start = content.slice(0, wantedLength / 2);
+        end = content.slice(-wantedLength / 2);
+    } else { // no message given; we take out a random value of 30%
+        start = content.slice(0, 0.35 * content.length);
+        end = content.slice(-0.35 * content.length);
     }
-    const modelMaxTokens = parseInt(tooLongMatch[1], 10);
-    const messageTokens = parseInt(tooLongMatch[2], 10);
-    const messageLength = content.length;
-    const wantedLength = (0.9 * modelMaxTokens / messageTokens) * messageLength - 5; // safety margin
-    const start = content.slice(0, wantedLength / 2);
-    const end = content.slice(-wantedLength / 2);
     var oldcontent = content;
     content = start + " [...] " + end;
+    if (verbose) console.error("Abbreviated message from " + oldcontent.length + " to " + content.length + " characters.");
     // find the message having oldcontent as content and change to the new content - might not be the first message
     for (let i = 0; i < requestData.messages.length; i++) {
         if (requestData.messages[i].content === oldcontent) {
@@ -370,7 +378,10 @@ async function requestChatGPT(attempt = 1) {
             const assistantMessage = responseData.choices[0].message;
             const finishReason = responseData.choices[0].finish_reason;
 
-            if (finishReason === 'stop' || !finishReason) {
+            if (finishReason == 'length' && abbreviateMiddle) {
+                abbreviateMessage();
+                setTimeout(() => requestChatGPT(attempt + 1), 10);
+            } else if (finishReason === 'stop' || !finishReason) {
                 let output = assistantMessage.content;
                 if (wordWrapColumn) {
                     const fmt = spawnSync('fmt', ['-w', wordWrapColumn, '-p'], {input: output, encoding: 'utf8'});
