@@ -225,6 +225,9 @@ if (verbose) {
 
 let content = prompt;
 if (imageFiles.length > 0 || imageUrls.length > 0) {
+    if (model === 'gpt-3.5-turbo') { // default has no vision.
+        model = 'gpt-4o';
+    }
     content = [
         {
             "type": "text",
