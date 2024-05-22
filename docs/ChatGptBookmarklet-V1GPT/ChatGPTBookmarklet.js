@@ -113,7 +113,7 @@
         },
 
         getAPIKey: function () {
-            let apiKey = localStorage.getItem('chatgpt_api_key');
+            let apiKey = localStorage.getItem('openai_api_key');
             if (!apiKey) {
                 apiKey = prompt('Please enter your ChatGPT API key:');
                 if (apiKey) {
