@@ -92,6 +92,7 @@ const insertResult = (data) => {
     // set the cursor position just after the inserted text . Observe the possibly inserted space after textBefore, and before textAfter
     textarea.selectionStart = cursorPosition + (/\s$/.test(textBefore) ? 0 : 1) + data.text.length + (/^\s/.test(textAfter) ? 0 : 1);
     textarea.selectionEnd = textarea.selectionStart;
+    lastPosition = textarea.selectionStart;
 }
 
 textarea.addEventListener('blur', () => {
