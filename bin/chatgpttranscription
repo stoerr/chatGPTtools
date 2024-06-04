@@ -6,7 +6,7 @@ show_usage() {
     echo "  -m  Model ID to use for transcription. Default is 'whisper-1'."
     echo "  -l  Language code of the input audio. Optional but improves accuracy."
     echo "  -p  Text to guide the model's style. Optional."
-    echo "  -r  Response format of the transcript output. Options: json, text, srt, verbose_json, vtt. Default is 'text'."
+    echo "  -r  Response format of the transcript output. Options: text, vtt, json, srt, verbose_json. Default is 'text'."
     echo "  -o  Output file to write the response to. If not provided, the response will be printed to stdout."
     echo "  -h  Show this help message and exit."
     echo "  <audio_file> The audio file to transcribe."

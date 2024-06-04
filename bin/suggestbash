@@ -14,4 +14,4 @@ fi
 
 machinedescription="For a a $(sysctl -n hw.model) with $(sysctl -n hw.machine) architecture running $(sw_vers -productName) $(sw_vers -productVersion) ,"
 
-chatgpt "$machinedescription write a bash command line including explanation to do the following: $*"
+chatgpt -4 "$machinedescription write a bash command line including explanation to do the following: $*"
