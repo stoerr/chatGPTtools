@@ -2,12 +2,15 @@
 (function (window) {
     window.hpsChatGPTBookmarklet = window.hpsChatGPTBookmarklet || {};
 
+    /** Some CSS selectors that, if they match something, are taken as the text content of the page. Useful e.g.
+     * to cut out a frame. */
+    const contentElements = ['main div#content-body','article', 'iframe#thirdPartyFrame_mail', 'iframe#detail-body-iframe'];
+
     var hpsChatGPTBookmarklet = {
 
         init: async function () {
             if (!this.initialized) {
                 const that = this;
-                this.initialized = true;
                 this.makeDialogDraggable();
                 // Detect user's preferred language
                 const userLang = navigator.language || navigator.userLanguage;
@@ -39,6 +42,8 @@
                 this.dictateButton.addEventListener('mouseup', this.stopDictation.bind(this));
 
                 setTimeout(this.sidebyside.bind(this), 0);
+
+                this.initialized = true;
             }
         },
 
@@ -115,7 +120,20 @@
         },
 
         getPageContent: function () {
-            return document.body.innerText;
+            var content = document.body;
+            for (let selector of contentElements) {
+                const element = document.querySelector(selector);
+                if (element && element.contentDocument && element.contentDocument.body) {
+                    content = element.contentDocument.body;
+                } else if (element && element.innerText) {
+                    content = element;
+                }
+            }
+            const text = content.innerText;
+            if (!text) {
+                alert('Bug: no text found on the page. Please report this page to the bookmarklet developer.');
+            }
+            return text;
         },
 
         getSelectedText: function () {
