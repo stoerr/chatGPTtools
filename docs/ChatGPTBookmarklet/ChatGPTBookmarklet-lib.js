@@ -31,7 +31,7 @@
          * @returns {Promise<string>} A promise that resolves to the content of the response message from the API.
          * @throws Will throw an error if the API limit is exceeded without a specified retry time or if there is a problem fetching data from the API.
          */
-        sendChatGPTRequest: async function (messages, selectedModel = 'gpt-3.5-turbo', maxTokens = 500) {
+        sendChatGPTRequest: async function (messages, selectedModel = 'gpt-4o-mini', maxTokens = 500) {
             const requestOptions = {
                 method: 'POST',
                 headers: {
@@ -92,7 +92,7 @@
          * @returns {Promise<string>} A promise that resolves to the content of the response message from the API.
          * @throws Will throw an error if the API limit is exceeded without a specified retry time or if there is a problem fetching data from the API.
          */
-        sendChatGPTRequestWithClipping(messages, isClippedCallback, selectedModel = 'gpt-3.5-turbo', maxTokens = 500) {
+        sendChatGPTRequestWithClipping(messages, isClippedCallback, selectedModel = 'gpt-4o-mini', maxTokens = 500) {
             const messageLengths = messages.map(message => message.content.length);
             const longestMessageIndex = messageLengths.indexOf(Math.max(...messageLengths));
             const longestMessage = messages[longestMessageIndex];

@@ -48,7 +48,7 @@ const headers = {
     'Authorization': `Bearer ${fs.readFileSync(apiKeyFile, 'utf8').trim()}`,
 };
 
-let model = 'gpt-3.5-turbo';
+let model = 'gpt-4o-mini';
 let maxTokens;
 let prompt = '';
 let inOptions = true;
@@ -225,8 +225,8 @@ if (verbose) {
 
 let content = prompt;
 if (imageFiles.length > 0 || imageUrls.length > 0) {
-    if (model === 'gpt-3.5-turbo') { // default has no vision.
-        model = 'gpt-4o';
+    if (model === 'gpt-3.5-turbo') { // has no vision.
+        model = 'gpt-4o-mini';
     }
     content = [
         {

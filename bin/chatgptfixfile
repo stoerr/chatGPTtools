@@ -6,7 +6,7 @@ print_help() {
   echo ""
   echo "Options:"
   echo "  -f <additionalfile>  Add an additional file to be passed to ChatGPT with -f option (can be used multiple times)"
-  echo "  -m <modelname>       Use a specific model (default: gpt-3.5-turbo)"
+  echo "  -m <modelname>       Use a specific model (default: gpt-4o-mini)"
   echo "  --help               Display this help text and exit"
   echo ""
   echo "Arguments:"
@@ -29,7 +29,7 @@ if [[ $# -lt 2 ]]; then
   exit 1
 fi
 
-modelname="gpt-3.5-turbo"
+modelname="gpt-4o-mini"
 
 # Parse options
 additional_files=()
@@ -83,6 +83,7 @@ fi
 
 # Rename original file and write new content
 mv "$filepath" "$filepath.gptfix.orig"
+cp "$filepath.gptfix.orig" "$filepath" # ensure we have the same permissions
 echo "$newcontent" > "$filepath"
 
 echo "Moved $filepath to $filepath.gptfix.orig and wrote new content to $filepath"
@@ -90,7 +91,7 @@ echo "The response was:"
 echo "$gptoutput"
 
 # Display differences using 'idea diff'
-idea diff "$filepath.gptfix.orig" "$filepath" &
+intellij diff "$filepath.gptfix.orig" "$filepath" &
 
 # Specification for generation with ChatGPT was originally:
 #The script chatfgptfixfile is called like this:

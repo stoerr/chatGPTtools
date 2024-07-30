@@ -13,6 +13,9 @@ show_usage() {
     exit 1
 }
 
+# TODO: perhaps recode if larger than 25MB, in the extreme case with
+# ffmpeg -i audio.mp3 -vn -map_metadata -1 -ac 1 -c:a libopus -b:a 12k -application voip audio.ogg
+
 # Initialize default values
 model="whisper-1"
 response_format="text"

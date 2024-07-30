@@ -17,7 +17,7 @@ Options:
   -pl key         Add a prompt from the ChatGPT prompt library using the given key (see script chatgptpromptlib)
   -u suffix       Suffix the prompt with a string. Use this or -sf, not both.
   -uf suffixfile  Suffix the prompt with the contents of a file
-  -m modelname    Use a specific model (default: gpt-3.5-turbo)
+  -m modelname    Use a specific model (default: gpt-4o-mini)
   -4              Use the "gpt-4o" model
   -t number       Set max tokens for response (default: no limit)
   -v              verbose output : prints the sent and received json message to stderr and gives info about connection retries
@@ -90,7 +90,7 @@ A script to modify a file using the ChatGPT API and display the differences.
 
 Options:
   -f <additionalfile>  Add an additional file to be passed to ChatGPT with -f option (can be used multiple times)
-  -m <modelname>       Use a specific model (default: gpt-3.5-turbo)
+  -m <modelname>       Use a specific model (default: gpt-4o-mini)
   --help               Display this help text and exit
 
 Arguments:

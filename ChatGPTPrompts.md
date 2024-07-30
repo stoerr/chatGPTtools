@@ -19,14 +19,14 @@ answer to stdout. It should be done using NodeJS using fetch.
 In addition to option --help, it should have the following command line arguments:
 - if it gets a single dash, that is a `-` , it should read the prompt from stdin. Otherwise it should take the 
   command line except the options as prompt to send to ChatGPT.
-- if it gets `-m modelname` it should use modelname as a model attribute in the request, instead of the default gpt-3.5-turbo
+- if it gets `-m modelname` it should use modelname as a model attribute in the request, instead of the default gpt-4o-mini
 - if it gets `-t number` it should transmit the given number as 'max_tokens' in the request.
 
 It should access the ChatGPT chat completions API at https://api.openai.com/v1/chat/completions . The API key should 
   be read from file ~/.openai-api-key.txt .
 
 The request looks like:
-{"model":"gpt-3.5-turbo","messages":[{"role":"user","content":"This is the promt to submit to ChatGPT"}]}
+{"model":"gpt-4o-mini","messages":[{"role":"user","content":"This is the prompt to submit to ChatGPT"}]}
 
 A successful response is like 
   {
