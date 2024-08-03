@@ -8,11 +8,11 @@
     let isRecording = false;
     let isStoppingRecording = false;
 
-    /** Splits the message into words and replaces the middle 10% of the words by " ... [message truncated] ... " */
-    function shortenBy10Percent(message) {
+    /** Splits the message into words and replaces the middle 20% of the words by " ... [message truncated] ... " */
+    function shortenMessage(message) {
         const words = message.split(/\b/);
-        const start = Math.floor(words.length * 0.45) - 5;
-        const end = Math.floor(words.length * 0.55) + 5;
+        const start = Math.floor(words.length * 0.4) - 5;
+        const end = Math.floor(words.length * 0.6) + 5;
         let result = words.slice(0, start).join('') + '\n... [message truncated] ...\n' + words.slice(end).join('');
         return result;
     }
@@ -92,7 +92,7 @@
          * @returns {Promise<string>} A promise that resolves to the content of the response message from the API.
          * @throws Will throw an error if the API limit is exceeded without a specified retry time or if there is a problem fetching data from the API.
          */
-        sendChatGPTRequestWithClipping(messages, isClippedCallback, selectedModel = 'gpt-4o-mini', maxTokens = 500) {
+        sendChatGPTRequestWithClipping(messages, isClippedCallback, selectedModel = 'gpt-4o-mini', maxTokens = 5000) {
             const messageLengths = messages.map(message => message.content.length);
             const longestMessageIndex = messageLengths.indexOf(Math.max(...messageLengths));
             const longestMessage = messages[longestMessageIndex];
@@ -101,13 +101,13 @@
 
             const sendRequest = async () => {
                 try {
-                    return await this.sendChatGPTRequest(messages, selectedModel);
+                    return await this.sendChatGPTRequest(messages, selectedModel, maxTokens);
                 } catch (e) {
                     if (e.cause && e.cause.includes && e.cause.includes('Please reduce the length') &&
                         e.cause.includes('maximum context length') && numberOfTriesLeft > 0) {
                         isClippedCallback(true);
                         numberOfTriesLeft--;
-                        longestMessage.content = shortenBy10Percent(longestMessage.content);
+                        longestMessage.content = shortenMessage(longestMessage.content);
                         return await sendRequest();
                     } else {
                         throw e;
