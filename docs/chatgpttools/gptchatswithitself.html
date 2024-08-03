@@ -466,7 +466,11 @@
         }
         console.log(messages)
         submitToGPT(messages, function (data) {
-            var newchat = $('<div class="col-12 chat ' + chatclass + '"><div class="card msg mb-3"><div class="card-body">' + data.choices[0].message.content + '</div></div></div>');
+            let content = data.choices[0].message.content;
+            if (data.choices[0].finish_reason === 'length') {
+                content = content + "...\n\n";
+            }
+            let newchat = $('<div class="col-12 chat ' + chatclass + '"><div class="card msg mb-3"><div class="card-body">' + content + '</div></div></div>');
             $('#chats').append(newchat);
             $('html, body').animate({scrollTop: $(document).height()}, 1000);
             turn++;
