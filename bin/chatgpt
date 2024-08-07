@@ -28,9 +28,11 @@ Options:
   -v              verbose output : prints the sent and received json message to stderr and gives info about connection retries
   -w column       Word wrap the response to a specified column width using fmt.
   -s systemmsg    Use the given string as system message
+  -sf systemfile  Use the contents of the given file as system message
   -sl key         Add a system message from the ChatGPT prompt library using the given key with chatgptpromptlib
   -a              Abbreviate the message in the middle if it's too long for the model context window
   -h, --help      Show this help message
+  -ha, --helpai   Answer a question about the tool from this helptext and exit. The rest of the command line (prompt) is the question.
   
 If the prompt or system message contain a construct like promptlib:key , the chatgptpromptlib command will be called with that key
 and this will be replaced with the prompt library entry, as an alternative to -pl key .
@@ -65,6 +67,7 @@ let imageFiles = [];
 let imageUrls = [];
 let detailparam = 'low';
 let abbreviateMiddle = false;
+let helpaimode = false;
 
 for (let i = 2; i < process.argv.length; i++) {
     const arg = process.argv[i];
@@ -110,6 +113,9 @@ for (let i = 2; i < process.argv.length; i++) {
         } else if (arg === '-s' && process.argv[i + 1]) {
             systemMsg = process.argv[i + 1];
             i++;
+        } else if (arg === '-sf' && process.argv[i + 1]) {
+            systemMsg = fs.readFileSync(process.argv[i + 1], 'utf8');
+            i++;
         } else if (arg === '-sl' && process.argv[i + 1]) {
             const promptlibkey = process.argv[i + 1];
             try {
@@ -143,6 +149,8 @@ for (let i = 2; i < process.argv.length; i++) {
             i++;
         } else if (arg === '-a') {
             abbreviateMiddle = true;
+        } else if (arg === '-ha' || arg === '--helpai') {
+            helpaimode = true;
         } else if (!arg.startsWith('-')) {
             inOptions = false;
             prompt += arg;
@@ -207,6 +215,11 @@ for (let i = 0; i < files.length; i++) {
 // }
 if (filecontents) {
     prompt = prompt + "\n\n" + filecontents;
+}
+
+if (helpaimode) {
+    fmfilemessages.push({role: 'user', content: "Print the help text for the 'chatgpt' tool. You will use that as background knowledge to answer my question."});
+    fmfilemessages.push({role: 'assistant', content: helpMessage});
 }
 
 if (!prompt) {
@@ -332,7 +345,7 @@ function replacePromptlibKey(inputString) {
 
 async function requestChatGPT(attempt = 1) {
     try {
-        if (verbose) console.error("Request: ", JSON.stringify(requestData));
+        if (verbose) console.error("Request: ", JSON.stringify(requestData, null, 2));
         const response = await fetch(apiURL, {
             method: 'POST',
             headers,
@@ -377,7 +390,7 @@ async function requestChatGPT(attempt = 1) {
             process.exit(5);
         } else {
             const responseData = await response.json();
-            if (verbose) console.error("Response: ", JSON.stringify(responseData));
+            if (verbose) console.error("Response: ", JSON.stringify(responseData, null, 2));
             const assistantMessage = responseData.choices[0].message;
             const finishReason = responseData.choices[0].finish_reason;
 
