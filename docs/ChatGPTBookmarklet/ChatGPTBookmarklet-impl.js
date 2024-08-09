@@ -176,19 +176,14 @@
         getSummary: async function () {
             const instructions = this.lang === 'de' ?
                 "Erstelle eine Zusammenfassung des folgenden Texts auf Deutsch. Konzentriere dich auf neue oder überraschende Informationen.\n\n" :
-                "Create a summary of this text. Focus on new or surprising information.\n\n";
+                "Create a summary of this text that you could replace the text with. Focus on new or surprising information.\n\n";
             const content = this.getIncludedText().trim();
-            const messages = [{role: 'user', content: content}];
             const selectedModel = document.getElementById('hps-chatgpt-model-selector').value;
             return this.promptOnText(instructions, content, selectedModel);
         },
 
         getAnswer: async function (question, includePageContent) {
-            const instructions = this.lang === 'de' ?
-                "\nBitte beantworte diese Frage in Bezug auf den folgenden Text auf Deutsch:\n" :
-                "\nPlease answer this question with regard to the following text:\n";
             const content = includePageContent ? this.getIncludedText().trim() : '';
-            const messages = [{role: 'user', content: content}];
             const selectedModel = document.getElementById('hps-chatgpt-model-selector').value;
             return this.promptOnText(question, content, selectedModel);
         },
