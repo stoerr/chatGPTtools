@@ -1,0 +1,64 @@
+#!/bin/bash
+
+# Function to show the usage of the script and exit
+show_usage() {
+  cat <<EOF
+  Usage: $(basename $0) [-t time] [-o output_file] [-p prompt] [-l language]
+  This script records audio from the microphone and sends it to chatgpttranscript and outputs it as text.
+  The audio is recorded until a key is pressed, or until the maximum duration is reached.
+    -t     maximum duration in seconds, default is 60 seconds
+    -o     output file to write the response to. If not provided, the response will be printed to stdout.
+    -p     Text to guide the model's style. Optional.
+    -l     code of the input audio. Optional but improves accuracy.
+    -h, --help  Show this help message and exit
+EOF
+  exit 1
+}
+
+# Initialize default values
+max_duration=60
+output_file=""
+prompt=""
+language=""
+
+# Parse options
+while [[ "$#" -gt 0 ]]; do
+  case $1 in
+    -t) max_duration="$2"; shift ;;
+    -o) output_file="$2"; shift ;;
+    -p) prompt="$2"; shift ;;
+    -l) language="$2"; shift ;;
+    -h|--help|-\?) show_usage ;;
+    *) echo "Unknown parameter passed: $1"; show_usage ;;
+  esac
+  shift
+done
+
+# Create a temporary file for the audio
+basetmp=$(mktemp -t chatgptdictate)
+tmpwav=${basetmp}.wav
+nrmwav=${basetmp}.nrm.wav
+trap 'rm -f $tmpwav $nrmwav' EXIT
+
+# Record audio
+echo "Recording audio for up to $max_duration seconds. Press any key to stop." > /dev/tty
+sox -q -d -c 1 -t wav $tmpwav trim 0 $max_duration &
+soxpid=$!
+trap 'kill $soxpid >& /dev/null; sleep 1; kill -9 $soxpid >& /dev/null; rm -f $tmpwav $nrmwav' EXIT
+
+sleep 1
+# Wait for a key press
+read -n 1 -s -r -t $max_duration
+
+# Stop recording
+kill $soxpid
+wait $soxpid
+
+sox $tmpwav $nrmwav norm
+
+echo -n -e "(Transcribing)\\r" > /dev/tty # alert user that the recording has stopped
+
+# Send the audio to chatgpttranscript
+chatgpttranscription -l "$language" -p "$prompt" -o "$output_file" $nrmwav
+
+echo "                       " > /dev/tty  # override "Transribing" message
