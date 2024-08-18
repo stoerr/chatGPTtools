@@ -47,15 +47,17 @@ const stopRecording = async () => {
     clearTimeout(timeoutCall);
     audioStream.getTracks().forEach(track => track.stop());
     recorder.exportWAV(async (blob) => {
-        const formData = new FormData();
-        formData.append('file', blob);
-        formData.append('model', 'whisper-1');
-        formData.append('language', document.getElementById('dictation-language').value);
-        // Optionally append the prompt
-        const promptText = textarea.value.substring(0, textarea.selectionStart);
-        formData.append('prompt', promptText);
 
         try {
+            const formData = new FormData();
+            formData.append('file', blob);
+            formData.append('model', 'whisper-1');
+            let value = document.getElementById('dictation-language').value;
+            if (value) formData.append('language', value);
+            // Optionally append the prompt
+            const promptText = textarea.value.substring(0, textarea.selectionStart);
+            if (promptText) formData.append('prompt', promptText);
+
             const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
                 method: 'POST',
                 headers: {
@@ -72,6 +74,7 @@ const stopRecording = async () => {
             }
         } catch (error) {
             alert(`Error: ${error.message}`);
+            console.error(error);
         } finally {
             dictateButton.disabled = false;
             recorder = null;
@@ -86,8 +89,9 @@ const insertResult = (data) => {
     // Insert transcription at current cursor position
     // set cursorPosition to textarea.selectionStart if textarea is focussed, otherwise to lastPosition
     let cursorPosition = document.activeElement === textarea ? textarea.selectionStart : lastPosition;
-    const textBefore = textarea.value.substring(0, cursorPosition);
-    const textAfter = textarea.value.substring(cursorPosition);
+    let value = textarea.value || '';
+    const textBefore = value.substring(0, cursorPosition);
+    const textAfter = value.substring(cursorPosition);
     textarea.value = `${textBefore}${/\s$/.test(textBefore) ? '' : ' '}${data.text}${/^\s/.test(textAfter) ? '' : ' '}${textAfter}`;
     // set the cursor position just after the inserted text . Observe the possibly inserted space after textBefore, and before textAfter
     textarea.selectionStart = cursorPosition + (/\s$/.test(textBefore) ? 0 : 1) + data.text.length + (/^\s/.test(textAfter) ? 0 : 1);
@@ -188,6 +192,7 @@ const fixupText = async () => {
         }
     } catch (error) {
         alert(`Error: ${error.message}`);
+        console.error(error);
     } finally {
         fixupButton.disabled = false;
     }

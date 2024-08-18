@@ -63,7 +63,7 @@ if [ ! -f "$audio_file" ]; then
 fi
 
 # recode file if it is larger than 25MB. If it's still too large, you'll need to split it up.
-if [ $(stat -c %s "$audio_file") -gt 25000000 ]; then
+if [ $(wc -c < "$audio_file") -gt 25000000 ]; then
   #tmpdir is $TMPDIR or /tmp
   tmpdir=$TMPDIR
   [ -z "$tmpdir" ] && tmpdir=/tmp
