@@ -59,7 +59,7 @@ prompt="$prompt
 $(chatgptpromptlib -d "mainfile=$filepath" fixSingleFile)"
 
 # Call chatgpt with the file and prompt
-chatgpt_args=("-v" "-f" "$filepath" -y 'promptlib:programmersys' -m "$modelname")
+chatgpt_args=("-f" "$filepath" -y 'promptlib:programmersys' -m "$modelname")
 for file in "${additional_files[@]}"; do
   chatgpt_args+=("-f" "$file")
 done

@@ -16,7 +16,7 @@ Options:
                   Can be given multiple times. if - is given as filename, the content is read from stdin.
   -i imagefile    Includes the given image file as image, together with the filename. Can be given multiple times.
   -iu imageurl    Includes the given image url as image, together with the url. Can be given multiple times.
-  -id detaillevel Sets the detail level for the image. Can be 'low', 'high', or 'auto'. Default is 'low'.
+  -id detaillevel Sets the detail level for the image. Can be 'low', 'high', or 'auto'. Default is 'auto'.
   -p prefix       Prefix the prompt with a string. Use this or -pf, not both.
   -pf prefixfile  Prefix the prompt with the contents of a file
   -pl key         Add a prompt from the ChatGPT prompt library using the given key (see script chatgptpromptlib)
@@ -65,7 +65,7 @@ let wordWrapColumn;
 let systemMsg = '';
 let imageFiles = [];
 let imageUrls = [];
-let detailparam = 'low';
+let detailparam = 'auto';
 let abbreviateMiddle = false;
 let helpaimode = false;
 
@@ -253,9 +253,9 @@ if (imageFiles.length > 0 || imageUrls.length > 0) {
 
         let imageFileContent;
         if (detailparam === 'low') {
-            imageFileContent = execSync(`convert '${imageFile}' -resize '512x512>' - | base64`, {encoding: 'utf8'});
+            imageFileContent = execSync(`magick '${imageFile}' -resize '512x512>' jpg:- | base64`, {encoding: 'utf8'});
         } else { // let OpenAI handle the resizing to avoid losing details, but make sure we don't submit huge images
-            imageFileContent = execSync(`convert '${imageFile}' -resize '8000x8000>' - | base64`, {encoding: 'utf8'});
+            imageFileContent = execSync(`magick '${imageFile}' -resize '2000x2000>' jpg:- | base64`, {encoding: 'utf8', maxBuffer: 1024 * 1024 * 25});
         }
         const imageBase64 = `data:image/jpeg;base64,${imageFileContent.trim()}`;
         content.push({
