@@ -5,7 +5,7 @@ const execSync = require('child_process').execSync;
 const spawnSync = require('child_process').spawnSync;
 
 const helpMessage = `
-chatgpt - Submit a prompt to ChatGPT conversation and print the response to stdout. The prompt can be given on the command line or read from stdin.
+${path.basename(process.argv[1])} - Submit a prompt to ChatGPT conversation and print the response to stdout. The prompt can be given on the command line or read from stdin.
 
 Usage: chatgpt [options] [prompt]
 
@@ -20,8 +20,10 @@ Options:
   -p prefix       Prefix the prompt with a string. Use this or -pf, not both.
   -pf prefixfile  Prefix the prompt with the contents of a file
   -pl key         Add a prompt from the ChatGPT prompt library using the given key (see script chatgptpromptlib)
+  -pa             Record audio from the microphone until a key is pressed (using chatgptdictate) and use the result as prompt prefis
   -u suffix       Suffix the prompt with a string. Use this or -sf, not both.
   -uf suffixfile  Suffix the prompt with the contents of a file
+  -ua             Record audio from the microphone until a key is pressed (using chatgptdictate) and use the result as prompt suffix
   -m modelname    Use a specific model (default: gpt-3.5-turbo)
   -4              Use the "gpt-4o" model
   -t number       Set max tokens for response (default: no limit)
@@ -30,7 +32,7 @@ Options:
   -s systemmsg    Use the given string as system message
   -sf systemfile  Use the contents of the given file as system message
   -sl key         Add a system message from the ChatGPT prompt library using the given key with chatgptpromptlib
-  -a              Abbreviate the message in the middle if it's too long for the model context window
+  -a              Abbreviate (2clip") the message in the middle if it's too long for the model context window
   -h, --help      Show this help message
   -ha, --helpai   Answer a question about the tool from this helptext and exit. The rest of the command line (prompt) is the question.
   
@@ -68,12 +70,14 @@ let imageUrls = [];
 let detailparam = 'auto';
 let abbreviateMiddle = false;
 let helpaimode = false;
+let audioPrefix = false;
+let audioSuffix = false;
 
 for (let i = 2; i < process.argv.length; i++) {
     const arg = process.argv[i];
 
     if (inOptions) {
-        if (arg === '--help' || arg === '-h' || arg == ' -?') {
+        if (arg === '--help' || arg === '-h' || arg === ' -?') {
             console.log(helpMessage);
             process.exit(0);
         } else if (arg === '-m' && process.argv[i + 1]) {
@@ -119,8 +123,7 @@ for (let i = 2; i < process.argv.length; i++) {
         } else if (arg === '-sl' && process.argv[i + 1]) {
             const promptlibkey = process.argv[i + 1];
             try {
-                const promptlibOutput = execSync(`chatgptpromptlib ${promptlibkey}`, {encoding: 'utf8'});
-                systemMsg = promptlibOutput;
+                systemMsg = execSync(`chatgptpromptlib ${promptlibkey}`, {encoding: 'utf8'});
             } catch (e) {
                 console.error('Error: Prompt library key not found (2): ' + promptlibkey);
                 process.exit(1);
@@ -149,6 +152,10 @@ for (let i = 2; i < process.argv.length; i++) {
             i++;
         } else if (arg === '-a') {
             abbreviateMiddle = true;
+        } else if (arg === '-pa') {
+            audioPrefix = true;
+        } else if (arg === '-ua') {
+            audioSuffix = true;
         } else if (arg === '-ha' || arg === '--helpai') {
             helpaimode = true;
         } else if (!arg.startsWith('-')) {
@@ -222,7 +229,23 @@ if (helpaimode) {
     fmfilemessages.push({role: 'assistant', content: helpMessage});
 }
 
-if (!prompt) {
+if (audioPrefix) {
+    const audioPrefix = execSync('chatgptdictate', {encoding: 'utf8', stdio: ['inherit', 'pipe', 'pipe']});
+    if (audioPrefix) {
+        console.log(audioPrefix.trim());
+        prompt = audioPrefix.trim() + '\n\n' + prompt;
+    }
+}
+
+if (audioSuffix) {
+    const audioSuffix = execSync('chatgptdictate', {encoding: 'utf8', stdio: ['inherit', 'pipe', 'pipe']});
+    if (audioSuffix) {
+        console.log(audioSuffix.trim());
+        prompt = prompt + '\n\n' + audioSuffix.trim();
+    }
+}
+
+if (!prompt || !prompt.trim()) {
     console.error('Error: No prompt provided');
     console.error(helpMessage);
     process.exit(1);
@@ -249,7 +272,6 @@ if (imageFiles.length > 0 || imageUrls.length > 0) {
     ];
     for (let i = 0; i < imageFiles.length; i++) {
         const imageFile = imageFiles[i];
-        const filename = path.basename(imageFile);
 
         let imageFileContent;
         if (detailparam === 'low') {
@@ -394,7 +416,7 @@ async function requestChatGPT(attempt = 1) {
             const assistantMessage = responseData.choices[0].message;
             const finishReason = responseData.choices[0].finish_reason;
 
-            if (finishReason == 'length' && abbreviateMiddle) {
+            if (finishReason === 'length' && abbreviateMiddle) {
                 abbreviateMessage();
                 setTimeout(() => requestChatGPT(attempt + 1), 10);
             } else if (finishReason === 'stop' || !finishReason) {

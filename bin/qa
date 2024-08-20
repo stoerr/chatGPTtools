@@ -19,7 +19,5 @@ echo "Please dictate prompt for chatgpt and then press any key."
 if [ "$#" -gt 0 ]; then
   echo "Additional arguments will be given to chatgpt: $*"
 fi
-prompt="$(chatgptdictate)"
-echo $prompt
 
-exec chatgpt -s "Answer in as few words as possible. Use a brief style with short replies." "$@" "$prompt"
+exec chatgpt -s "Answer in as few words as possible. Use a brief style with short replies." -ua "$@"
