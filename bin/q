@@ -1,0 +1,17 @@
+#!/bin/bash
+# "quick question": ask chatgpt for something with a quick answer
+# compare https://two-wrongs.com/q
+
+if [[ "$1" == "-h" || "$1" == "-?" || "$1" == "--help" ]]; then
+cat <<EOF
+Usage: $(basename $0) [chatgpt arguments] [prompt]
+
+This script asks chatgpt for something with a quick answer.
+Additional arguments can be given for chatgpt, e.g. -fm file, -4, -
+Full usage of chatgpt for more arguments:
+EOF
+  chatgpt -h
+  exit 1
+fi
+
+exec chatgpt -s "Answer in as few words as possible. Use a brief style with short replies." "$@"
