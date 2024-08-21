@@ -1,0 +1,396 @@
+#!/usr/bin/env node
+const fs = require('fs');
+const path = require('path');
+const execSync = require('child_process').execSync;
+const spawnSync = require('child_process').spawnSync;
+const https = require('https');
+
+const helpMessage = `
+${path.basename(process.argv[1])} - Submit a prompt to Claude conversation and print the response to stdout. The prompt can be given on the command line or read from stdin.
+
+Usage: chatgpt [options] [prompt]
+
+Options:
+  -               Reads prompt from stdin; if a prompt is given on the command line it is appended
+  -f filename     Includes the content of the given file as codeblock, together with the filename. Can be given multiple times.
+  -fm filename    Includes the content of the given file as additional message in https://www.stoerr.net/blog/aimouth pattern. 
+                  Can be given multiple times. if - is given as filename, the content is read from stdin.
+  -i imagefile    Includes the given image file as image, together with the filename. Can be given multiple times.
+  -iu imageurl    Includes the given image url as image, together with the url. Can be given multiple times.
+  -id detaillevel Sets the detail level for the image. Can be 'low', 'high', or 'auto'. Default is 'auto'.
+  -p prefix       Prefix the prompt with a string. Use this or -pf, not both.
+  -pf prefixfile  Prefix the prompt with the contents of a file
+  -pl key         Add a prompt from the ChatGPT prompt library using the given key (see script chatgptpromptlib)
+  -pa             Record audio from the microphone until a key is pressed (using chatgptdictate) and use the result as prompt prefis
+  -u suffix       Suffix the prompt with a string. Use this or -sf, not both.
+  -uf suffixfile  Suffix the prompt with the contents of a file
+  -ua             Record audio from the microphone until a key is pressed (using chatgptdictate) and use the result as prompt suffix
+  -m modelname    Use a specific model (default: claude-2)
+  -t number       Set max tokens for response (default: no limit)
+  -v              verbose output : prints the sent and received json message to stderr and gives info about connection retries
+  -w column       Word wrap the response to a specified column width using fmt.
+  -s systemmsg    Use the given string as system message
+  -sf systemfile  Use the contents of the given file as system message
+  -sl key         Add a system message from the ChatGPT prompt library using the given key with chatgptpromptlib
+  -a              Abbreviate (2clip") the message in the middle if it's too long for the model context window
+  -h, --help      Show this help message
+  -ha, --helpai   Answer a question about the tool from this helptext and exit. The rest of the command line (prompt) is the question.
+  
+If the prompt or system message contain a construct like promptlib:key , the chatgptpromptlib command will be called with that key
+and this will be replaced with the prompt library entry, as an alternative to -pl key .
+`;
+
+if (process.argv.length < 3) {
+    console.log(helpMessage);
+    process.exit(0);
+}
+
+const apiKeyFile = `${process.env.HOME}/.anthropic-api-key.txt`;
+const apiURL = 'https://api.anthropic.com/v1/messages';
+const headers = {
+    'Content-Type': 'application/json',
+    'X-API-Key': fs.readFileSync(apiKeyFile, 'utf8').trim(),
+    'anthropic-version': '2023-06-01'
+};
+
+let model = 'claude-3-5-sonnet-20240620';
+let maxTokens=8192;
+let prompt = '';
+let inOptions = true;
+let readStdin = false;
+let verbose = false;
+let prefix = '';
+let suffix = '';
+let files = [];
+let fmfiles = [];
+let fmfilemessages = [];
+let wordWrapColumn;
+let systemMsg = '';
+let imageFiles = [];
+let imageUrls = [];
+let detailparam = 'auto';
+let abbreviateMiddle = false;
+let helpaimode = false;
+let audioPrefix = false;
+let audioSuffix = false;
+
+for (let i = 2; i < process.argv.length; i++) {
+    const arg = process.argv[i];
+
+    if (inOptions) {
+        if (arg === '--help' || arg === '-h' || arg === ' -?') {
+            console.log(helpMessage);
+            process.exit(0);
+        } else if (arg === '-m' && process.argv[i + 1]) {
+            model = process.argv[i + 1];
+            i++;
+        } else if (arg === '-t' && process.argv[i + 1]) {
+            maxTokens = parseInt(process.argv[i + 1], 10);
+            i++;
+        } else if (arg === '-') {
+            readStdin = true;
+        } else if (arg === '-v') {
+            verbose = true;
+        } else if (arg === '-p' && process.argv[i + 1]) {
+            prefix = process.argv[i + 1];
+            i++;
+        } else if (arg === '-pf' && process.argv[i + 1]) {
+            prefix = fs.readFileSync(process.argv[i + 1], 'utf8');
+            i++;
+        } else if (arg === '-pl' && process.argv[i + 1]) {
+            const promptlibkey = process.argv[i + 1];
+            try {
+                const promptlibOutput = execSync(`chatgptpromptlib ${promptlibkey}`, {encoding: 'utf8'});
+                prompt += '\n' + promptlibOutput + '\n';
+            } catch (e) {
+                console.error('Error: Prompt library key not found (1): ' + promptlibkey);
+                process.exit(1);
+            }
+            i++;
+        } else if (arg === '-u' && process.argv[i + 1]) {
+            suffix = process.argv[i + 1];
+            i++;
+        } else if (arg === '-uf' && process.argv[i + 1]) {
+            suffix = fs.readFileSync(process.argv[i + 1], 'utf8');
+            i++;
+        } else if (arg === '-s' && process.argv[i + 1]) {
+            systemMsg = process.argv[i + 1];
+            i++;
+        } else if (arg === '-sf' && process.argv[i + 1]) {
+            systemMsg = fs.readFileSync(process.argv[i + 1], 'utf8');
+            i++;
+        } else if (arg === '-sl' && process.argv[i + 1]) {
+            const promptlibkey = process.argv[i + 1];
+            try {
+                systemMsg = execSync(`chatgptpromptlib ${promptlibkey}`, {encoding: 'utf8'});
+            } catch (e) {
+                console.error('Error: Prompt library key not found (2): ' + promptlibkey);
+                process.exit(1);
+            }
+            i++;
+        } else if (arg === '-f' && process.argv[i + 1]) {
+            files.push(process.argv[i + 1]);
+            i++;
+        } else if (arg === '-fm' && process.argv[i + 1]) {
+            fmfiles.push(process.argv[i + 1]);
+            i++;
+        } else if (arg === '-w' && process.argv[i + 1]) {
+            wordWrapColumn = parseInt(process.argv[i + 1], 10);
+            i++;
+        } else if (arg === '-y' && process.argv[i + 1]) {
+            systemMsg = process.argv[i + 1];
+            i++;
+        } else if (arg === '-i' && process.argv[i + 1]) {
+            imageFiles.push(process.argv[i + 1]);
+            i++;
+        } else if (arg === '-iu' && process.argv[i + 1]) {
+            imageUrls.push(process.argv[i + 1]);
+            i++;
+        } else if (arg === '-id' && process.argv[i + 1]) {
+            detailparam = process.argv[i + 1];
+            i++;
+        } else if (arg === '-a') {
+            abbreviateMiddle = true;
+        } else if (arg === '-pa') {
+            audioPrefix = true;
+        } else if (arg === '-ua') {
+            audioSuffix = true;
+        } else if (arg === '-ha' || arg === '--helpai') {
+            helpaimode = true;
+        } else if (!arg.startsWith('-')) {
+            inOptions = false;
+            prompt += arg;
+        }
+    } else {
+        prompt += ' ' + arg;
+    }
+}
+
+if (readStdin) {
+    const stdinPrompt = fs.readFileSync(0, 'utf-8');
+    prompt = stdinPrompt.trim() + '\n\n' + prompt;
+}
+
+prompt = replacePromptlibKey(prompt);
+
+if (prefix) {
+    prompt = prefix.trim() + '\n\n' + prompt;
+}
+
+if (suffix) {
+    prompt = prompt + '\n\n' + suffix.trim();
+}
+
+let filecontents = "";
+
+function resolveFile(file) {
+    let filename = file;
+    const homeDir = process.env.HOME;
+    return filename.replace(homeDir, '~');
+}
+
+for (let i = 0; i < fmfiles.length; i++) {
+    const file = fmfiles[i];
+    if (file === '-') {
+        const filecontent = fs.readFileSync(0, 'utf-8');
+        fmfilemessages.push({role: 'user', content: "Print the raw input text the instructions will apply to."});
+        fmfilemessages.push({role: 'assistant', content: filecontent});
+    } else {
+        const filecontent = fs.readFileSync(resolveFile(file), 'utf-8');
+        fmfilemessages.push({role: 'user', content: "Print the current raw content of the file " + file});
+        fmfilemessages.push({role: 'assistant', content: filecontent});
+    }
+}
+
+for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    let filename = resolveFile(file);
+    const filePrompt = fs.readFileSync(file, 'utf-8');
+
+    if (files.length > 1) {
+        filecontents = filecontents + "=== FILE " + (i + 1) + ": " + filename + " ===\n```\n" + filePrompt.trim() + "\n```\n";
+    } else {
+        filecontents = filecontents + "```\n" + filePrompt.trim() + "\n```\n";
+    }
+}
+
+if (filecontents) {
+    prompt = prompt + "\n\n" + filecontents;
+}
+
+if (helpaimode) {
+    fmfilemessages.push({role: 'user', content: "Print the help text for the 'chatgpt' tool. You will use that as background knowledge to answer my question."});
+    fmfilemessages.push({role: 'assistant', content: helpMessage});
+}
+
+if (audioPrefix) {
+    const audioPrefix = execSync('chatgptdictate', {encoding: 'utf8', stdio: ['inherit', 'pipe', 'pipe']});
+    if (audioPrefix) {
+        console.log(audioPrefix.trim());
+        prompt = audioPrefix.trim() + '\n\n' + prompt;
+    }
+}
+
+if (audioSuffix) {
+    const audioSuffix = execSync('chatgptdictate', {encoding: 'utf8', stdio: ['inherit', 'pipe', 'pipe']});
+    if (audioSuffix) {
+        console.log(audioSuffix.trim());
+        prompt = prompt + '\n\n' + audioSuffix.trim();
+    }
+}
+
+if (!prompt || !prompt.trim()) {
+    console.error('Error: No prompt provided');
+    console.error(helpMessage);
+    process.exit(1);
+}
+
+if (verbose) {
+    console.error('Arguments: ', process.argv);
+    console.error('Prompt: ', prompt, '\n');
+    console.error('Prompt word count: ', prompt.split(/\s+/).length, '\n');
+    console.error("---------------------------------------------\n\n");
+}
+
+let content = prompt;
+if (imageFiles.length > 0 || imageUrls.length > 0) {
+    console.error('Error: Image input is not supported with the Anthropic API');
+    process.exit(1);
+}
+
+const requestData = {
+    model: model,
+    messages: [{role: 'user', content: content}],
+};
+
+if (fmfilemessages.length > 0) {
+    requestData.messages = fmfilemessages.concat(requestData.messages);
+}
+
+if (systemMsg) {
+    requestData.system = replacePromptlibKey(systemMsg);
+}
+
+if (maxTokens) {
+    requestData.max_tokens = maxTokens;
+}
+
+function abbreviateMessage(errorMsg) {
+    let start;
+    let end;
+    if (errorMsg) {
+        const tooLongMatch = errorMsg.match(/maximum context length is (\d+) tokens.*messages resulted in (\d+) tokens/);
+        if (!tooLongMatch) {
+            console.error('Error: Unexpected error message format: ' + errorMsg);
+            process.exit(6);
+        }
+        const modelMaxTokens = parseInt(tooLongMatch[1], 10);
+        const messageTokens = parseInt(tooLongMatch[2], 10);
+        const messageLength = content.length;
+        const wantedLength = (0.9 * modelMaxTokens / messageTokens) * messageLength - 5;
+        start = content.slice(0, wantedLength / 2);
+        end = content.slice(-wantedLength / 2);
+    } else {
+        start = content.slice(0, 0.35 * content.length);
+        end = content.slice(-0.35 * content.length);
+    }
+    var oldcontent = content;
+    content = start + " [...] " + end;
+    if (verbose) console.error("Abbreviated message from " + oldcontent.length + " to " + content.length + " characters.");
+    for (let i = 0; i < requestData.messages.length; i++) {
+        if (requestData.messages[i].content === oldcontent) {
+            requestData.messages[i].content = content;
+            break;
+        }
+    }
+}
+
+function replacePromptlibKey(inputString) {
+    if (!inputString) return inputString;
+    const promptlibRegex = /promptlib:([a-zA-Z0-9_.-]+)/g;
+    return inputString.replace(promptlibRegex, function (match, key) {
+        try {
+            return execSync(`chatgptpromptlib ${key}`, {encoding: 'utf8'});
+        } catch (e) {
+            console.error('Error: Prompt library key not found (3): ' + key);
+            process.exit(1);
+        }
+    });
+}
+
+function requestChatGPT(attempt = 1) {
+    if (verbose) console.error("Request: ", JSON.stringify(requestData, null, 2));
+
+    const req = https.request(apiURL, {
+        method: 'POST',
+        headers: headers,
+    }, (res) => {
+        let data = '';
+
+        res.on('data', (chunk) => {
+            data += chunk;
+        });
+
+        res.on('end', () => {
+            if (verbose) console.error("Response status: ", res.statusCode);
+
+            if (res.statusCode === 429) {
+                if (verbose) console.error("Retry message: ", data);
+                let waitTime = 10; // Default wait time if we can't parse it from the response
+
+                try {
+                    const retryAfter = res.headers['retry-after'];
+                    if (retryAfter) {
+                        waitTime = parseInt(retryAfter, 10);
+                    }
+                } catch (e) {
+                    console.error('Error parsing retry-after header:', e);
+                }
+
+                if (attempt < 5) {
+                    if (verbose) {
+                        console.error(`Error: Rate limit exceeded, retrying in ${waitTime} seconds`);
+                    }
+                    setTimeout(() => requestChatGPT(attempt + 1), waitTime * 1000);
+                } else {
+                    console.error('Error: Too many retries');
+                    process.exit(4);
+                }
+            } else if (res.statusCode === 400) {
+                if (abbreviateMiddle && data.includes("reduce the length of the messages")) {
+                    abbreviateMessage(data);
+                    setTimeout(() => requestChatGPT(attempt + 1), 10);
+                } else {
+                    console.error('Error: Request failed with status', res.statusCode, 'and message', res.statusMessage, 'and body', data);
+                    process.exit(5);
+                }
+            } else if (res.statusCode !== 200) {
+                console.error('Error: Request failed with status', res.statusCode, 'and message', res.statusMessage, 'and body', data);
+                process.exit(5);
+            } else {
+                const responseData = JSON.parse(data);
+                if (verbose) console.error("Response: ", JSON.stringify(responseData, null, 2));
+                let output = responseData.content[0].text;
+                if (wordWrapColumn) {
+                    const fmt = spawnSync('fmt', ['-w', wordWrapColumn, '-p'], {input: output, encoding: 'utf8'});
+                    if (fmt.error) {
+                        console.error(`Error: fmt command failed with error ${fmt.error.message}`);
+                        process.exit(7);
+                    }
+                    output = fmt.stdout;
+                }
+                console.log(output);
+            }
+        });
+    });
+
+    req.on('error', (error) => {
+        console.error('Error:', error.message);
+        process.exit(6);
+    });
+
+    req.write(JSON.stringify(requestData));
+    req.end();
+}
+
+requestChatGPT();
