@@ -5,13 +5,14 @@ const execSync = require('child_process').execSync;
 const spawnSync = require('child_process').spawnSync;
 const https = require('https');
 
-let model = 'claude-3-haiku-20240307';
+let model = 'claude-3-haiku-20240307'; // see https://docs.anthropic.com/en/docs/about-claude/models#model-names
 let maxTokens=4096;
+const programname = path.basename(process.argv[1]);
 
 const helpMessage = `
-${path.basename(process.argv[1])} - Submit a prompt to Claude conversation and print the response to stdout. The prompt can be given on the command line or read from stdin.
+${programname} - Submit a prompt to Claude conversation and print the response to stdout. The prompt can be given on the command line or read from stdin.
 
-Usage: chatgpt [options] [prompt]
+Usage: ${programname} [options] [prompt]
 
 Options:
   -               Reads prompt from stdin; if a prompt is given on the command line it is appended
@@ -19,8 +20,6 @@ Options:
   -fm filename    Includes the content of the given file as additional message in https://www.stoerr.net/blog/aimouth pattern. 
                   Can be given multiple times. if - is given as filename, the content is read from stdin.
   -i imagefile    Includes the given image file as image, together with the filename. Can be given multiple times.
-  -iu imageurl    Includes the given image url as image, together with the url. Can be given multiple times.
-  -id detaillevel Sets the detail level for the image. Can be 'low', 'high', or 'auto'. Default is 'auto'.
   -p prefix       Prefix the prompt with a string. Use this or -pf, not both.
   -pf prefixfile  Prefix the prompt with the contents of a file
   -pl key         Add a prompt from the ChatGPT prompt library using the given key (see script chatgptpromptlib)
@@ -29,7 +28,7 @@ Options:
   -uf suffixfile  Suffix the prompt with the contents of a file
   -ua             Record audio from the microphone until a key is pressed (using chatgptdictate) and use the result as prompt suffix
   -m modelname    Use a specific model (default: ${model})
-  -mh             Use the model with - the time of updating this script - highest intelligence ("claude-3-5-sonnet-20240620). 
+  -mh             Use the model with - the time of updating this script - highest intelligence (claude-3-5-sonnet-20240620). 
   -t number       Set max tokens for response (default: ${maxTokens})
   -v              verbose output : prints the sent and received json message to stderr and gives info about connection retries
   -w column       Word wrap the response to a specified column width using fmt.
@@ -42,6 +41,8 @@ Options:
 If the prompt or system message contain a construct like promptlib:key , the chatgptpromptlib command will be called with that key
 and this will be replaced with the prompt library entry, as an alternative to -pl key .
 `;
+// as of 8/24 not supported :  -iu imageurl    Includes the given image url as image, together with the url. Can be given multiple times.
+// probably never supported: -id detaillevel Sets the detail level for the image. Can be 'low', 'high', or 'auto'. Default is 'auto'.
 
 if (process.argv.length < 3) {
     console.log(helpMessage);
@@ -68,8 +69,6 @@ let fmfilemessages = [];
 let wordWrapColumn;
 let systemMsg = '';
 let imageFiles = [];
-let imageUrls = [];
-let detailparam = 'auto';
 let helpaimode = false;
 let audioPrefix = false;
 let audioSuffix = false;
@@ -85,7 +84,7 @@ for (let i = 2; i < process.argv.length; i++) {
             model = process.argv[i + 1];
             i++;
         } else if (arg === '-4') {
-            model = 'claude-3-5-sonnet-20240620';
+            model = 'claude-3-5-sonnet-20240620'; // see https://docs.anthropic.com/en/docs/about-claude/models#model-names
         } else if (arg === '-t' && process.argv[i + 1]) {
             maxTokens = parseInt(process.argv[i + 1], 10);
             i++;
@@ -145,12 +144,6 @@ for (let i = 2; i < process.argv.length; i++) {
         } else if (arg === '-i' && process.argv[i + 1]) {
             imageFiles.push(process.argv[i + 1]);
             i++;
-        } else if (arg === '-iu' && process.argv[i + 1]) {
-            imageUrls.push(process.argv[i + 1]);
-            i++;
-        } else if (arg === '-id' && process.argv[i + 1]) {
-            detailparam = process.argv[i + 1];
-            i++;
         } else if (arg === '-pa') {
             audioPrefix = true;
         } else if (arg === '-ua') {
@@ -160,6 +153,10 @@ for (let i = 2; i < process.argv.length; i++) {
         } else if (!arg.startsWith('-')) {
             inOptions = false;
             prompt += arg;
+        } else {
+            console.error('Error: Unknown option: ' + arg);
+            console.error(helpMessage);
+            process.exit(1);
         }
     } else {
         prompt += ' ' + arg;
@@ -253,9 +250,27 @@ if (verbose) {
 }
 
 let content = prompt;
-if (imageFiles.length > 0 || imageUrls.length > 0) {
-    console.error('Error: Image input is not supported with the Anthropic API');
-    process.exit(1);
+if (imageFiles.length > 0) {
+    content = [
+        {
+            "type": "text",
+            "text": prompt
+        }
+    ];
+    for (let i = 0; i < imageFiles.length; i++) {
+        const imageFile = imageFiles[i];
+
+        const imageFileContent = execSync(`base64 -i '${imageFile}'`, {encoding: 'utf8', maxBuffer: 1024 * 1024 * 25}).trim();
+        const imageFileType = execSync(`file -b --mime-type '${imageFile}'`, {encoding: 'utf8'}).trim();
+        content.push({
+            "type": "image",
+            "source": {
+                "type": "base64",
+                "media_type": imageFileType,
+                "data": imageFileContent
+            }
+        });
+    }
 }
 
 const requestData = {
@@ -288,7 +303,7 @@ function replacePromptlibKey(inputString) {
     });
 }
 
-function requestChatGPT(attempt = 1) {
+function requestClaude(attempt = 1) {
     if (verbose) console.error("Request: ", JSON.stringify(requestData, null, 2));
 
     const req = https.request(apiURL, {
@@ -321,7 +336,7 @@ function requestChatGPT(attempt = 1) {
                     if (verbose) {
                         console.error(`Error: Rate limit exceeded, retrying in ${waitTime} seconds`);
                     }
-                    setTimeout(() => requestChatGPT(attempt + 1), waitTime * 1000);
+                    setTimeout(() => requestClaude(attempt + 1), waitTime * 1000);
                 } else {
                     console.error('Error: Too many retries');
                     process.exit(4);
@@ -358,4 +373,4 @@ function requestChatGPT(attempt = 1) {
     req.end();
 }
 
-requestChatGPT();
+requestClaude();

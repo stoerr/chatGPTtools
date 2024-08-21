@@ -5,11 +5,12 @@ const execSync = require('child_process').execSync;
 const spawnSync = require('child_process').spawnSync;
 
 let model = 'gpt-4o-mini';
+const programname = path.basename(process.argv[1]);
 
 const helpMessage = `
-${path.basename(process.argv[1])} - Submit a prompt to ChatGPT conversation and print the response to stdout. The prompt can be given on the command line or read from stdin.
+${programname} - Submit a prompt to ChatGPT conversation and print the response to stdout. The prompt can be given on the command line or read from stdin.
 
-Usage: chatgpt [options] [prompt]
+Usage: ${programname} [options] [prompt]
 
 Options:
   -               Reads prompt from stdin; if a prompt is given on the command line it is appended
@@ -162,6 +163,10 @@ for (let i = 2; i < process.argv.length; i++) {
         } else if (!arg.startsWith('-')) {
             inOptions = false;
             prompt += arg;
+        } else {
+            console.error('Error: Unknown option: ' + arg);
+            console.error(helpMessage);
+            process.exit(1);
         }
     } else {
         prompt += ' ' + arg;
@@ -360,6 +365,7 @@ function replacePromptlibKey(inputString) {
     });
 }
 
+// see https://docs.anthropic.com/en/api/messages
 async function requestChatGPT(attempt = 1) {
     try {
         if (verbose) console.error("Request: ", JSON.stringify(requestData, null, 2));
