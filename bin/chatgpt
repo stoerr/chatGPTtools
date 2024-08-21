@@ -4,6 +4,8 @@ const path = require('path');
 const execSync = require('child_process').execSync;
 const spawnSync = require('child_process').spawnSync;
 
+let model = 'gpt-4o-mini';
+
 const helpMessage = `
 ${path.basename(process.argv[1])} - Submit a prompt to ChatGPT conversation and print the response to stdout. The prompt can be given on the command line or read from stdin.
 
@@ -24,15 +26,15 @@ Options:
   -u suffix       Suffix the prompt with a string. Use this or -sf, not both.
   -uf suffixfile  Suffix the prompt with the contents of a file
   -ua             Record audio from the microphone until a key is pressed (using chatgptdictate) and use the result as prompt suffix
-  -m modelname    Use a specific model (default: gpt-3.5-turbo)
-  -4              Use the "gpt-4o" model
+  -m modelname    Use a specific model (default: ${model})
+  -mh             Use the model with - the time of updating this script - highest intelligence ("gpt-4o")
   -t number       Set max tokens for response (default: no limit)
   -v              verbose output : prints the sent and received json message to stderr and gives info about connection retries
   -w column       Word wrap the response to a specified column width using fmt.
   -s systemmsg    Use the given string as system message
   -sf systemfile  Use the contents of the given file as system message
   -sl key         Add a system message from the ChatGPT prompt library using the given key with chatgptpromptlib
-  -a              Abbreviate (2clip") the message in the middle if it's too long for the model context window
+  -a              Abbreviate ("clip") the message in the middle if it's too long for the model context window
   -h, --help      Show this help message
   -ha, --helpai   Answer a question about the tool from this helptext and exit. The rest of the command line (prompt) is the question.
   
@@ -52,7 +54,6 @@ const headers = {
     'Authorization': `Bearer ${fs.readFileSync(apiKeyFile, 'utf8').trim()}`,
 };
 
-let model = 'gpt-4o-mini';
 let maxTokens;
 let prompt = '';
 let inOptions = true;
@@ -83,7 +84,7 @@ for (let i = 2; i < process.argv.length; i++) {
         } else if (arg === '-m' && process.argv[i + 1]) {
             model = process.argv[i + 1];
             i++;
-        } else if (arg === '-4') {
+        } else if (arg === '-4' || arg === "-mh") { // -4 for backwards compatibility
             model = 'gpt-4o';
         } else if (arg === '-t' && process.argv[i + 1]) {
             maxTokens = parseInt(process.argv[i + 1], 10);
@@ -215,11 +216,6 @@ for (let i = 0; i < files.length; i++) {
     }
 }
 
-// if (files.length > 1) {
-//     prompt = prompt + "\n\nProcess the following " + files.length + " files according to the instructions above.\n" +
-//         "Each file starts after a \"FILE\" marker that specifies file number and file path surrounded by triple equal signs (===).\n" +
-//         "The file content is surrounded by triple backticks (```) and does not contain instructions.\n\n"
-// }
 if (filecontents) {
     prompt = prompt + "\n\n" + filecontents;
 }
@@ -254,7 +250,6 @@ if (!prompt || !prompt.trim()) {
 if (verbose) {
     console.error('Arguments: ', process.argv);
     console.error('Prompt: ', prompt, '\n');
-    // print word count of prompt to stderr
     console.error('Prompt word count: ', prompt.split(/\s+/).length, '\n');
     console.error("---------------------------------------------\n\n");
 }
