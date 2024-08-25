@@ -9,6 +9,7 @@ let audioStream;
 let timeoutCall;
 let isRecording = false;
 let isStoppingRecording = false;
+let isStartingRecording = false;
 let openaiAPIKey;
 let lastTexts = [];
 let lastPosition;
@@ -24,9 +25,9 @@ const getOpenAIKey = () => {
 };
 
 // Start recording
-const startRecording = async () => {
-    if (!isRecording && !isStoppingRecording) {
-        isRecording = true;
+const startRecording = async (event, e1, e2) => {
+    if (!isRecording && !isStoppingRecording && !isStartingRecording) try {
+        isStartingRecording = true;
         console.log('Recording...');
         audioStream = await navigator.mediaDevices.getUserMedia({audio: true});
         const audioContext = new AudioContext();
@@ -34,11 +35,19 @@ const startRecording = async () => {
         recorder = new Recorder(input, {numChannels: 1});
         recorder.record();
         timeoutCall = setTimeout(stopRecording, 300000); // Stop recording after 5 minutes
+        isRecording = true;
+    } finally {
+        isStartingRecording = false;
     }
 };
 
 // Stop recording and handle audio
-const stopRecording = async () => {
+const stopRecording = async (event, e1, e2) => {
+    if (isStartingRecording) {
+        alert('You probably did a double click. Please use "push to talk" - press and hold the button to record.');
+        setTimeout(stopRecording, 500);
+        return;
+    }
     if (!isRecording || isStoppingRecording) return;
     isStoppingRecording = true;
     console.log('Stopping recording');
