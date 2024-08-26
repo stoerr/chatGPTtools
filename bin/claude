@@ -16,9 +16,9 @@ Usage: ${programname} [options] [prompt]
 
 Options:
   -               Reads prompt from stdin; if a prompt is given on the command line it is appended
-  -f filename     Includes the content of the given file as codeblock, together with the filename. Can be given multiple times.
-  -fm filename    Includes the content of the given file as additional message in https://www.stoerr.net/blog/aimouth pattern. 
+  -f filename     Includes the content of the given file as additional message in https://www.stoerr.net/blog/aimouth pattern. 
                   Can be given multiple times. if - is given as filename, the content is read from stdin.
+  -fp filename    Includes the content of the given file as codeblock into the prompt, together with the filename. Can be given multiple times.
   -i imagefile    Includes the given image file as image, together with the filename. Can be given multiple times.
   -p prefix       Prefix the prompt with a string. Use this or -pf, not both.
   -pf prefixfile  Prefix the prompt with the contents of a file
@@ -129,10 +129,10 @@ for (let i = 2; i < process.argv.length; i++) {
                 process.exit(1);
             }
             i++;
-        } else if (arg === '-f' && process.argv[i + 1]) {
+        } else if (arg === '-fp' && process.argv[i + 1]) {
             files.push(process.argv[i + 1]);
             i++;
-        } else if (arg === '-fm' && process.argv[i + 1]) {
+        } else if ((arg === '-fm' || arg === '-f') && process.argv[i + 1]) { // -fm is for backwards compatibility
             fmfiles.push(process.argv[i + 1]);
             i++;
         } else if (arg === '-w' && process.argv[i + 1]) {
