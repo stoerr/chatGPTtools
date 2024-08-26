@@ -20,6 +20,7 @@ Options:
                   Can be given multiple times. if - is given as filename, the content is read from stdin.
   -fp filename    Includes the content of the given file as codeblock into the prompt, together with the filename. Can be given multiple times.
   -i imagefile    Includes the given image file as image, together with the filename. Can be given multiple times.
+  -iu imageurl    Includes the given image url as image, together with the url. Can be given multiple times.
   -p prefix       Prefix the prompt with a string. Use this or -pf, not both.
   -pf prefixfile  Prefix the prompt with the contents of a file
   -pl key         Add a prompt from the ChatGPT prompt library using the given key (see script chatgptpromptlib)
@@ -41,8 +42,8 @@ Options:
 If the prompt or system message contain a construct like promptlib:key , the chatgptpromptlib command will be called with that key
 and this will be replaced with the prompt library entry, as an alternative to -pl key .
 `;
-// as of 8/24 not supported :  -iu imageurl    Includes the given image url as image, together with the url. Can be given multiple times.
 // probably never supported: -id detaillevel Sets the detail level for the image. Can be 'low', 'high', or 'auto'. Default is 'auto'.
+// -a (abbreviate) doesn't make sense with the large context windows and cheap prices nowadays - ask if you need it.
 
 if (process.argv.length < 3) {
     console.log(helpMessage);
@@ -69,6 +70,7 @@ let fmfilemessages = [];
 let wordWrapColumn;
 let systemMsg = '';
 let imageFiles = [];
+let imageUrls = [];
 let helpaimode = false;
 let audioPrefix = false;
 let audioSuffix = false;
@@ -143,6 +145,9 @@ for (let i = 2; i < process.argv.length; i++) {
             i++;
         } else if (arg === '-i' && process.argv[i + 1]) {
             imageFiles.push(process.argv[i + 1]);
+            i++;
+        } else if (arg === '-iu' && process.argv[i + 1]) {
+            imageUrls.push(process.argv[i + 1]);
             i++;
         } else if (arg === '-pa') {
             audioPrefix = true;
@@ -223,7 +228,7 @@ if (helpaimode) {
 if (audioPrefix) {
     const audioPrefix = execSync('chatgptdictate', {encoding: 'utf8', stdio: ['inherit', 'pipe', 'pipe']});
     if (audioPrefix) {
-        console.log(audioPrefix.trim());
+        console.log('Dicated prompt: ' + audioPrefix.trim());
         prompt = audioPrefix.trim() + '\n\n' + prompt;
     }
 }
@@ -231,7 +236,7 @@ if (audioPrefix) {
 if (audioSuffix) {
     const audioSuffix = execSync('chatgptdictate', {encoding: 'utf8', stdio: ['inherit', 'pipe', 'pipe']});
     if (audioSuffix) {
-        console.log(audioSuffix.trim());
+        console.log('Dictated prompt suffix: ' + audioSuffix.trim());
         prompt = prompt + '\n\n' + audioSuffix.trim();
     }
 }
@@ -250,7 +255,24 @@ if (verbose) {
 }
 
 let content = prompt;
-if (imageFiles.length > 0) {
+
+function addImageFile(imageFile) {
+    const imageFileContent = execSync(`base64 -i '${imageFile}'`, {
+        encoding: 'utf8',
+        maxBuffer: 1024 * 1024 * 25
+    }).trim();
+    const imageFileType = execSync(`file -b --mime-type '${imageFile}'`, {encoding: 'utf8'}).trim();
+    content.push({
+        "type": "image",
+        "source": {
+            "type": "base64",
+            "media_type": imageFileType,
+            "data": imageFileContent
+        }
+    });
+}
+
+if (imageFiles.length > 0 || imageUrls.length > 0) {
     content = [
         {
             "type": "text",
@@ -259,17 +281,29 @@ if (imageFiles.length > 0) {
     ];
     for (let i = 0; i < imageFiles.length; i++) {
         const imageFile = imageFiles[i];
-
-        const imageFileContent = execSync(`base64 -i '${imageFile}'`, {encoding: 'utf8', maxBuffer: 1024 * 1024 * 25}).trim();
-        const imageFileType = execSync(`file -b --mime-type '${imageFile}'`, {encoding: 'utf8'}).trim();
-        content.push({
-            "type": "image",
-            "source": {
-                "type": "base64",
-                "media_type": imageFileType,
-                "data": imageFileContent
+        addImageFile(imageFile);
+    }
+    for (let i = 0; i < imageUrls.length; i++) {
+        // emulate image file download as this as of 8/24 only supported by OpenAI but not Claude
+        const imageUrl = imageUrls[i];
+        const imageFileName = imageUrl.split('/').pop();
+        // create temp file name with mktemp -u
+        const tmpfile = execSync('mktemp -u', {encoding: 'utf8'}).trim() + "-" + imageFileName;
+        // register that for deletion on exit
+        process.on('exit', () => {
+            try {
+                fs.unlinkSync(tmpfile);
+            } catch (e) {
+                console.error('Error: Could not delete temporary file ' + tmpfile + ' because of ' + e);
             }
         });
+        // download the image, exit if it fails
+        const curlResult = spawnSync('curl', ['-s', '-o', tmpfile, imageUrl]);
+        if (curlResult.status !== 0) {
+            console.error('Error: Could not download image from ' + imageUrl + ' because of ' + curlResult.error);
+            process.exit(1);
+        }
+        addImageFile(tmpfile);
     }
 }
 

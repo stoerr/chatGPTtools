@@ -233,7 +233,7 @@ if (helpaimode) {
 if (audioPrefix) {
     const audioPrefix = execSync('chatgptdictate', {encoding: 'utf8', stdio: ['inherit', 'pipe', 'pipe']});
     if (audioPrefix) {
-        console.log(audioPrefix.trim());
+        console.log('Dicated prompt: ' + audioPrefix.trim());
         prompt = audioPrefix.trim() + '\n\n' + prompt;
     }
 }
@@ -241,7 +241,7 @@ if (audioPrefix) {
 if (audioSuffix) {
     const audioSuffix = execSync('chatgptdictate', {encoding: 'utf8', stdio: ['inherit', 'pipe', 'pipe']});
     if (audioSuffix) {
-        console.log(audioSuffix.trim());
+        console.log('Dictated prompt suffix: ' + audioSuffix.trim());
         prompt = prompt + '\n\n' + audioSuffix.trim();
     }
 }
@@ -260,6 +260,7 @@ if (verbose) {
 }
 
 let content = prompt;
+
 if (imageFiles.length > 0 || imageUrls.length > 0) {
     if (model === 'gpt-3.5-turbo') { // has no vision.
         model = 'gpt-4o-mini';
