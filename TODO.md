@@ -2,6 +2,7 @@
 
 Check out competitors, e.g. https://gamma.app/
 ## Next plans:
+- quick thing: possibly -fu retrieve URLs in chatgpt (though that can be done with curl | chatgpt).
 - functions into multiplemessagechat
 - functions into chatgpt
 - tool to create function description from example (?)
