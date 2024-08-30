@@ -6,6 +6,7 @@
     <script type="text/javascript" src="ChatGPTBookmarklet-lib.js"></script>
     <script type="text/javascript" src="ChatGPTBookmarklet-data.js"></script>
     <script type="text/javascript" src="ChatGPTBookmarklet-impl.js"></script>
+    <script type="text/javascript" src="html2canvas.min.js"></script>
 </head>
 <body>
 <div class="hpsChatGPTDialog-container">
@@ -33,9 +34,15 @@
                 <button id="hpsChatGPTSubmit" onclick="window.hpsChatGPTBookmarklet.submitQuestion()"
                         title="Submits the question to ChatGPT; pressing Enter also submits.">Submit
                 </button>
-                <input type="checkbox" id="hpsChatGPTIncludePageContent" class="hps-chatgpt-include-page-content"
-                       checked="checked"/>
-                <label for="hpsChatGPTIncludePageContent">Include page content</label>
+                <span title="Send the webpage text content to the AI for processing.">
+                    <input type="checkbox" id="hpsChatGPTIncludePageContent" class="hps-chatgpt-include-page-content"
+                           checked="checked"/>
+                    <label for="hpsChatGPTIncludePageContent">content</label>
+                </span>
+                <span title="Send a picture of the web page to the AI.">
+                    <input type="checkbox" id="hpsChatGPTIncludeScreenshot" class="hps-chatgpt-include-screenshot"/>
+                    <label for="hpsChatGPTIncludeScreenshot">screenshot</label>
+                </span>
                 <select id="hps-chatgpt-model-selector">
                     <option value="gpt-4o-mini">gpt-4o-mini</option>
                     <option value="gpt-4o">gpt-4o</option>

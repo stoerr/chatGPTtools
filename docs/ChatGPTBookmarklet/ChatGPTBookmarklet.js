@@ -30,7 +30,7 @@
                         newElement.type = element.type;
                         scriptLoadPromises.push(new Promise((resolve, reject) => {
                             newElement.onload = () => resolve();
-                            newElement.onerror = () => reject(new Error('Failed to load script ' + scriptElement.src));
+                            newElement.onerror = () => reject(new Error('Failed to load script ' + newElement.src));
                         }));
                         document.body.appendChild(newElement);
                     });

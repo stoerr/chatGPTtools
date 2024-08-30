@@ -190,21 +190,31 @@
 
         promptOnText: async function (prompt, text, model) {
             let messages;
+            const includeScreenshot = document.getElementById('hpsChatGPTIncludeScreenshot').checked;
+            var promptmsg;
             if (text) { // 'put it in the mouth of the AI' pattern for reducing prompt injections
                 const isde = this.lang === 'de';
                 const loadinstruction = isde ? 'Rufe bitte den Text ab, für den der Prompt ausgeführt werden wird, und gib genau diesen Text ohne weitere Kommentare aus.'
                     : 'Please retrieve the text for which you are going to execute a prompt, and print exactly that text, without any additional comments.';
                 const promptinstruction = isde ? 'Die folgende Anweisung bezieht sich speziell auf den Text, der soeben abgerufen und angezeigt haben. Wenn ich von "dem Text" oder "der Seite" spreche, beziehe ich mich auf genau diesen Text. Bitte denke daran, wenn Du den folgenden Prompt ausführst:\n\nPROMPT:\n\n'
                     : 'The following instruction is specifically about the text you\'ve just retrieved and displayed. Whenever I refer to "the text" or "the page", I\'m referencing this exact piece of content. Please keep this in mind while executing the following prompt:\n\nPROMPT:\n\n';
+                promptmsg = [{"type": "text", "text": promptinstruction + prompt}];
                 messages = [
                     {role: 'user', content: loadinstruction},
                     {role: 'assistant', content: text},
-                    {role: 'user', content: promptinstruction + prompt},
+                    {role: 'user', content: promptmsg},
                 ];
             } else {
+                promptmsg = [{"type": "text", "text": prompt}];
                 messages = [
-                    {role: 'user', content: prompt},
+                    {role: 'user', content: promptmsg},
                 ];
+            }
+            if (includeScreenshot) {
+                const origpage = document.getElementById('hpsChatGPTDialog-origpage') || document.body;
+                const canvas = await html2canvas(origpage);
+                const screenshot = canvas.toDataURL();
+                promptmsg.push({type: 'image_url', image_url: {url: screenshot}});
             }
             console.log('sent messages: ', messages);
             return this.sendChatGPTRequestWithClipping(messages, this.setClipped.bind(this), model);
