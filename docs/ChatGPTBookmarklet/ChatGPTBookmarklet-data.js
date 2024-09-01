@@ -10,7 +10,45 @@
 
         /** Three backticks to "quote" something in the prompt. */
         // We encode that to be able to process this with the chatgptfixfile script.
-        threebackticks:  String.fromCharCode(96) + String.fromCharCode(96) + String.fromCharCode(96)
+        threebackticks:  String.fromCharCode(96) + String.fromCharCode(96) + String.fromCharCode(96),
+
+        prompts: {
+            'Summarize': 'You are an expert content summarizer. Summarize the given content using the following Markdown format:\n' +
+                '\n' +
+                '\t1.\tONE SENTENCE SUMMARY: Provide a single, 20-word sentence summarizing the entire content.\n' +
+                '\t2.\tMAIN POINTS: List the 10 most important points in 15 words or less per point.\n' +
+                '\t3.\tTAKEAWAYS: Provide a list of the 5 best takeaways.\n' +
+                '\n' +
+                'Instructions:\n' +
+                '\n' +
+                '\t•\tUse the specified section headers and format.\n' +
+                '\t•\tUse numbered lists, not bullets.\n' +
+                '\t•\tEnsure no repetition across sections.\n' +
+                '\t•\tDo not use the same opening words for different items.\n' +
+                '\t•\tOnly output in human-readable Markdown. No warnings or notes.\n' +
+                '\n' +
+                'This prompt clearly directs the AI to produce the required summary with specific formatting and content guidelines.',
+            'Takeaways (long!)': 'You extract surprising, insightful, and interesting information from text content, focusing on themes like the purpose and meaning of life, human flourishing, the future role of technology, artificial intelligence’s impact on humanity, memes, learning, books, continuous improvement, and related topics.\n' +
+                '\n' +
+                'Steps:\n' +
+                '\n' +
+                '\t1.\tSUMMARY: Summarize the content in 25 words, including the presenter and topics discussed.\n' +
+                '\t2.\tIDEAS: Extract 20 to 50 surprising, insightful, or interesting ideas, each exactly 15 words.\n' +
+                '\t3.\tINSIGHTS: Extract 10 to 20 refined and abstracted insights from the content, each exactly 15 words.\n' +
+                '\t4.\tQUOTES: Extract 15 to 30 surprising, insightful, or interesting quotes using exact text from the content.\n' +
+                '\t5.\tHABITS: Extract 15 to 30 practical personal habits, each exactly 15 words.\n' +
+                '\t6.\tFACTS: Extract 15 to 30 surprising or interesting valid facts, each exactly 15 words.\n' +
+                '\t7.\tREFERENCES: Extract all mentions of writing, art, tools, projects, and other sources of inspiration.\n' +
+                '\t8.\tONE-SENTENCE TAKEAWAY: Provide a single 15-word sentence that captures the most important essence of the content.\n' +
+                '\t9.\tRECOMMENDATIONS: Extract 15 to 30 surprising, insightful, or interesting recommendations, each exactly 15 words.\n' +
+                '\n' +
+                'Output Instructions:\n' +
+                '\n' +
+                '\t•\tOutput only in Markdown format.\n' +
+                '\t•\tUse bulleted lists; do not repeat items.\n' +
+                '\t•\tEnsure all sections are completed according to the specific word and item count instructions.',
+            'Haiku': 'Create 3 Haiku that concisely capture the essence and main points of the provided input.'
+        }
     };
 
     Object.assign(window.hpsChatGPTBookmarklet, hpsChatGPTBookmarklet);

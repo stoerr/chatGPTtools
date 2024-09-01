@@ -48,11 +48,34 @@
 
                 this.selectIncludeScreenshot
                     .addEventListener('change', this.includeScreenshotChange.bind(this));
+                this.predefinedPromptSelect = document.getElementById('hpsChatGPTPredefinedPrompt');
+                this.initPredefinedPrompts();
+                this.predefinedPromptSelect.addEventListener('change', this.selectPrompt.bind(this));
+                this.questionField.addEventListener('change', this.resetPredefinedPrompt.bind(this));
 
                 setTimeout(this.sidebyside.bind(this), 0);
 
                 this.initialized = true;
             }
+        },
+
+        initPredefinedPrompts: function () {
+            const select = this.predefinedPromptSelect;
+            for (let key in this.prompts) {
+                const option = document.createElement('option');
+                option.value = key;
+                option.text = key;
+                select.appendChild(option);
+            }
+        },
+
+        selectPrompt: function () {
+            const key = this.predefinedPromptSelect.value;
+            this.questionField.value = this.prompts[key];
+        },
+
+        resetPredefinedPrompt: function () {
+            this.predefinedPromptSelect.value = '';
         },
 
         startDictation: async function () {
