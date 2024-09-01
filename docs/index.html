@@ -52,8 +52,9 @@
                     </p>
                     <!-- <p class="card-text">Base Url: <span id="baseurldisplay"></span></p> -->
                     <script>
-                        var baseurl = location.protocol + '//' + location.host + location.pathname.replace("index.html", "");
-                        document.getElementById("baseurldisplay").innerHTML = baseurl;
+                        const baseurl = location.protocol + '//' + location.host + location.pathname.replace("index.html", "");
+                        const display = document.getElementById("baseurldisplay");
+                        if (display) display.innerText = baseurl;
                     </script>
 
                     <hr>
@@ -92,7 +93,7 @@
                     <p class="card-text">Bookmarklet to drag: <a id="chatgptbookmarklet">Enter a ChatGPT API Key
                         first.</a> (If you want a quick preview of the dialog, you can
                         <a id="bookmarkletpreview"
-                           href="javascript:(function()%7Bjavascript%3A%2F*ChatGPTBookmarklet*%2F(function()%20%7B%0A%20%20function%20load(basePath%2C%20apikey)%20%7B%0A%20%20%20%20if%20(!window.hpsChatGPTBookmarklet)%20%7B%0A%20%20%20%20%20%20var%20script%20%3D%20document.createElement(%27script%27)%3B%0A%20%20%20%20%20%20script.type%20%3D%20%27text%2Fjavascript%27%3B%0A%20%20%20%20%20%20script.src%20%3D%20basePath%20%2B%20%27%2FChatGPTBookmarklet.js%27%3B%0A%20%20%20%20%20%20script.onload%20%3D%20function%20()%20%7B%0A%20%20%20%20%20%20%20%20window.hpsChatGPTBookmarklet.init(basePath%2C%20apikey%2C%20window.hpsChatGPTBookmarklet.openDialog)%3B%0A%20%20%20%20%20%20%7D%3B%0A%20%20%20%20%20%20document.body.appendChild(script)%3B%0A%20%20%20%20%7D%20else%20%7B%0A%20%20%20%20%20%20window.hpsChatGPTBookmarklet.openDialog()%3B%0A%20%20%20%20%7D%0A%20%20%7D%0A%20%20load(%27https%3A%2F%2Fstoerr.github.io%2FchatGPTtools%2FChatGPTBookmarklet%27%2C%20%27THEKEY%27)%3B%0A%7D)()%3B%7D)()">click
+                           href="javascript:(function()%7Bjavascript%3A%2F*ChatGPTBookmarklet*%2F(function()%20%7B%0A%20%20function%20load(basePath%2C%20apikey)%20%7B%0A%20%20%20%20if%20(!window.hpsChatGPTBookmarklet)%20%7B%0A%20%20%20%20%20%20var%20script%20%3D%20document.createElement(%27script%27)%3B%0A%20%20%20%20%20%20script.type%20%3D%20%27text%2Fjavascript%27%3B%0A%20%20%20%20%20%20script.src%20%3D%20basePath%20%2B%20%27%2FChatGPTBookmarklet.js%27%3B%0A%20%20%20%20%20%20script.onload%20%3D%20function%20()%20%7B%0A%20%20%20%20%20%20%20%20window.hpsChatGPTBookmarklet.init(basePath%2C%20apikey%2C%20window.hpsChatGPTBookmarklet.openDialog)%3B%0A%20%20%20%20%20%20%7D%3B%0A%20%20%20%20%20%20document.body.appendChild(script)%3B%0A%20%20%20%20%7D%20else%20%7B%0A%20%20%20%20%20%20window.hpsChatGPTBookmarklet.openDialog()%3B%0A%20%20%20%20%7D%0A%20%20%7D%0A%20%20load(%27https%3A%2F%2Fchatgpttools.stoerr.net%2FChatGPTBookmarklet%27%2C%20%27THEKEY%27)%3B%0A%7D)()%3B%7D)()">click
                             here</a>.
                         However, that doesn't really work until you enter a working API key.)
                     </p>
@@ -131,7 +132,7 @@
 
                     <script>
                         var bookmarklet = "javascript:(function()%7Bjavascript%3A%2F*net.stoerr.chatGPT.grabStyles*%2F(function () %7B%0A    function load(basePath) %7B%0A        if (!window.netStoerrGrabStyles) %7B%0A            var script %3D document.createElement(%27script%27)%3B%0A            script.type %3D %27text%2Fjavascript%27%3B%0A            script.src %3D basePath %2B %27%2FgrabStyles.js%27%3B%0A            script.onload %3D function () %7B%0A                window.netStoerrGrabStyles.init(basePath)%3B%0A                window.netStoerrGrabStyles.start()%3B%0A            %7D%3B%0A            document.body.appendChild(script)%3B%0A        %7D else %7B%0A            window.netStoerrGrabStyles.start()%3B%0A        %7D%0A    %7D%0A%0A    load(%27THEURL%27)%3B%0A%7D)()%3B%7D)()";
-                        // https%3A%2F%2Fstoerr.github.io%2FchatGPTtools%2FgrabStyles
+                        // https%3A%2F%2Fchatgpttools.stoerr.net%2FgrabStyles
                         var url = baseurl + "grabStyles";
                         var element = document.getElementById("grabstyles");
                         element.setAttribute("href", bookmarklet.replace("THEURL", encodeURIComponent(url)));
