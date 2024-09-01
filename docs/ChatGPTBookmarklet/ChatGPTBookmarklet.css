@@ -15,7 +15,7 @@
     top: 5% !important;
     left: 50% !important;
     width: 50% !important;
-    z-index: 999999999 !important;
+    z-index: 999999998 !important;
     box-sizing: border-box !important;
     font-family: Arial, sans-serif !important;
     border-radius: 5px !important;
@@ -29,7 +29,7 @@
     width: 100% !important;
     padding: 20px !important;
     box-sizing: border-box !important;
-    z-index: 999999999 !important;
+    z-index: 999999998 !important;
 }
 
 .hps-chatgpt-maximize-maximized .hps-chatgpt-dialog {
@@ -179,3 +179,33 @@
   cursor: move;
   user-select: none;
 }
+
+#hpsChatGPTScreenshotOverlay {
+    position: fixed !important;
+    top: 5% !important;
+    left: 5% !important;
+    width: 90% !important;
+    height: 90% !important;
+    z-index: 999999999 !important;
+    box-sizing: border-box !important;
+    border: 1px solid #e5e5e5 !important;
+    box-shadow: 0 3px 9px rgba(0, 0, 0, 0.5) !important;
+    background-color: #ffffff !important;
+    cursor: pointer !important;
+}
+
+#hpsChatGPTScreenshotOverlay.hidden {
+    display: none !important;
+}
+
+#hpsChatGPTOverlayImage {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+}
+
+#hpsChatGPTOverlayImage:hover {
+    cursor: pointer !important;
+}
+
+
