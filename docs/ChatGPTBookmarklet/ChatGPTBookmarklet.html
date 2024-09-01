@@ -16,13 +16,15 @@
                 <h2>Summary/Q&A with ChatGPT</h2>
                 <div class="hps-chatgpt-header-controls">
                     <button id="hpsChatGPTMaximize" class="hps-chatgpt-maximize"
-                            onclick="window.hpsChatGPTBookmarklet.toggleMaximize()">+
+                            onclick="window.hpsChatGPTBookmarklet.toggleMaximize()">&#xFF0B;
                     </button>
-                    <button id="hpsChatGPTExpandLeft" onclick="window.hpsChatGPTBookmarklet.expandLeft()">|<</button>
-                    <button id="hpsChatGPTInsertInPage" onclick="window.hpsChatGPTBookmarklet.sidebyside()">S</button>
-                    <button id="hpsChatGPTExpandRight" onclick="window.hpsChatGPTBookmarklet.expandRight()">>|</button>
+                    <button id="hpsChatGPTExpandLeft" onclick="window.hpsChatGPTBookmarklet.expandLeft()">&#x2B05;
+                    </button>
+                    <button id="hpsChatGPTInsertInPage" onclick="window.hpsChatGPTBookmarklet.sidebyside()">&#x23B8;&#x23B9;</button>
+                    <button id="hpsChatGPTExpandRight" onclick="window.hpsChatGPTBookmarklet.expandRight()">&#x27A1;
+                    </button>
                     <button id="hpsChatGPTCloseTop" class="hps-chatgpt-close"
-                            onclick="window.hpsChatGPTBookmarklet.hideDialog()">X
+                            onclick="window.hpsChatGPTBookmarklet.hideDialog()">&#x2716;
                     </button>
                 </div>
             </div>
@@ -59,21 +61,31 @@
                 </div>
             </div>
             <div class="hps-chatgpt-controls">
-                <button id="hpsChatGPTCopyToClipboard" onclick="window.hpsChatGPTBookmarklet.copyToClipboard()">To
-                    Clipboard
+                <button id="hpsChatGPTCopyToClipboard" onclick="window.hpsChatGPTBookmarklet.copyToClipboard()"
+                        title="Copy to clipboard">&#x1F4CB;
                 </button>
-                <button id="hpsChatGPTCloseBottom" onclick="window.hpsChatGPTBookmarklet.hideDialog()">Close
+                <button id="hpsChatGPTCloseBottom" onclick="window.hpsChatGPTBookmarklet.hideDialog()"
+                        title="Hide the dialog">&#x2716;
                 </button>
-                <button id="hpsChatGPTHelp" onclick="window.hpsChatGPTBookmarklet.showHelp()">Help</button>
+                <button id="hpsChatGPTHelp" onclick="window.hpsChatGPTBookmarklet.showHelp()"
+                        title="Show the help text">&#x1F4A1;
+                </button>
                 <button id="hpsChatGPTHistoryBack" onclick="window.hpsChatGPTBookmarklet.historyBack()"
-                title="Backward in history">&lt;H</button>
+                        title="Backward in history">&lt;&#x23F3
+                </button>
                 <button id="hpsChatGPTHistoryForward" onclick="window.hpsChatGPTBookmarklet.historyForward()"
-                title="Forward in history">H&gt;</button>
+                        title="Forward in history">&#x23F3&gt;
+                </button>
                 <button id="hpsChatGPTRecord" onclick="window.hpsChatGPTBookmarklet.dictate()"
-                        title="Dictate the query - keep pressed while you are speaking.">&#x1F3A4;</button>
+                        title="Dictate the query - keep pressed while you are speaking.">&#x1F3A4;
+                </button>
+                <button id="hpsChatGPTScreenshot" onclick="window.hpsChatGPTBookmarklet.takeScreenshot()"
+                        title="Take a screenshot">&#x1F4F7;
+                </button>
             </div>
         </div>
     </div>
+    <!--  -->
 </div>
 </body>
 </html>

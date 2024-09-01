@@ -225,7 +225,7 @@
             const dialogContainer = document.querySelector('.hpsChatGPTDialog-container');
             const maximizeButton = document.getElementById('hpsChatGPTMaximize');
             const isMaximized = dialogContainer.classList.toggle('hps-chatgpt-maximize-maximized');
-            maximizeButton.innerText = isMaximized ? '[-]' : '[+]';
+            maximizeButton.innerHTML = isMaximized ? '&#xFF0D;' : '&#xFF0B;';
             var dialog = document.getElementById('hpsChatGPTDialog');
             if (isMaximized) {
                 this.savedDragPosition = dialog.style.cssText;
