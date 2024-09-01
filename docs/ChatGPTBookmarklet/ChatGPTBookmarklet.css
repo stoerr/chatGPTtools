@@ -182,16 +182,9 @@
 
 #hpsChatGPTScreenshotOverlay {
     position: fixed !important;
-    top: 5% !important;
-    left: 5% !important;
-    width: 90% !important;
-    height: 90% !important;
+    width: 100% !important;
+    height: 100% !important;
     z-index: 999999999 !important;
-    box-sizing: border-box !important;
-    border: 1px solid #e5e5e5 !important;
-    box-shadow: 0 3px 9px rgba(0, 0, 0, 0.5) !important;
-    background-color: #ffffff !important;
-    cursor: pointer !important;
 }
 
 #hpsChatGPTScreenshotOverlay.hidden {
@@ -199,8 +192,15 @@
 }
 
 #hpsChatGPTOverlayImage {
-    width: 100% !important;
-    height: 100% !important;
+    top: 5% !important;
+    left: 5% !important;
+    width: 90% !important;
+    height: 90% !important;
+    box-sizing: border-box !important;
+    border: 1px solid #e5e5e5 !important;
+    box-shadow: 0 3px 9px rgba(0, 0, 0, 0.5) !important;
+    background-color: #ffffff !important;
+    cursor: pointer !important;
     object-fit: contain !important;
 }
 
