@@ -1,7 +1,6 @@
 /** The parts of thelibrary that are dialog implementation. */
+'use strict';
 (function (window) {
-    window.hpsChatGPTBookmarklet = window.hpsChatGPTBookmarklet || {};
-
     /** Some CSS selectors that, if they match something, are taken as the text content of the page. Useful e.g.
      * to cut out a frame. */
     const contentElements = ['main div#content-body','article', 'iframe#thirdPartyFrame_mail', 'iframe#detail-body-iframe'];
@@ -22,6 +21,9 @@
                 this.history = [];
                 this.historyIndex = -1;
 
+                this.selectIncludePageContent = document.getElementById('hpsChatGPTIncludePageContent');
+                this.selectIncludeScreenshot = document.getElementById('hpsChatGPTIncludeScreenshot');
+
                 this.answerfield = document.getElementById('hpsChatGPTAnswer');
                 this.questionField = document.getElementById('hpsChatGPTQuestion');
                 this.getIncludedText(); // sets clipped to true if text was clipped
@@ -40,6 +42,12 @@
                 this.dictateButton = document.getElementById('hpsChatGPTRecord');
                 this.dictateButton.addEventListener('mousedown', this.startDictation.bind(this));
                 this.dictateButton.addEventListener('mouseup', this.stopDictation.bind(this));
+
+                this.screenshotImage = document.getElementById('hpsChatGPTOverlayImage');
+                this.screenshotOverlay = document.getElementById('hpsChatGPTScreenshotOverlay');
+
+                this.selectIncludeScreenshot
+                    .addEventListener('change', this.includeScreenshotChange.bind(this));
 
                 setTimeout(this.sidebyside.bind(this), 0);
 
@@ -101,7 +109,7 @@
 
         submitQuestion: async function () {
             const question = this.questionField.value;
-            const includePageContent = document.getElementById('hpsChatGPTIncludePageContent').checked;
+            const includePageContent = this.selectIncludePageContent.checked;
 
             if (question.trim() !== '') {
                 this.answerfield.innerText = 'Thinking...';
@@ -190,8 +198,8 @@
 
         promptOnText: async function (prompt, text, model) {
             let messages;
-            const includeScreenshot = document.getElementById('hpsChatGPTIncludeScreenshot').checked;
-            var promptmsg;
+            const includeScreenshot = this.selectIncludeScreenshot.checked;
+            let promptmsg;
             if (text) { // 'put it in the mouth of the AI' pattern for reducing prompt injections
                 const isde = this.lang === 'de';
                 const loadinstruction = isde ? 'Rufe bitte den Text ab, für den der Prompt ausgeführt werden wird, und gib genau diesen Text ohne weitere Kommentare aus.'
@@ -211,9 +219,7 @@
                 ];
             }
             if (includeScreenshot) {
-                const origpage = document.getElementById('hpsChatGPTDialog-origpage') || document.body;
-                const canvas = await html2canvas(origpage);
-                const screenshot = canvas.toDataURL();
+                const screenshot = this.screenshotImage.src;
                 promptmsg.push({type: 'image_url', image_url: {url: screenshot}});
             }
             console.log('sent messages: ', messages);
@@ -226,7 +232,7 @@
             const maximizeButton = document.getElementById('hpsChatGPTMaximize');
             const isMaximized = dialogContainer.classList.toggle('hps-chatgpt-maximize-maximized');
             maximizeButton.innerHTML = isMaximized ? '&#xFF0D;' : '&#xFF0B;';
-            var dialog = document.getElementById('hpsChatGPTDialog');
+            const dialog = document.getElementById('hpsChatGPTDialog');
             if (isMaximized) {
                 this.savedDragPosition = dialog.style.cssText;
                 dialog.style.cssText = '';
@@ -332,12 +338,6 @@
             }
         },
 
-        // Implement this:
-        //                 <button id="hpsChatGPTHistoryBack" onclick="window.hpsChatGPTBookmarklet.historyBack()"
-        //                 title="Backward in history">&lt;H</button>
-        //                 <button id="hpsChatGPTHistoryForward" onclick="window.hpsChatGPTBookmarklet.historyForward()"
-        //                 title="Forward in history">H&gt;</button>
-
         saveToHistory: function () {
             let state = {
                 // save the question and the answer
@@ -364,6 +364,39 @@
             if (this.historyIndex < this.history.length - 1) {
                 this.restore(this.history[++this.historyIndex]);
             }
+        },
+
+        hideScreenshotOverlay() {
+            this.screenshotOverlay.classList.add('hidden');
+        },
+
+        captureScreenshot(callback) {
+            const origpage = document.getElementById('hpsChatGPTDialog-origpage') || document.body;
+            html2canvas(origpage, {
+                onclone: function (clonedDoc) {
+                    clonedDoc.body.style.overflow = 'hidden';
+                }
+            }).then(canvas => {
+                this.screenshotImage.src = canvas.toDataURL();
+                if (callback) {
+                    callback();
+                }
+            });
+        },
+
+        includeScreenshotChange() {
+            if (this.selectIncludeScreenshot.checked) {
+                this.captureScreenshot();
+            } else {
+                this.hideScreenshotOverlay();
+            }
+        },
+
+        showScreenshot() {
+            this.captureScreenshot(() => {
+                this.screenshotOverlay.classList.remove('hidden');
+                this.selectIncludeScreenshot.checked = true;
+            });
         },
 
         /** Used here but declared in another file:
