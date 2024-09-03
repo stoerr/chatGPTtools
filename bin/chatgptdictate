@@ -48,7 +48,7 @@ trap 'kill $soxpid >& /dev/null; sleep 1; kill -9 $soxpid >& /dev/null; rm -f $t
 
 sleep 1
 # Wait for a key press
-read -n 1 -s -r -t $max_duration
+read -n 1 -s -r -t $max_duration < /dev/tty
 
 # Stop recording
 kill $soxpid

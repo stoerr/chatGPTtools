@@ -36,6 +36,7 @@ Options:
   -sf systemfile  Use the contents of the given file as system message
   -sl key         Add a system message from the ChatGPT prompt library using the given key with chatgptpromptlib
   -a              Abbreviate ("clip") the message in the middle if it's too long for the model context window
+  -api            Use this URL instead of the OpenAI chat completion API (e.g. for local LLM or OpenAI compatible APIs)
   -h, --help      Show this help message
   -ha, --helpai   Answer a question about the tool from this helptext and exit. The rest of the command line (prompt) is the question.
   
@@ -49,12 +50,8 @@ if (process.argv.length < 3) {
 }
 
 const apiKeyFile = `${process.env.HOME}/.openai-api-key.txt`;
-const apiURL = 'https://api.openai.com/v1/chat/completions';
-const headers = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${fs.readFileSync(apiKeyFile, 'utf8').trim()}`,
-};
-
+const openAIurldefault = 'https://api.openai.com/v1/chat/completions';
+let apiURL = openAIurldefault;
 let maxTokens;
 let prompt = '';
 let inOptions = true;
@@ -158,6 +155,9 @@ for (let i = 2; i < process.argv.length; i++) {
             audioPrefix = true;
         } else if (arg === '-ua') {
             audioSuffix = true;
+        } else if (arg === '-api' && process.argv[i + 1]) {
+            apiURL = process.argv[i + 1];
+            i++;
         } else if (arg === '-ha' || arg === '--helpai') {
             helpaimode = true;
         } else if (!arg.startsWith('-')) {
@@ -171,6 +171,18 @@ for (let i = 2; i < process.argv.length; i++) {
     } else {
         prompt += ' ' + arg;
     }
+}
+
+const headers = {
+    'Content-Type': 'application/json'
+};
+
+if (apiURL === openAIurldefault) { // don't give out the authorization header for other API!
+    let apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey && fs.existsSync(apiKeyFile)) {
+        apiKey = fs.readFileSync(apiKeyFile, 'utf8').trim();
+    }
+    headers['Authorization'] = `Bearer ${apiKey}`;
 }
 
 if (readStdin) {
@@ -189,11 +201,11 @@ if (suffix) {
 }
 
 let filecontents = "";
+const homeDir = process.env.HOME;
 
 function resolveFile(file) {
     let filename = file;
-    const homeDir = process.env.HOME;
-    return filename.replace(homeDir, '~');
+    return filename.replace('~', homeDir);
 }
 
 for (let i = 0; i < fmfiles.length; i++) {
@@ -204,15 +216,15 @@ for (let i = 0; i < fmfiles.length; i++) {
         fmfilemessages.push({role: 'assistant', content: filecontent});
     } else {
         const filecontent = fs.readFileSync(resolveFile(file), 'utf-8');
-        fmfilemessages.push({role: 'user', content: "Print the current raw content of the file " + file});
+        fmfilemessages.push({role: 'user', content: "Print the current raw content of the file " + file.replace(homeDir, '~')});
         fmfilemessages.push({role: 'assistant', content: filecontent});
     }
 }
 
 for (let i = 0; i < files.length; i++) {
     const file = files[i];
-    let filename = resolveFile(file);
-    const filePrompt = fs.readFileSync(file, 'utf-8');
+    let filename = file.replace('~', homeDir);
+    const filePrompt = fs.readFileSync(resolveFile(file), 'utf-8');
 
     if (files.length > 1) {
         filecontents = filecontents + "=== FILE " + (i + 1) + ": " + filename + " ===\n```\n" + filePrompt.trim() + "\n```\n";
@@ -360,8 +372,7 @@ function replacePromptlibKey(inputString) {
         try {
             return execSync(`chatgptpromptlib ${key}`, {encoding: 'utf8'});
         } catch (e) {
-            console.error('Error: Prompt library key not found (3): ' + key);
-            process.exit(1);
+            console.error('Warning: Prompt library key not found (3): ' + key);
         }
     });
 }
