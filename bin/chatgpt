@@ -12,7 +12,7 @@ ${programname} - Submit a prompt to ChatGPT conversation and print the response 
 
 Usage: ${programname} [options] [prompt]
 
-Options:
+Input Options:
   -               Reads prompt from stdin; if a prompt is given on the command line it is appended
   -f filename     Includes the content of the given file as additional message in https://www.stoerr.net/blog/aimouth pattern. 
                   Can be given multiple times. if - is given as filename, the content is read from stdin.
@@ -20,6 +20,8 @@ Options:
   -i imagefile    Includes the given image file as image, together with the filename. Can be given multiple times.
   -iu imageurl    Includes the given image url as image, together with the url. Can be given multiple times.
   -id detaillevel Sets the detail level for the image. Can be 'low', 'high', or 'auto'. Default is 'auto'.
+  
+Prompt Options:
   -p prefix       Prefix the prompt with a string. Use this or -pf, not both.
   -pf prefixfile  Prefix the prompt with the contents of a file
   -pl key         Add a prompt from the ChatGPT prompt library using the given key (see script chatgptpromptlib)
@@ -27,16 +29,22 @@ Options:
   -u suffix       Suffix the prompt with a string. Use this or -sf, not both.
   -uf suffixfile  Suffix the prompt with the contents of a file
   -ua             Record audio from the microphone until a key is pressed (using chatgptdictate) and use the result as prompt suffix
+
+System Message Options:
+  -s systemmsg    Use the given string as system message
+  -sf systemfile  Use the contents of the given file as system message
+  -sl key         Add a system message from the ChatGPT prompt library using the given key with chatgptpromptlib
+
+Request Settings:
   -m modelname    Use a specific model (default: ${model})
   -mh             Use the model with - the time of updating this script - highest intelligence ("gpt-4o")
   -t number       Set max tokens for response (default: no limit)
   -v              verbose output : prints the sent and received json message to stderr and gives info about connection retries
   -w column       Word wrap the response to a specified column width using fmt.
-  -s systemmsg    Use the given string as system message
-  -sf systemfile  Use the contents of the given file as system message
-  -sl key         Add a system message from the ChatGPT prompt library using the given key with chatgptpromptlib
   -a              Abbreviate ("clip") the message in the middle if it's too long for the model context window
-  -api            Use this URL instead of the OpenAI chat completion API (e.g. for local LLM or OpenAI compatible APIs)
+  -api url        Use this URL instead of the OpenAI chat completion API (e.g. for local LLM or OpenAI compatible APIs)
+
+Help Options:
   -h, --help      Show this help message
   -ha, --helpai   Answer a question about the tool from this helptext and exit. The rest of the command line (prompt) is the question.
   
