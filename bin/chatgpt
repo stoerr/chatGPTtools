@@ -13,6 +13,7 @@ const spawnSync = require('child_process').spawnSync;
 
 let model = 'gpt-4o-mini';
 const programname = path.basename(process.argv[1]);
+const homeDir = process.env.HOME;
 
 const helpMessage = `
 ${programname} - Submit a prompt to ChatGPT conversation and print the response to stdout. The prompt can be given on the command line or read from stdin.
@@ -43,11 +44,14 @@ System Message Options:
   -sl key         Add a system message from the ChatGPT prompt library using the given key with chatgptpromptlib
 
 Converstion Options:
-  -cf convfile    Use the given file to keep a conversation state. This either continues a conversation or starts a new one.
+  -cf convfile    Use the given file to keep a conversation state. Either creates this file or updates it after the answer is received.
   -cn             Starts a new conversation: a new file in directory $HOME/.chatgpt/conversations is created and used as conversation state.
-  -cc             Continues the last conversation: the last file in directory $HOME/.chatgpt/conversations is used as conversation state. 
+  -cc             Continues the last conversation: the last file in directory $HOME/.chatgpt/conversations is used as conversation state.
+  -cl convfile    Loads the conversation state from the given file and uses it for the conversation, but is not updating the file.
+  -cr             Removes the last created conversation file and then exits.
+  -cp             Prints the conversation state as JSON and then exits. Use -cc or -cf to specify which file to print.
 
-Request Settings:
+Request Settings etc:
   -m modelname    Use a specific model (default: ${model})
   -mh             Use the model with - the time of updating this script - highest intelligence ("gpt-4o")
   -t number       Set max tokens for response (default: no limit)
@@ -63,6 +67,8 @@ Help Options:
   
 If the prompt or system message contain a construct like promptlib:key , the chatgptpromptlib command will be called with that key
 and this will be replaced with the prompt library entry, as an alternative to -pl key .
+
+The conversation files contain JSON arrays of the conversation messages.
 `;
 
 if (process.argv.length < 3) {
@@ -93,6 +99,8 @@ let helpaimode = false;
 let audioPrefix = false;
 let audioSuffix = false;
 let conversationFile = undefined;
+let conversationLoad = undefined;
+let conversationPrint = false;
 let openAIOptions = {};
 
 function getConversationDir() {
@@ -103,6 +111,18 @@ function getConversationDir() {
         process.exit(1);
     }
     return conversationDir;
+}
+
+function getLastConversationFile() {
+    const conversationDir = getConversationDir();
+    const conversationFiles = fs.readdirSync(conversationDir);
+    conversationFiles.sort();
+    if (conversationFiles.length === 0) {
+        console.error(`Error: No conversation files found in ${conversationDir}.`);
+        process.exit(1);
+    }
+    const lastConversationFile = `${conversationDir}/${conversationFiles[conversationFiles.length - 1]}`;
+    return lastConversationFile;
 }
 
 for (let i = 2; i < process.argv.length; i++) {
@@ -195,22 +215,23 @@ for (let i = 2; i < process.argv.length; i++) {
             const conversationDir = getConversationDir();
             conversationFile = `${conversationDir}/${new Date().toISOString().replace(/:/g, '-')}.json`;
         } else if (arg === '-cc') {
-            const conversationDir = getConversationDir();
-            const conversationFiles = fs.readdirSync(conversationDir);
-            conversationFiles.sort();
-            if (conversationFiles.length === 0) {
-                console.error(`Error: No conversation files found in ${conversationDir}.`);
-                process.exit(1);
-            }
-            conversationFile = `${conversationDir}/${conversationFiles[conversationFiles.length - 1]}`;
+            conversationFile = getLastConversationFile();
+        } else if (arg === '-cl' && process.argv[i + 1]) {
+            conversationLoad = process.argv[i + 1];
+            i++;
+        } else if (arg === '-cr') {
+            const lastConversationFile = getLastConversationFile();
+            fs.unlinkSync(lastConversationFile);
+            console.error(`Conversation file ${lastConversationFile} removed. Exiting.`);
+            process.exit(0);
+        } else if (arg === '-cp') {
+            conversationPrint = true;
         } else if (arg === '-o' && process.argv[i + 1]) {
             var [key, value] = process.argv[i + 1].split('=');
-            if (value === 'true') {
-                value = true;
-            } else if (value === 'false') {
-                value = false;
-            } else if (value.match(/[0-9]+(\.[0-9]+)?/)) {
-                value = parseFloat(value);
+            try {
+                value = JSON.parse(value);
+            } catch (e) {
+                // if value is parseable as JSON, parse it, otherwise just take it as string
             }
             openAIOptions[key] = value;
             i++;
@@ -236,6 +257,33 @@ const headers = {
     'Content-Type': 'application/json'
 };
 
+let messages = [];
+
+function addMessagesFrom(file) {
+    // if the file exists, read the conversation from it
+    if (fs.existsSync(resolveFile(file))) {
+        const conversationJson = fs.readFileSync(resolveFile(file), 'utf-8');
+        const newMessages = JSON.parse(conversationJson);
+        messages = messages.concat(newMessages);
+    } else {
+        console.error('Error: Directory for conversation file does not exist: ' + path.dirname(resolveFile(file)));
+        process.exit(2);
+    }
+}
+
+if (conversationFile) {
+    addMessagesFrom(conversationFile);
+}
+
+if (conversationLoad) {
+    addMessagesFrom(conversationLoad);
+}
+
+if (conversationPrint) {
+    console.log(JSON.stringify(messages, null, 4));
+    process.exit(0);
+}
+
 if (apiURL === openAIurldefault) { // don't give out the authorization header for other API!
     let apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey && fs.existsSync(apiKeyFile)) {
@@ -260,7 +308,6 @@ if (suffix) {
 }
 
 let filecontents = "";
-const homeDir = process.env.HOME;
 
 function resolveFile(file) {
     let filename = file;
@@ -380,19 +427,6 @@ if (imageFiles.length > 0 || imageUrls.length > 0) {
     }
 }
 
-let messages = [];
-
-if (conversationFile) {
-    // if the file exists, read the conversation from it
-    if (fs.existsSync(resolveFile(conversationFile))) {
-        const conversationJson = fs.readFileSync(resolveFile(conversationFile), 'utf-8');
-        messages = JSON.parse(conversationJson);
-    } else if (!fs.existsSync(path.dirname(resolveFile(conversationFile)))) {
-        console.error('Error: Directory for conversation file does not exist: ' + path.dirname(resolveFile(conversationFile)));
-        process.exit(2);
-    }
-}
-
 messages.push({role: 'user', content: content});
 
 const requestData = {
@@ -467,7 +501,7 @@ function replacePromptlibKey(inputString) {
 // see https://docs.anthropic.com/en/api/messages
 async function requestChatGPT(attempt = 1) {
     try {
-        if (verbose) console.error("Request: ", JSON.stringify(requestData, null, 2));
+        if (verbose) console.error("Request: ", JSON.stringify(requestData, null, 4));
         const response = await fetch(apiURL, {
             method: 'POST',
             headers,
@@ -512,7 +546,7 @@ async function requestChatGPT(attempt = 1) {
             process.exit(5);
         } else {
             const responseData = await response.json();
-            if (verbose) console.error("Response: ", JSON.stringify(responseData, null, 2));
+            if (verbose) console.error("Response: ", JSON.stringify(responseData, null, 4));
             const assistantMessage = responseData.choices[0].message;
             const finishReason = responseData.choices[0].finish_reason;
 
