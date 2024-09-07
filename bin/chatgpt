@@ -51,7 +51,7 @@ Converstion Options:
   -cr             Removes the last created conversation file and then exits.
   -cp             Prints the conversation state as JSON and then exits. Use -cc or -cf to specify which file to print.
 
-Request Settings etc:
+Request Settings etc.:
   -m modelname    Use a specific model (default: ${model})
   -mh             Use the model with - the time of updating this script - highest intelligence ("gpt-4o")
   -t number       Set max tokens for response (default: no limit)
@@ -60,6 +60,10 @@ Request Settings etc:
   -a              Abbreviate ("clip") the message in the middle if it's too long for the model context window
   -api url        Use this URL instead of the OpenAI chat completion API (e.g. for local LLM or OpenAI compatible APIs)
   -o key=value    Other options for the OpenAI API, e.g. -o temperature=0.5 . Can be given multiple times.
+
+Response Options:
+  -rj             JSON mode: model outputs a JSON object
+  -rf schemafile  Structured output: requests that the response conforms to the given JSON schema read from a file.
 
 Help Options:
   -h, --help      Show this help message
@@ -102,6 +106,8 @@ let conversationFile = undefined;
 let conversationLoad = undefined;
 let conversationPrint = false;
 let openAIOptions = {};
+let jsonMode = false;
+let responseSchemaFile = undefined;
 
 function getConversationDir() {
     const conversationDir = `${process.env.HOME}/.chatgpt/conversations`;
@@ -234,6 +240,11 @@ for (let i = 2; i < process.argv.length; i++) {
                 // if value is parseable as JSON, parse it, otherwise just take it as string
             }
             openAIOptions[key] = value;
+            i++;
+        } else if (arg === '-rj') {
+            jsonMode = true;
+        } else if (arg === '-rf' && process.argv[i + 1]) {
+            responseSchemaFile = process.argv[i + 1];
             i++;
         } else if (arg === '-api' && process.argv[i + 1]) {
             apiURL = process.argv[i + 1];
@@ -449,6 +460,22 @@ if (systemMsg) {
 
 if (maxTokens) {
     requestData.max_tokens = maxTokens;
+}
+
+if (jsonMode) {
+    requestData.response_format = {"type": "json_object"};
+}
+
+if (responseSchemaFile) { // see https://platform.openai.com/docs/guides/structured-outputs/introduction
+    const jsonschema = JSON.parse(fs.readFileSync( resolveFile(responseSchemaFile), 'utf8'));
+    let schema = jsonschema; // OpenAI schema description https://platform.openai.com/docs/api-reference/chat/create
+    if (jsonschema.name) { // we assume this is is an OpenAI description
+        // with name, possibly description, schema, strict
+        schema = jsonschema;
+    } else { // we assume this is a JSON schema
+        schema = {name: "responseschema", schema: jsonschema, strict: true};
+    }
+    requestData.response_format = {"type": "json_schema", "json_schema": schema};
 }
 
 /** When we receive a message from chatgpt that the request is too long and if the user requested that,
