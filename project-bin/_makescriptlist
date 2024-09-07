@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+$(dirname "$(realpath "$0")")/../bin/_makeusagetxt
+
 tmp_result=$(mktemp)
 tmp_script=$(mktemp)
 
