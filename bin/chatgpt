@@ -35,6 +35,9 @@ System Message Options:
   -sf systemfile  Use the contents of the given file as system message
   -sl key         Add a system message from the ChatGPT prompt library using the given key with chatgptpromptlib
 
+Converstion Options:
+  -cf convfile    Use the given file to keep a conversation state. This either continues a conversation or starts a new one.
+
 Request Settings:
   -m modelname    Use a specific model (default: ${model})
   -mh             Use the model with - the time of updating this script - highest intelligence ("gpt-4o")
@@ -79,6 +82,7 @@ let abbreviateMiddle = false;
 let helpaimode = false;
 let audioPrefix = false;
 let audioSuffix = false;
+let conversationFile = undefined;
 
 for (let i = 2; i < process.argv.length; i++) {
     const arg = process.argv[i];
@@ -163,6 +167,9 @@ for (let i = 2; i < process.argv.length; i++) {
             audioPrefix = true;
         } else if (arg === '-ua') {
             audioSuffix = true;
+        } else if (arg === '-cf' && process.argv[i + 1]) {
+            conversationFile = process.argv[i + 1];
+            i++;
         } else if (arg === '-api' && process.argv[i + 1]) {
             apiURL = process.argv[i + 1];
             i++;
@@ -224,7 +231,10 @@ for (let i = 0; i < fmfiles.length; i++) {
         fmfilemessages.push({role: 'assistant', content: filecontent});
     } else {
         const filecontent = fs.readFileSync(resolveFile(file), 'utf-8');
-        fmfilemessages.push({role: 'user', content: "Print the current raw content of the file " + file.replace(homeDir, '~')});
+        fmfilemessages.push({
+            role: 'user',
+            content: "Print the current raw content of the file " + file.replace(homeDir, '~')
+        });
         fmfilemessages.push({role: 'assistant', content: filecontent});
     }
 }
@@ -246,7 +256,10 @@ if (filecontents) {
 }
 
 if (helpaimode) {
-    fmfilemessages.push({role: 'user', content: "Print the help text for the 'chatgpt' tool. You will use that as background knowledge to answer my question."});
+    fmfilemessages.push({
+        role: 'user',
+        content: "Print the help text for the 'chatgpt' tool. You will use that as background knowledge to answer my question."
+    });
     fmfilemessages.push({role: 'assistant', content: helpMessage});
 }
 
@@ -298,7 +311,10 @@ if (imageFiles.length > 0 || imageUrls.length > 0) {
         if (detailparam === 'low') {
             imageFileContent = execSync(`magick '${imageFile}' -resize '512x512>' jpg:- | base64`, {encoding: 'utf8'});
         } else { // let OpenAI handle the resizing to avoid losing details, but make sure we don't submit huge images
-            imageFileContent = execSync(`magick '${imageFile}' -resize '2000x2000>' jpg:- | base64`, {encoding: 'utf8', maxBuffer: 1024 * 1024 * 25});
+            imageFileContent = execSync(`magick '${imageFile}' -resize '2000x2000>' jpg:- | base64`, {
+                encoding: 'utf8',
+                maxBuffer: 1024 * 1024 * 25
+            });
         }
         const imageBase64 = `data:image/jpeg;base64,${imageFileContent.trim()}`;
         content.push({
@@ -320,10 +336,25 @@ if (imageFiles.length > 0 || imageUrls.length > 0) {
     }
 }
 
+let messages = [];
+
+if (conversationFile) {
+    // if the file exists, read the conversation from it
+    if (fs.existsSync(resolveFile(conversationFile))) {
+        const conversationJson = fs.readFileSync(resolveFile(conversationFile), 'utf-8');
+        messages = JSON.parse(conversationJson);
+    } else if (!fs.existsSync(path.dirname(resolveFile(conversationFile)))) {
+        console.error('Error: Directory for conversation file does not exist: ' + path.dirname(resolveFile(conversationFile)));
+        process.exit(2);
+    }
+}
+
+messages.push({role: 'user', content: content});
+
 const requestData = {
     model: model,
     user: 'chatgpt script',
-    messages: [{role: 'user', content: content}],
+    messages: messages,
 };
 
 if (fmfilemessages.length > 0) {
@@ -454,6 +485,11 @@ async function requestChatGPT(attempt = 1) {
             } else {
                 console.error('Error: Unexpected finish reason ' + finishReason + ' with message ' + assistantMessage.content);
                 process.exit(1);
+            }
+
+            messages.push({role: 'assistant', content: assistantMessage.content});
+            if (conversationFile) {
+                fs.writeFileSync(resolveFile(conversationFile), JSON.stringify(messages, null, 4));
             }
         }
     } catch (error) {
