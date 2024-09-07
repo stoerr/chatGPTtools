@@ -1,4 +1,11 @@
 #!/usr/bin/env node
+/**
+ * Swiss knive type tool for submitting conversations to ChatGPT and printing the response.
+ * Many options and several ways of submitting files or images are supported.
+ *
+ * @see "https://platform.openai.com/docs/api-reference/chat/create"
+ */
+
 const fs = require('fs');
 const path = require('path');
 const execSync = require('child_process').execSync;
@@ -48,6 +55,7 @@ Request Settings:
   -w column       Word wrap the response to a specified column width using fmt.
   -a              Abbreviate ("clip") the message in the middle if it's too long for the model context window
   -api url        Use this URL instead of the OpenAI chat completion API (e.g. for local LLM or OpenAI compatible APIs)
+  -o key=value    Other options for the OpenAI API, e.g. -o temperature=0.5 . Can be given multiple times.
 
 Help Options:
   -h, --help      Show this help message
@@ -85,6 +93,7 @@ let helpaimode = false;
 let audioPrefix = false;
 let audioSuffix = false;
 let conversationFile = undefined;
+let openAIOptions = {};
 
 function getConversationDir() {
     const conversationDir = `${process.env.HOME}/.chatgpt/conversations`;
@@ -194,6 +203,17 @@ for (let i = 2; i < process.argv.length; i++) {
                 process.exit(1);
             }
             conversationFile = `${conversationDir}/${conversationFiles[conversationFiles.length - 1]}`;
+        } else if (arg === '-o' && process.argv[i + 1]) {
+            var [key, value] = process.argv[i + 1].split('=');
+            if (value === 'true') {
+                value = true;
+            } else if (value === 'false') {
+                value = false;
+            } else if (value.match(/[0-9]+(\.[0-9]+)?/)) {
+                value = parseFloat(value);
+            }
+            openAIOptions[key] = value;
+            i++;
         } else if (arg === '-api' && process.argv[i + 1]) {
             apiURL = process.argv[i + 1];
             i++;
@@ -380,6 +400,10 @@ const requestData = {
     user: 'chatgpt script',
     messages: messages,
 };
+
+for (const key in openAIOptions) {
+    requestData[key] = openAIOptions[key];
+}
 
 if (fmfilemessages.length > 0) {
     requestData.messages = fmfilemessages.concat(requestData.messages);
