@@ -1,0 +1,67 @@
+#!/bin/bash
+if [ "$#" -eq 0 ] || [ "$1" = "--help" ] || [ "$1" = "-h" ] || [ "$1" = "-?" ]; then cat <<EOF
+Usage: $(basename $0) {program description}
+Searches in the PATH for programs that do what the description says.
+EOF
+  exit 0
+fi
+
+description="$*"
+
+machinedescription="For a $(sysctl -n hw.model) with $(sysctl -n hw.machine) architecture running $(sw_vers -productName) $(sw_vers -productVersion) ,"
+
+listprompt=$(cat <<EOF
+$machinedescription
+print an extensive list of program names might be useful for fulfilling the following task but might be not installed.
+Include many possible alternatives. Use a globbing pathern if the name is variable - like foo* for programs starting with foo.
+For MacOS, include homebrew installable programs.
+A script will then look whether there are any such programs in the PATH and tell you the matches, so that you can
+make a program later that fulfills the task. Print only the program names, no descriptions, as JSON. The task is:
+$description
+
+EOF
+)
+
+programs=$(chatgpt -p "$listprompt" -rf <(cat <<EOF
+{
+  "type": "object",
+  "properties": {
+    "programs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": ["programs"],
+  "additionalProperties": false
+}
+EOF
+) | jq -r '.programs[]')
+
+echo "Looking for relevant programs..."
+
+foundprograms=$(
+for program in $programs; do
+  (IFS=:; for dir in $PATH; do
+    for file in "$dir"/$program; do
+      if [ -x "$file" ]; then
+        echo "$(basename $file)"
+      fi
+    done
+  done)
+  (for dir in /System/Applications/ /Applications/ $HOME/Applications/; do
+    for file in "$dir"/$program.app; do
+      if [ -x "$file" ]; then
+        echo "$(basename $file)"
+      fi
+    done
+  done)
+done
+)
+
+echo "Asking ChatGPT..."
+echo
+
+exec chatgpt -4 -s "$machinedescription write a bash command line including explanation, or answer a question. The following programs have been verified to be available for that, so are recommended if appropriate: $foundprograms." "$description"
+
