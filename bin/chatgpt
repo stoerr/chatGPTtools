@@ -59,7 +59,8 @@ Request Settings etc.:
   -w column       Word wrap the response to a specified column width using fmt.
   -a              Abbreviate ("clip") the message in the middle if it's too long for the model context window
   -api url        Use this URL instead of the OpenAI chat completion API (e.g. for local LLM or OpenAI compatible APIs)
-  -o key=value    Other options for the OpenAI API, e.g. -o temperature=0.5 . Can be given multiple times.
+  -o key=value    Other options, e.g. for the OpenAI API -o temperature=0.5 . Can be given multiple times.
+  -of key=file    Other options read from a json file, e.g. for the OpenAI API tools. Can be given multiple times.
 
 Response Options:
   -rj             JSON mode: model outputs a JSON object
@@ -241,6 +242,14 @@ for (let i = 2; i < process.argv.length; i++) {
             }
             openAIOptions[key] = value;
             i++;
+        } else if (arg === '-of' && process.argv[i + 1]) {
+            var [key, filename] = process.argv[i + 1].split('=');
+            try {
+                openAIOptions[key] = JSON.parse(fs.readFileSync(resolveFile(filename), 'utf8'));
+            } catch (e) {
+                console.error('Error: Could not read JSON file: ' + filename);
+                process.exit(1);
+            }
         } else if (arg === '-rj') {
             jsonMode = true;
         } else if (arg === '-rf' && process.argv[i + 1]) {
@@ -467,7 +476,7 @@ if (jsonMode) {
 }
 
 if (responseSchemaFile) { // see https://platform.openai.com/docs/guides/structured-outputs/introduction
-    const jsonschema = JSON.parse(fs.readFileSync( resolveFile(responseSchemaFile), 'utf8'));
+    const jsonschema = JSON.parse(fs.readFileSync(resolveFile(responseSchemaFile), 'utf8'));
     let schema = jsonschema; // OpenAI schema description https://platform.openai.com/docs/api-reference/chat/create
     if (jsonschema.name) { // we assume this is is an OpenAI description
         // with name, possibly description, schema, strict
