@@ -26,8 +26,11 @@
       "strict": true
     },
     "commandline": [
-      "curl",
-      "-sSL",
+      "pandoc",
+      "-f",
+      "html",
+      "-t",
+      "markdown",
       "$url"
     ],
     "stdin": ""

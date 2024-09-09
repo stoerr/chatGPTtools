@@ -653,7 +653,7 @@ function onMessage(assistantMessage) {
     }
     for (const toolCall of toolCalls) {
         const tool = tools.find(tool => tool.function.name === toolCall.function.name);
-        let commandline = Array.isArray(tool.commandline) ? tool.commandline : tool.commandline.split(' ');
+        let commandline = Array.isArray(tool.commandline) ? tool.commandline.slice() : tool.commandline.split(' ');
         // replace placeholders ($arg) with corresponding tool_call.function.arguments
         const parsedArguments = JSON.parse(toolCall.function.arguments);
         // replace arguments in all parts of the commandline
@@ -667,6 +667,10 @@ function onMessage(assistantMessage) {
             for (const [key, value] of Object.entries(parsedArguments)) {
                 commandline = commandline.replace('$' + key, value);
             }
+        }
+        // if commandline[0] doesn't exist, take it relative to the toolsConfigFile's directory
+        if (!fs.existsSync(commandline[0])) {
+            commandline[0] = path.join(path.dirname(toolsConfigFile), commandline[0]);
         }
         console.error("Calling tool", toolCall.function.name, ': ', commandline.join(' '));
         const result = spawnSync(commandline[0], commandline.slice(1), {input: stdin, encoding: 'utf8', timeout: 10000});

@@ -8,6 +8,9 @@ fi
 
 prompt="$*"
 
+# example: ./browse.sh read www.stoerr.net and find out what the URL of the artificial intelligence section is and read that section and collect the urls of the pro
+           #jects there
+
 # This doesn't execute the call but prints the response for debugging purposes
 # chatgpt -v -o tool_choice=required -of tools=geturl-tool.json -s "Use the tool to retrieve URLs relevant to the users prompt." -p "$prompt"
 
