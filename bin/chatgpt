@@ -653,11 +653,14 @@ function onMessage(assistantMessage) {
     }
     for (const toolCall of toolCalls) {
         const tool = tools.find(tool => tool.function.name === toolCall.function.name);
-        let commandline = tool.commandline.join(' ');
+        let commandline = Array.isArray(tool.commandline) ? tool.commandline : tool.commandline.split(' ');
         // replace placeholders ($arg) with corresponding tool_call.function.arguments
         const parsedArguments = JSON.parse(toolCall.function.arguments);
-        for (const [key, value] of Object.entries(parsedArguments)) {
-            commandline = commandline.replace('$' + key, value);
+        // replace arguments in all parts of the commandline
+        for (let i = 0; i < commandline.length; i++) {
+            for (const [key, value] of Object.entries(parsedArguments)) {
+                commandline[i] = commandline[i].replace('$' + key, value);
+            }
         }
         let stdin = tool.stdin;
         if (stdin) {
@@ -665,8 +668,13 @@ function onMessage(assistantMessage) {
                 commandline = commandline.replace('$' + key, value);
             }
         }
-        console.error("Calling tool", toolCall.function.name, ': ', commandline);
-        const toolOutput = execSync(commandline, {input: stdin, encoding: 'utf8'});
+        console.error("Calling tool", toolCall.function.name, ': ', commandline.join(' '));
+        const result = spawnSync(commandline[0], commandline.slice(1), {input: stdin, encoding: 'utf8', timeout: 10000});
+        if (result.error) {
+            console.error('Error: Tool call failed with error', result.error);
+            process.exit(8);
+        }
+        const toolOutput = result.error ? result.error.toString() : result.stderr.toString() + result.stdout.toString();
         messages.push({role: 'tool', content: toolOutput, tool_call_id: toolCall.id});
     }
     requestChatGPT(onMessage);

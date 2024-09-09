@@ -1,5 +1,7 @@
 [
   {
+    "ignoredcomment": "This file declares a tool for the chatgpt script that can read webpages. That returns HTML to ChaGPT, which isn't ideal, and it cannot use google, but is nice for testing working with tools.",
+
     "function": {
       "name": "readurl",
       "description": "Reads the text content of a given URL",
@@ -25,9 +27,7 @@
     },
     "commandline": [
       "curl",
-      "-s",
-      "-S",
-      "-L",
+      "-sSL",
       "$url"
     ],
     "stdin": ""
