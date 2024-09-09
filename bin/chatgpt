@@ -42,12 +42,12 @@ System Message Options:
   -sf systemfile  Use the contents of the given file as system message
   -sl key         Add a system message from the ChatGPT prompt library using the given key with chatgptpromptlib
 
-Conversation Options:
+Conversation Options: (only 1 turn per call ${programname}, the conversation state is kept in a file)${programname}
   -cf convfile    Use the given file to keep a conversation state. Either creates this file or updates it after the answer is received.
   -cn             Starts a new conversation: a new file in directory $HOME/.chatgpt/conversations is created and used as conversation state.
   -cc             Continues the last conversation: the last file in directory $HOME/.chatgpt/conversations is used as conversation state.
   -cl convfile    Loads the conversation state from the given file and uses it for the conversation, but is not updating the file.
-  -cr             Removes the last created conversation file and then exits.
+  -cd             Deletes the last automatically created conversation file (-cn) and then exits.
   -cp             Prints the conversation state as JSON and then exits. Use -cc or -cf to specify which file to print.
 
 Request Settings etc.:
@@ -228,12 +228,14 @@ for (let i = 2; i < process.argv.length; i++) {
         } else if (arg === '-cn') {
             const conversationDir = getConversationDir();
             conversationFile = `${conversationDir}/${new Date().toISOString().replace(/:/g, '-')}.json`;
+            console.error(`Creating new conversation file: ${conversationFile}`);
         } else if (arg === '-cc') {
             conversationFile = getLastConversationFile();
+            console.error(`Continuing conversation from ${conversationFile}`);
         } else if (arg === '-cl' && process.argv[i + 1]) {
             conversationLoad = process.argv[i + 1];
             i++;
-        } else if (arg === '-cr') {
+        } else if (arg === '-cd') {
             const lastConversationFile = getLastConversationFile();
             fs.unlinkSync(lastConversationFile);
             console.error(`Conversation file ${lastConversationFile} removed. Exiting.`);
@@ -552,6 +554,9 @@ function replacePromptlibKey(inputString) {
 function writeConversation() {
     if (conversationFile) {
         fs.writeFileSync(resolveFile(conversationFile), JSON.stringify(messages, null, 4));
+        if (verbose) {
+            console.error('Conversation written to ' + conversationFile);
+        }
     }
 }
 
