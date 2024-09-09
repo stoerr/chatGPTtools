@@ -549,6 +549,12 @@ function replacePromptlibKey(inputString) {
     });
 }
 
+function writeConversation() {
+    if (conversationFile) {
+        fs.writeFileSync(resolveFile(conversationFile), JSON.stringify(messages, null, 4));
+    }
+}
+
 // see https://docs.anthropic.com/en/api/messages
 async function requestChatGPT(successcallback, attempt = 1) {
     try {
@@ -612,8 +618,8 @@ async function requestChatGPT(successcallback, attempt = 1) {
                     msg.tool_calls = assistantMessage.tool_calls;
                 }
                 messages.push(msg);
-                if (conversationFile) {
-                    fs.writeFileSync(resolveFile(conversationFile), JSON.stringify(messages, null, 4));
+                if (finishReason === 'stop') {
+                    writeConversation();
                 }
 
                 successcallback(assistantMessage);
@@ -634,6 +640,7 @@ function onContent(assistantMessage) {
         console.error('Error: Unexpected message format: ', assistantMessage);
         process.exit(7);
     }
+    writeConversation();
     if (wordWrapColumn) {
         const fmt = spawnSync('fmt', ['-w', wordWrapColumn, '-p'], {input: output, encoding: 'utf8'});
         if (fmt.error) {
@@ -677,6 +684,7 @@ function onMessage(assistantMessage) {
         const toolOutput = result.error ? result.error.toString() : result.stderr.toString() + result.stdout.toString();
         messages.push({role: 'tool', content: toolOutput, tool_call_id: toolCall.id});
     }
+    writeConversation();
     requestChatGPT(onMessage);
 }
 
