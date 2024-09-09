@@ -43,7 +43,7 @@ System Message Options:
   -sf systemfile  Use the contents of the given file as system message
   -sl key         Add a system message from the ChatGPT prompt library using the given key with chatgptpromptlib
 
-Converstion Options:
+Conversation Options:
   -cf convfile    Use the given file to keep a conversation state. Either creates this file or updates it after the answer is received.
   -cn             Starts a new conversation: a new file in directory $HOME/.chatgpt/conversations is created and used as conversation state.
   -cc             Continues the last conversation: the last file in directory $HOME/.chatgpt/conversations is used as conversation state.
@@ -535,7 +535,7 @@ function replacePromptlibKey(inputString) {
 }
 
 // see https://docs.anthropic.com/en/api/messages
-async function requestChatGPT(attempt = 1) {
+async function requestChatGPT(successcallback, attempt = 1) {
     try {
         if (verbose) console.error("Request: ", JSON.stringify(requestData, null, 4));
         const response = await fetch(apiURL, {
@@ -562,7 +562,7 @@ async function requestChatGPT(attempt = 1) {
                 if (verbose) {
                     console.error(`Error: Rate limit exceeded, retrying in ${waitTime} seconds`);
                 }
-                setTimeout(() => requestChatGPT(attempt + 1), waitTime * 1000);
+                setTimeout(() => requestChatGPT(successcallback, attempt + 1), waitTime * 1000);
             } else {
                 console.error('Error: Too many retries');
                 process.exit(4);
@@ -572,7 +572,7 @@ async function requestChatGPT(attempt = 1) {
             if (abbreviateMiddle && body.includes("reduce the length of the messages")
                 && body.includes("context_length_exceeded")) {
                 abbreviateMessage(body);
-                setTimeout(() => requestChatGPT(attempt + 1), 10);
+                setTimeout(() => requestChatGPT(successcallback, attempt + 1), 10);
             } else {
                 console.error('Error: Request failed with status', response.status, 'and message', response.statusText, 'and body', body);
                 process.exit(5);
@@ -588,18 +588,9 @@ async function requestChatGPT(attempt = 1) {
 
             if (finishReason === 'length' && abbreviateMiddle) {
                 abbreviateMessage();
-                setTimeout(() => requestChatGPT(attempt + 1), 10);
+                setTimeout(() => requestChatGPT(successcallback, attempt + 1), 10);
             } else if (finishReason === 'stop' || !finishReason) {
-                let output = assistantMessage.content;
-                if (wordWrapColumn) {
-                    const fmt = spawnSync('fmt', ['-w', wordWrapColumn, '-p'], {input: output, encoding: 'utf8'});
-                    if (fmt.error) {
-                        console.error(`Error: fmt command failed with error ${fmt.error.message}`);
-                        process.exit(7);
-                    }
-                    output = fmt.stdout;
-                }
-                console.log(output);
+                successcallback(assistantMessage);
             } else {
                 console.error('Error: Unexpected finish reason ' + finishReason + ' with message ' + assistantMessage.content);
                 process.exit(1);
@@ -616,4 +607,17 @@ async function requestChatGPT(attempt = 1) {
     }
 }
 
-requestChatGPT();
+function onsuccess(assistantMessage) {
+    let output = assistantMessage.content;
+    if (wordWrapColumn) {
+        const fmt = spawnSync('fmt', ['-w', wordWrapColumn, '-p'], {input: output, encoding: 'utf8'});
+        if (fmt.error) {
+            console.error(`Error: fmt command failed with error ${fmt.error.message}`);
+            process.exit(7);
+        }
+        output = fmt.stdout;
+    }
+    console.log(output);
+}
+
+requestChatGPT(onsuccess);
