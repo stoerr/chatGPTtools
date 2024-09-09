@@ -1,0 +1,35 @@
+[
+  {
+    "function": {
+      "name": "readurl",
+      "description": "Reads the text content of a given URL",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "One sentence description of the reason to fetch the URL"
+          },
+          "url": {
+            "type": "string",
+            "description": "The url to fetch"
+          }
+        },
+        "required": [
+          "reason",
+          "url"
+        ],
+        "additionalProperties": false
+      },
+      "strict": true
+    },
+    "commandline": [
+      "curl",
+      "-s",
+      "-S",
+      "-L",
+      "$url"
+    ],
+    "stdin": ""
+  }
+]
