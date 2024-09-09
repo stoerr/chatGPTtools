@@ -25,6 +25,11 @@
       },
       "strict": true
     },
+    "alternativecommandline-renameifdesired": [
+      "curl",
+      "-sSL",
+      "$url"
+    ],
     "commandline": [
       "pandoc",
       "-f",

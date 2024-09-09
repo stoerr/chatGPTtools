@@ -8,7 +8,8 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execSync, spawnSync } = require('child_process');
+const {execSync, spawnSync} = require('child_process');
+const readline = require('readline');
 
 let model = 'gpt-4o-mini';
 const programname = path.basename(process.argv[1]);
@@ -49,6 +50,7 @@ Conversation Options: (only 1 turn per call ${programname}, the conversation sta
   -cl convfile    Loads the conversation state from the given file and uses it for the conversation, but is not updating the file.
   -cd             Deletes the last automatically created conversation file (-cn) and then exits.
   -cp             Prints the conversation state as JSON and then exits. Use -cc or -cf to specify which file to print.
+  -cr             Multi turn conversation - abort the program to end this. Each message is finished with Ctrl-D.
 
 Request Settings etc.:
   -m modelname    Use a specific model (default: ${model})
@@ -116,6 +118,7 @@ let jsonMode = false;
 let responseSchemaFile = undefined;
 let toolsConfigFile = undefined;
 let tools = undefined;
+let conversationLoopWithReadline = false;
 
 function getConversationDir() {
     const conversationDir = `${process.env.HOME}/.chatgpt/conversations`;
@@ -242,6 +245,8 @@ for (let i = 2; i < process.argv.length; i++) {
             process.exit(0);
         } else if (arg === '-cp') {
             conversationPrint = true;
+        } else if (arg === '-cr') {
+            conversationLoopWithReadline = true;
         } else if (arg === '-o' && process.argv[i + 1]) {
             var [key, value] = process.argv[i + 1].split('=');
             try {
@@ -402,7 +407,7 @@ if (audioSuffix) {
     }
 }
 
-if (!prompt || !prompt.trim()) {
+if ((!prompt || !prompt.trim()) && !conversationLoopWithReadline) {
     console.error('Error: No prompt provided');
     console.error(helpMessage);
     process.exit(1);
@@ -415,51 +420,53 @@ if (verbose) {
     console.error("---------------------------------------------\n\n");
 }
 
-let content = prompt;
+function addFirstMessage(firstPrompt) {
+    let content = firstPrompt;
 
-if (imageFiles.length > 0 || imageUrls.length > 0) {
-    if (model === 'gpt-3.5-turbo') { // has no vision.
-        model = 'gpt-4o-mini';
-    }
-    content = [
-        {
-            "type": "text",
-            "text": prompt
+    if (imageFiles.length > 0 || imageUrls.length > 0) {
+        if (model === 'gpt-3.5-turbo') { // has no vision.
+            model = 'gpt-4o-mini';
         }
-    ];
-    for (let i = 0; i < imageFiles.length; i++) {
-        const imageFile = imageFiles[i];
+        content = [
+            {
+                "type": "text",
+                "text": firstPrompt
+            }
+        ];
+        for (let i = 0; i < imageFiles.length; i++) {
+            const imageFile = imageFiles[i];
 
-        let imageFileContent;
-        if (detailparam === 'low') {
-            imageFileContent = execSync(`magick '${imageFile}' -resize '512x512>' jpg:- | base64`, {encoding: 'utf8'});
-        } else { // let OpenAI handle the resizing to avoid losing details, but make sure we don't submit huge images
-            imageFileContent = execSync(`magick '${imageFile}' -resize '2000x2000>' jpg:- | base64`, {
-                encoding: 'utf8',
-                maxBuffer: 1024 * 1024 * 25
+            let imageFileContent;
+            if (detailparam === 'low') {
+                imageFileContent = execSync(`magick '${imageFile}' -resize '512x512>' jpg:- | base64`, {encoding: 'utf8'});
+            } else { // let OpenAI handle the resizing to avoid losing details, but make sure we don't submit huge images
+                imageFileContent = execSync(`magick '${imageFile}' -resize '2000x2000>' jpg:- | base64`, {
+                    encoding: 'utf8',
+                    maxBuffer: 1024 * 1024 * 25
+                });
+            }
+            const imageBase64 = `data:image/jpeg;base64,${imageFileContent.trim()}`;
+            content.push({
+                "type": "image_url",
+                "image_url": {
+                    "url": imageBase64,
+                    "detail": detailparam
+                }
             });
         }
-        const imageBase64 = `data:image/jpeg;base64,${imageFileContent.trim()}`;
-        content.push({
-            "type": "image_url",
-            "image_url": {
-                "url": imageBase64,
-                "detail": detailparam
-            }
-        });
+        for (let i = 0; i < imageUrls.length; i++) {
+            const imageUrl = imageUrls[i];
+            content.push({
+                "type": "image_url",
+                "image_url": {
+                    "url": imageUrl
+                }
+            });
+        }
     }
-    for (let i = 0; i < imageUrls.length; i++) {
-        const imageUrl = imageUrls[i];
-        content.push({
-            "type": "image_url",
-            "image_url": {
-                "url": imageUrl
-            }
-        });
-    }
-}
 
-messages.push({role: 'user', content: content});
+    messages.push({role: 'user', content: content});
+}
 
 const requestData = {
     model: model,
@@ -655,6 +662,7 @@ function onContent(assistantMessage) {
         output = fmt.stdout;
     }
     console.log(output);
+    maybeContinueConversation();
 }
 
 function onMessage(assistantMessage) {
@@ -681,7 +689,11 @@ function onMessage(assistantMessage) {
         }
         commandline[0] = resolveScript(commandline[0]);
         console.error("Calling tool", toolCall.function.name, ': ', commandline.join(' '));
-        const result = spawnSync(commandline[0], commandline.slice(1), {input: stdin, encoding: 'utf8', timeout: 10000});
+        const result = spawnSync(commandline[0], commandline.slice(1), {
+            input: stdin,
+            encoding: 'utf8',
+            timeout: 10000
+        });
         if (result.error) {
             console.error('Error: Tool call failed with error', result.error);
             process.exit(8);
@@ -703,8 +715,53 @@ function resolveScript(script) {
     return path.join(path.dirname(toolsConfigFile), script);
 }
 
-if (toolsConfigFile) {
-    requestChatGPT(onMessage);
+function readMessageAndContine(continuecallback) {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+        prompt: '\nType your next message, end with Ctrl-D or "/end" on a line on itself; end with an empty message.\n',
+    });
+
+    let inputBuffer = '';
+    rl.on('line', (line) => {
+        if (line.trim() === '/end') {
+            rl.close();
+        } else {
+            inputBuffer += line + '\n';
+        }
+    }).on('SIGINT', () => {
+        process.exit(130);
+    }).on('close', () => {
+        continuecallback(inputBuffer);
+    });
+    rl.prompt();
+}
+
+function maybeContinueConversation() {
+    if (conversationLoopWithReadline) {
+        readMessageAndContine((inputBuffer) => {
+            if (inputBuffer.trim() === '') {
+                process.exit(0);
+            }
+            messages.push({role: 'user', content: inputBuffer});
+            console.log();
+            requestChatGPT(onMessage);
+        });
+    }
+}
+
+const mainCallback = toolsConfigFile ? onMessage : onContent;
+
+if (prompt) {
+    addFirstMessage(prompt);
+    requestChatGPT(mainCallback);
+} else if (conversationLoopWithReadline) {
+    readMessageAndContine(
+        (prompt) => {
+            addFirstMessage(prompt);
+            requestChatGPT(mainCallback);
+        }
+    );
 } else {
-    requestChatGPT(onContent);
+    console.error('Bug? No prompt given and not in conversation loop mode.');
 }
