@@ -15,5 +15,5 @@ prompt="$*"
 # chatgpt -v -o tool_choice=required -of tools=geturl-tool.json -s "Use the tool to retrieve URLs relevant to the users prompt." -p "$prompt"
 
 # This actually executes the tools call
-chatgpt -tf browseconfig.json -p "$prompt"
+chatgpt -tf browseconfig.json -cf log.json -p "$prompt"
 

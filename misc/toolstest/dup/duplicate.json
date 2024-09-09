@@ -1,0 +1,30 @@
+[
+  {
+    "function": {
+      "name": "duplicate",
+      "description": "duplicates the arguments",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "args": {
+            "type": "string"
+          },
+          "stdin": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "args",
+          "stdin"
+        ],
+        "additionalProperties": false
+      },
+      "strict": true
+    },
+    "commandline": [
+      "duplicate.sh",
+      "$args"
+    ],
+    "stdin": ""
+  }
+]

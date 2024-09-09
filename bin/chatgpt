@@ -8,8 +8,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const execSync = require('child_process').execSync;
-const spawnSync = require('child_process').spawnSync;
+const { execSync, spawnSync } = require('child_process');
 
 let model = 'gpt-4o-mini';
 const programname = path.basename(process.argv[1]);
@@ -296,7 +295,7 @@ function addMessagesFrom(file) {
         const conversationJson = fs.readFileSync(resolveFile(file), 'utf-8');
         const newMessages = JSON.parse(conversationJson);
         messages = messages.concat(newMessages);
-    } else {
+    } else if (!fs.existsSync(path.dirname(resolveFile(file)))) {
         console.error('Error: Directory for conversation file does not exist: ' + path.dirname(resolveFile(file)));
         process.exit(2);
     }
@@ -613,14 +612,14 @@ async function requestChatGPT(successcallback, attempt = 1) {
                     msg.tool_calls = assistantMessage.tool_calls;
                 }
                 messages.push(msg);
+                if (conversationFile) {
+                    fs.writeFileSync(resolveFile(conversationFile), JSON.stringify(messages, null, 4));
+                }
 
                 successcallback(assistantMessage);
             } else {
                 console.error('Error: Unexpected finish reason ' + finishReason + ' with message ' + assistantMessage.content);
                 process.exit(1);
-            }
-            if (conversationFile) {
-                fs.writeFileSync(resolveFile(conversationFile), JSON.stringify(messages, null, 4));
             }
         }
     } catch (error) {
@@ -665,13 +664,10 @@ function onMessage(assistantMessage) {
         let stdin = tool.stdin;
         if (stdin) {
             for (const [key, value] of Object.entries(parsedArguments)) {
-                commandline = commandline.replace('$' + key, value);
+                stdin = stdin.replace('$' + key, value);
             }
         }
-        // if commandline[0] doesn't exist, take it relative to the toolsConfigFile's directory
-        if (!fs.existsSync(commandline[0])) {
-            commandline[0] = path.join(path.dirname(toolsConfigFile), commandline[0]);
-        }
+        commandline[0] = resolveScript(commandline[0]);
         console.error("Calling tool", toolCall.function.name, ': ', commandline.join(' '));
         const result = spawnSync(commandline[0], commandline.slice(1), {input: stdin, encoding: 'utf8', timeout: 10000});
         if (result.error) {
@@ -682,6 +678,16 @@ function onMessage(assistantMessage) {
         messages.push({role: 'tool', content: toolOutput, tool_call_id: toolCall.id});
     }
     requestChatGPT(onMessage);
+}
+
+function resolveScript(script) {
+    if (script.startsWith('/')) {
+        return script;
+    }
+    if (fs.existsSync(script)) {
+        return path.resolve(script);
+    }
+    return path.join(path.dirname(toolsConfigFile), script);
 }
 
 if (toolsConfigFile) {
