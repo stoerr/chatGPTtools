@@ -51,6 +51,7 @@ Conversation Options: (only 1 turn per call ${programname}, the conversation sta
   -cd             Deletes the last automatically created conversation file (-cn) and then exits.
   -cp             Prints the conversation state as JSON and then exits. Use -cc or -cf to specify which file to print.
   -cr             Multi turn conversation - abort the program to end this. Each message is finished with Ctrl-D.
+  -ca             Multi turn conversation with dictated audio - abort the program to end this.
 
 Request Settings etc.:
   -m modelname    Use a specific model (default: ${model})
@@ -119,6 +120,7 @@ let responseSchemaFile = undefined;
 let toolsConfigFile = undefined;
 let tools = undefined;
 let conversationLoopWithReadline = false;
+let conversationLoopWithDictate = false;
 
 function getConversationDir() {
     const conversationDir = `${process.env.HOME}/.chatgpt/conversations`;
@@ -247,6 +249,8 @@ for (let i = 2; i < process.argv.length; i++) {
             conversationPrint = true;
         } else if (arg === '-cr') {
             conversationLoopWithReadline = true;
+        } else if (arg === '-ca') {
+            conversationLoopWithDictate = true;
         } else if (arg === '-o' && process.argv[i + 1]) {
             var [key, value] = process.argv[i + 1].split('=');
             try {
@@ -391,8 +395,14 @@ if (helpaimode) {
     fmfilemessages.push({role: 'assistant', content: helpMessage});
 }
 
+function dictatePrompt(waitKey = false) {
+    if (waitKey) console.log();
+    const args = waitKey ? ' -w' : '';
+    return execSync('chatgptdictate' + args, {encoding: 'utf8', stdio: ['inherit', 'pipe', 'pipe']});
+}
+
 if (audioPrefix) {
-    const audioPrefix = execSync('chatgptdictate', {encoding: 'utf8', stdio: ['inherit', 'pipe', 'pipe']});
+    const audioPrefix = dictatePrompt();
     if (audioPrefix) {
         console.log('Dicated prompt: ' + audioPrefix.trim());
         prompt = audioPrefix.trim() + '\n\n' + prompt;
@@ -400,14 +410,14 @@ if (audioPrefix) {
 }
 
 if (audioSuffix) {
-    const audioSuffix = execSync('chatgptdictate', {encoding: 'utf8', stdio: ['inherit', 'pipe', 'pipe']});
+    const audioSuffix = dictatePrompt();
     if (audioSuffix) {
         console.log('Dictated prompt suffix: ' + audioSuffix.trim());
         prompt = prompt + '\n\n' + audioSuffix.trim();
     }
 }
 
-if ((!prompt || !prompt.trim()) && !conversationLoopWithReadline) {
+if ((!prompt || !prompt.trim()) && !conversationLoopWithReadline && !conversationLoopWithDictate) {
     console.error('Error: No prompt provided');
     console.error(helpMessage);
     process.exit(1);
@@ -747,6 +757,13 @@ function maybeContinueConversation() {
             console.log();
             requestChatGPT(onMessage);
         });
+    } else if (conversationLoopWithDictate) {
+        const dictatedMessage = dictatePrompt(true);
+        if (dictatedMessage) {
+            messages.push({role: 'user', content: dictatedMessage});
+            console.log();
+            requestChatGPT(onMessage);
+        }
     }
 }
 
@@ -762,6 +779,12 @@ if (prompt) {
             requestChatGPT(mainCallback);
         }
     );
+} else if (conversationLoopWithDictate) {
+    const dictatedMessage = dictatePrompt(false);
+    console.log('Dicated message: ' + dictatedMessage.trim());
+    console.log();
+    addFirstMessage(dictatedMessage);
+    requestChatGPT(mainCallback);
 } else {
     console.error('Bug? No prompt given and not in conversation loop mode.');
 }

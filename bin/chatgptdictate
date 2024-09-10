@@ -10,6 +10,7 @@ show_usage() {
     -o     output file to write the response to. If not provided, the response will be printed to stdout.
     -p     Text to guide the model's style. Optional.
     -l     code of the input audio. Optional but improves accuracy.
+    -w     wait with recording until a key is pressed. Default is to start recording immediately.
     -h, --help  Show this help message and exit
 EOF
   exit 1
@@ -20,6 +21,7 @@ max_duration=60
 output_file=""
 prompt=""
 language=""
+wait_key=""
 
 # Parse options
 while [[ "$#" -gt 0 ]]; do
@@ -28,11 +30,18 @@ while [[ "$#" -gt 0 ]]; do
     -o) output_file="$2"; shift ;;
     -p) prompt="$2"; shift ;;
     -l) language="$2"; shift ;;
+    -w) wait_key="true" ;;
     -h|--help|-\?) show_usage ;;
     *) echo "Unknown parameter passed: $1"; show_usage ;;
   esac
   shift
 done
+
+if [ -n "$wait_key" ]; then
+  echo -n -e "Press any key to start recording.\\r" > /dev/tty
+  read -n 1 -s -r < /dev/tty
+  echo -n -e "                                 \\r" > /dev/tty
+fi
 
 # Create a temporary file for the audio
 basetmp=$(mktemp -t chatgptdictate)
@@ -41,7 +50,7 @@ nrmwav=${basetmp}.nrm.wav
 trap 'rm -f $tmpwav $nrmwav' EXIT
 
 # Record audio
-echo "Recording audio for up to $max_duration seconds. Press any key to stop." > /dev/tty
+echo -n -e "Recording audio for up to $max_duration seconds. Press any key to stop.\\r" > /dev/tty
 sox -q -d -c 1 -t wav $tmpwav trim 0 $max_duration &
 soxpid=$!
 trap 'kill $soxpid >& /dev/null; sleep 1; kill -9 $soxpid >& /dev/null; rm -f $tmpwav $nrmwav' EXIT
@@ -49,6 +58,7 @@ trap 'kill $soxpid >& /dev/null; sleep 1; kill -9 $soxpid >& /dev/null; rm -f $t
 sleep 1
 # Wait for a key press
 read -n 1 -s -r -t $max_duration < /dev/tty
+echo -n -e "                                                                       \\r" > /dev/tty
 
 # Stop recording
 kill $soxpid
