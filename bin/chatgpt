@@ -480,8 +480,7 @@ function addFirstMessage(firstPrompt) {
 
 const requestData = {
     model: model,
-    user: 'chatgpt script',
-    messages: messages,
+    user: 'chatgpt script'
 };
 
 for (const key in openAIOptions) {
@@ -489,11 +488,11 @@ for (const key in openAIOptions) {
 }
 
 if (fmfilemessages.length > 0) {
-    requestData.messages = fmfilemessages.concat(requestData.messages);
+    messages = fmfilemessages.concat(messages);
 }
 
 if (systemMsg) {
-    requestData.messages.unshift({role: 'system', content: replacePromptlibKey(systemMsg)});
+    messages.unshift({role: 'system', content: replacePromptlibKey(systemMsg)});
 }
 
 if (maxTokens) {
@@ -547,9 +546,9 @@ function abbreviateMessage(errorMsg) {
     content = start + " [...] " + end;
     if (verbose) console.error("Abbreviated message from " + oldcontent.length + " to " + content.length + " characters.");
     // find the message having oldcontent as content and change to the new content - might not be the first message
-    for (let i = 0; i < requestData.messages.length; i++) {
-        if (requestData.messages[i].content === oldcontent) {
-            requestData.messages[i].content = content;
+    for (let i = 0; i < messages.length; i++) {
+        if (messages[i].content === oldcontent) {
+            messages[i].content = content;
             break;
         }
     }
@@ -580,6 +579,7 @@ function writeConversation() {
 // see https://docs.anthropic.com/en/api/messages
 async function requestChatGPT(successcallback, attempt = 1) {
     try {
+        requestData.messages = messages;
         if (verbose) console.error("Request: ", JSON.stringify(requestData, null, 4));
         const response = await fetch(apiURL, {
             method: 'POST',
