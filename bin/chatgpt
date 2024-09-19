@@ -85,6 +85,8 @@ The conversation files contain JSON arrays of the conversation messages.
 A tools config file contains an array of tool definitions: {"function":{"name":...,"description:"...", "parameters":..., "strict":...},
 "commandline: [...], "stdin": ...}. The commandline array is used to call the tool, and stdin is the input for the tool.
 In the command line array and stdin, $args is replaced by the arguments given to the tool, and $toolcall is replaced by the tool call JSON.
+
+From https://github.com/stoerr/chatGPTtools .
 `;
 
 if (process.argv.length < 3) {
@@ -733,7 +735,11 @@ function resolveScript(script) {
     if (fs.existsSync(script)) {
         return path.resolve(script);
     }
-    return path.join(path.dirname(toolsConfigFile), script);
+    const relativeToCmdFile = path.join(path.dirname(toolsConfigFile), script);
+    if (fs.existsSync(relativeToCmdFile)) {
+        return path.resolve(relativeToCmdFile);
+    }
+    return script;
 }
 
 function readMessageAndContine(continuecallback) {
