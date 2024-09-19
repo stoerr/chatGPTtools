@@ -24,6 +24,7 @@ Input Options:
   -               Reads prompt from stdin; if a prompt is given on the command line it is appended
   -f filename     Includes the content of the given file as additional message in https://www.stoerr.net/blog/aimouth pattern. 
                   Can be given multiple times. if - is given as filename, the content is read from stdin.
+  -ff filenames   Like -f, but for multiple files - all further arguments are treated as filenames until there is a switch.
   -fp filename    Includes the content of the given file as codeblock into the prompt, together with the filename. Can be given multiple times.
   -i imagefile    Includes the given image file as image, together with the filename. Can be given multiple times.
   -iu imageurl    Includes the given image url as image, together with the url. Can be given multiple times.
@@ -63,6 +64,7 @@ Request Settings etc.:
   -api url        Use this URL instead of the OpenAI chat completion API (e.g. for local LLM or OpenAI compatible APIs)
   -o key=value    Other options, e.g. for the OpenAI API -o temperature=0.5 . Can be given multiple times.
   -of key=file    Other options read from a json file, e.g. for the OpenAI API tools. Can be given multiple times.
+  --              Last option - option parsing stops, the rest is taken as prompt. E.g. for finishing a -ff list.
 
 Response Options:
   -rj             JSON mode: model outputs a JSON object
@@ -82,6 +84,7 @@ The conversation files contain JSON arrays of the conversation messages.
 
 A tools config file contains an array of tool definitions: {"function":{"name":...,"description:"...", "parameters":..., "strict":...},
 "commandline: [...], "stdin": ...}. The commandline array is used to call the tool, and stdin is the input for the tool.
+In the command line array and stdin, $args is replaced by the arguments given to the tool, and $toolcall is replaced by the tool call JSON.
 `;
 
 if (process.argv.length < 3) {
@@ -206,6 +209,11 @@ for (let i = 2; i < process.argv.length; i++) {
         } else if ((arg === '-fm' || arg === '-f') && process.argv[i + 1]) { // -fm is for backwards compatibility
             fmfiles.push(process.argv[i + 1]);
             i++;
+        } else if (arg === '-ff') {
+            while(process.argv[i + 1] && !process.argv[i + 1].startsWith('-')) {
+                fmfiles.push(process.argv[i + 1]);
+                i++;
+            }
         } else if (arg === '-w' && process.argv[i + 1]) {
             wordWrapColumn = parseInt(process.argv[i + 1], 10);
             i++;
@@ -281,6 +289,8 @@ for (let i = 2; i < process.argv.length; i++) {
             i++;
         } else if (arg === '-ha' || arg === '--helpai') {
             helpaimode = true;
+        } else if (arg === '--') {
+            inOptions = false;
         } else if (!arg.startsWith('-')) {
             inOptions = false;
             prompt += arg;
@@ -685,6 +695,7 @@ function onMessage(assistantMessage) {
         let commandline = Array.isArray(tool.commandline) ? tool.commandline.slice() : tool.commandline.split(' ');
         // replace placeholders ($arg) with corresponding tool_call.function.arguments
         const parsedArguments = JSON.parse(toolCall.function.arguments);
+        parsedArguments['toolcall'] = JSON.stringify(toolCall.function, null, 2);
         // replace arguments in all parts of the commandline
         for (let i = 0; i < commandline.length; i++) {
             for (const [key, value] of Object.entries(parsedArguments)) {
