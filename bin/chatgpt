@@ -777,6 +777,7 @@ function maybeContinueConversation() {
     } else if (conversationLoopWithDictate) {
         const dictatedMessage = dictatePrompt(true);
         if (dictatedMessage) {
+            console.log('Dicated message: ' + dictatedMessage.trim());
             messages.push({role: 'user', content: dictatedMessage});
             console.log();
             requestChatGPT(onMessage);
