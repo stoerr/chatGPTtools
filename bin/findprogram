@@ -12,11 +12,12 @@ machinedescription="For a $(sysctl -n hw.model) with $(sysctl -n hw.machine) arc
 
 listprompt=$(cat <<EOF
 $machinedescription
-print an extensive list of program names might be useful for fulfilling the following task but might be not installed.
-Include many possible alternatives. Use a globbing pathern if the name is variable - like foo* for programs starting with foo.
+print an extensive long list of program names that might be useful for fulfilling the following task but might be not installed.
+Include many possible alternatives. Use glob patterns to account for variability - like foo* for programs starting with foo.
 For MacOS, include homebrew installable programs.
-A script will then look whether there are any such programs in the PATH and tell you the matches, so that you can
-make a program later that fulfills the task. Print only the program names, no descriptions, as JSON. The task is:
+A script will then look whether there are any such programs in the PATH and the Applications folders and tell you the
+matches, so that you can make a program later that fulfills the task. Print only the program names, no descriptions, as JSON.
+The task is:
 $description
 
 EOF
@@ -40,6 +41,7 @@ EOF
 ) | jq -r '.programs[]')
 
 echo "Looking for relevant programs..."
+# echo $programs
 
 foundprograms=$(
 for program in $programs; do
@@ -60,8 +62,10 @@ for program in $programs; do
 done
 )
 
+# echo "Found programs: $foundprograms"
+
 echo "Asking ChatGPT..."
-echo
 
-exec chatgpt -4 -s "$machinedescription write a bash command line including explanation, or answer a question. The following programs have been verified to be available for that, so are recommended if appropriate: $foundprograms." "$description"
+# exec chatgpt -4 -s "$machinedescription write a bash command line including explanation, or answer a question. The following programs have been verified to be available for that, so are recommended if appropriate: $foundprograms." "$description"
 
+exec chatgpt -4 -s "$machinedescription Suggest several programs that fulfill the task the user wants to do, with a short description. The following programs have been verified to be available for that, so are recommended if appropriate: $foundprograms." "$description"

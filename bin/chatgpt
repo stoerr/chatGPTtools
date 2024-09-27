@@ -282,6 +282,7 @@ for (let i = 2; i < process.argv.length; i++) {
             jsonMode = true;
         } else if (arg === '-rf' && process.argv[i + 1]) {
             responseSchemaFile = process.argv[i + 1];
+            jsonMode = true;
             i++;
         } else if (arg === '-tf' && process.argv[i + 1]) {
             toolsConfigFile = process.argv[i + 1];
@@ -711,7 +712,8 @@ function onMessage(assistantMessage) {
             }
         }
         commandline[0] = resolveScript(commandline[0]);
-        console.error("Calling tool", toolCall.function.name, ': ', commandline.join(' '));
+        console.error("Calling tool", toolCall.function.name, ': ', commandline.join(' '),
+            'with stdin', stdin.length > 300 ? stdin.slice(0, 300) + '...' : stdin);
         const result = spawnSync(commandline[0], commandline.slice(1), {
             input: stdin,
             encoding: 'utf8',
@@ -759,6 +761,7 @@ function readMessageAndContine(continuecallback) {
     }).on('SIGINT', () => {
         process.exit(130);
     }).on('close', () => {
+        console.log();
         continuecallback(inputBuffer);
     });
     rl.prompt();
@@ -771,7 +774,6 @@ function maybeContinueConversation() {
                 process.exit(0);
             }
             messages.push({role: 'user', content: inputBuffer});
-            console.log();
             requestChatGPT(onMessage);
         });
     } else if (conversationLoopWithDictate) {
