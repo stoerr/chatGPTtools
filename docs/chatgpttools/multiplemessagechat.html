@@ -12,9 +12,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 <body>
+<div class="container-xxl" style="border-radius: 20px; background: linear-gradient(#f0f0f0, #dcdcdc); padding-top: 1em; padding-bottom: 1.5em;">
 <div class="container-xxl messages">
     <div class="row">
-        <div class="col-sm-11"><h1>Chat simulation for ChatGPT</h1></div>
+        <div class="col-sm-11"><h1>Chat simulation / chat template debugger for ChatGPT</h1></div>
         <div class="col-sm-1 text-right"><a href="0README.html"><i class="fa fa-question-circle fa-2x"></i></a></div>
     </div>
     <div class="row messagefields" id="row-1">
@@ -25,10 +26,10 @@
                 <option value="assistant">Assistant</option>
             </select>
             <a href="#row-2" class="row-up">
-                <i class="fa fa-arrow-up" style="color: lightgrey"></i>
+                <i class="fa fa-arrow-up" style="color: white"></i>
             </a>
             <a href="#row-0" class="row-down">
-                <i class="fa fa-arrow-down" style="color: lightgrey"></i>
+                <i class="fa fa-arrow-down" style="color: white"></i>
             </a>
         </div>
         <div class="col-sm-11">
@@ -41,6 +42,9 @@
         <div class="col-sm-12 buttons mt-3">
             <button type="button" class="btn btn-primary submitbutton" onclick="submit()"
                     title="Button to submit, pressing Enter works, too (shift enter for linebreak)">Submit
+            </button>
+            <button type="button" class="btn btn-primary" onclick="retry()"
+                    title="Button to submit again, removing all trailing assistant messages.">Retry
             </button>
             <button type="button" class="btn btn-primary" onclick="reset()">Reset</button>
             <button type="button" class="btn btn-primary" onclick="resetButKeepSystem()"
@@ -96,6 +100,7 @@
             <textarea class="form-control" id="json" rows="3"></textarea>
         </div>
     </div>
+</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
@@ -325,6 +330,21 @@
             submit();
             return false;
         }
+    }
+
+    /** Removes all trailing rows with role assistant. */
+    function retry() {
+        var rows = $('.messagefields');
+        for (var i = rows.length - 1; i > 0; i--) {
+            const type = $(rows[i]).find('.type').val();
+            const content = $(rows[i]).find('.message').val();
+            if (type === 'assistant' || !content) {
+                $(rows[i]).remove();
+            } else {
+                break;
+            }
+        }
+        submit();
     }
 
     /** Sets the textarea row attributes so that the text just fits in there, without additional newlines.
