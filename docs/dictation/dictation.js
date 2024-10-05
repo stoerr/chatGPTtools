@@ -133,11 +133,8 @@ const attachEventListeners = () => {
     fixupButton.addEventListener('click', fixupText);
     undoButton.addEventListener('click', undo);
 
-    // Help dialog
-    helpButton.addEventListener('click', () => {
-        document.getElementById('dictation-help').addEventListener('click', function () {
-            $('#helpModal').modal('show'); // Using jQuery for Bootstrap 4 compatibility
-        });
+    document.getElementById('dictation-help').addEventListener('click', function () {
+        $('#helpModal').modal('show');
     });
 };
 

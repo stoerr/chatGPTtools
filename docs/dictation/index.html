@@ -44,7 +44,8 @@
             <div class="modal-body">
                 <p>
                     Press and hold the Dictate button to start dictation. Release to stop and transcribe.
-                    Optionally select the language for transcription accuracy.
+                    After a few seconds processing the transcribed text will be inserted into the text area at the cursor position.
+                    Optionally, select the language for improved transcription accuracy.
                 </p>
                 <p>
                     The Fixup button will attempt to correct any transcription errors, correct grammar and spelling
@@ -56,6 +57,10 @@
                     key</a>
                     to use this application.
                 </p>
+                <p>
+                    Part of the <a href="https://chatgpttools.stoerr.net/">ChatGPT Toolsuite</a>
+                    (<a href="https://github.com/stoerr/chatGPTtools/blob/develop/docs/dictation">source on Github</a>).
+                </p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -64,6 +69,7 @@
     </div>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/recorderjs/0.1.0/recorder.js"></script>
 <script src="dictation.js"></script>
