@@ -18,12 +18,18 @@
         <div class="col-sm-1 text-right"><a href="0README.html"><i class="fa fa-question-circle fa-2x"></i></a></div>
     </div>
     <div class="row messagefields" id="row-1">
-        <div class="col-sm-1">
+        <div class="col-sm-1 text-center">
             <select class="form-select type">
                 <option value="system">System</option>
                 <option value="user">User</option>
                 <option value="assistant">Assistant</option>
             </select>
+            <a href="#row-2" class="row-up">
+                <i class="fa fa-arrow-up" style="color: lightgrey"></i>
+            </a>
+            <a href="#row-0" class="row-down">
+                <i class="fa fa-arrow-down" style="color: lightgrey"></i>
+            </a>
         </div>
         <div class="col-sm-11">
             <textarea class="form-control message" rows="3"></textarea>
@@ -67,7 +73,8 @@
                 <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
             </select>
             &nbsp;
-            <input type="checkbox" id="jsonoutput" title="Check this box to require JSON output" value="jsonoutput">&nbsp; require JSON</input>
+            <input type="checkbox" id="jsonoutput" title="Check this box to require JSON output" value="jsonoutput">&nbsp;
+            require JSON</input>
             <br>
             <!-- Drop down list for selecting an initial prompt. The first entry is an autoselected option with an empty value and description "default" -->
             <label for="initialprompt" class="mt-3">For fun, select a different system prompt:</label>
@@ -179,11 +186,14 @@
 
     /** Adds a new row to the chat. The id row-1 is replaced by row, followed by the number of the row In the select 'type' the given type is preselected. */
     function addRow(type, message) {
-        var row = $('#row-1').clone();
-        row.attr('id', 'row-' + $('.row').length);
+        const row = $('#row-1').clone();
+        const rowNumber = $('.row').length;
+        row.attr('id', 'row-' + rowNumber);
         row.find('.type').val(type);
         row.find('.message').val(message.trim());
         row.appendTo('div.messages');
+        row.find('a.row-up').attr('href', '#row-' + (rowNumber - 1));
+        row.find('a.row-down').attr('href', '#row-' + (rowNumber + 1));
     }
 
     function addFields() {
@@ -250,7 +260,7 @@
                     alert("You have selected JSON output, but the request does not contain the word JSON. Please add it to the request.");
                     return false;
                 }
-                request.response_format = { "type": "json_object" };
+                request.response_format = {"type": "json_object"};
             }
 
             return $.ajax({
