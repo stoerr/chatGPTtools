@@ -257,9 +257,9 @@
                 url: 'https://api.openai.com/v1/chat/completions',
                 type: 'POST',
                 dataType: 'json',
+                contentType: 'application/json',
                 headers: {
-                    'Authorization': 'Bearer ' + api_key,
-                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + api_key
                 },
                 data: JSON.stringify(request),
                 success: resultcb,
