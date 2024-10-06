@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dictation App</title>
+    <meta name="description"
+          content="A dictation app based on the OpenAI Whisper AI. It improves the quality by submitting the already written text to the AI as context.">
     <link href="//stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
     <link rel="icon" href="img/dictationfavicon128.ico" type="image/x-icon">
 </head>
@@ -44,12 +46,19 @@
             <div class="modal-body">
                 <p>
                     Press and hold the Dictate button to start dictation. Release to stop and transcribe.
-                    After a few seconds processing the transcribed text will be inserted into the text area at the cursor position.
+                    After a few seconds processing the transcribed text will be inserted into the text area at the
+                    cursor position.
                     Optionally, select the language for improved transcription accuracy.
                 </p>
                 <p>
                     The Fixup button will attempt to correct any transcription errors, correct grammar and spelling
                     and execute any correction instructions in the text and format it, like a dictation assistant.
+                </p>
+                <p>
+                    If there is already text in the text area this application will provide it to the AI as context.
+                    This improves the quality of the transcription because the AI can guess better which word you meant
+                    if there are several words that sound alike, and also because the AI knows the beginning of the
+                    sentence if the cursor is in mid sentence.
                 </p>
                 <p>
                     This application is meant for a browser on a desktop computer, and is based on the

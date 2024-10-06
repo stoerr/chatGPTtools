@@ -63,8 +63,12 @@ const stopRecording = async (event, e1, e2) => {
             formData.append('model', 'whisper-1');
             let value = document.getElementById('dictation-language').value;
             if (value) formData.append('language', value);
-            // Optionally append the prompt
-            const promptText = textarea.value.substring(0, textarea.selectionStart);
+            // Create a prompt from the existing text to guide the transcription
+            const textBefore = textarea.substring(0, cursorPosition);
+            const textAfter = textarea.substring(cursorPosition);
+            var promptText = '';
+            if (textAfter) promptText = '... ' + textAfter + '\n\n' + '-'.repeat(80) + '\n\n';
+            if (textBefore) promptText = textBefore;
             if (promptText) formData.append('prompt', promptText);
 
             const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
