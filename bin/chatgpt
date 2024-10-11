@@ -69,6 +69,8 @@ Request Settings etc.:
 Response Options:
   -rj             [R]esponse mode JSON: model outputs a JSON object
   -rf schemafile  Structured output: requests that the [r]esponse conforms to the given JSON schema read from a [f]ile.
+  -ra attr1,...   Structured output [r]esponse - JSON with [a]ttributes: comma separated list of attributes to include in the JSON response. 
+                  Alternative to -rf - uses simple schema with these attributes as string properties. 
 
 Tooling options:
   -tf configfile  Use the given file as [t]ools configuration [f]ile for tools the LLM could use.
@@ -122,6 +124,7 @@ let conversationPrint = false;
 let openAIOptions = {};
 let jsonMode = false;
 let responseSchemaFile = undefined;
+let responseAttributes = undefined;
 let toolsConfigFile = undefined;
 let tools = undefined;
 let conversationLoopWithReadline = false;
@@ -212,7 +215,7 @@ for (let i = 2; i < process.argv.length; i++) {
             fmfiles.push(process.argv[i + 1]);
             i++;
         } else if (arg === '-ff') {
-            while(process.argv[i + 1] && !process.argv[i + 1].startsWith('-')) {
+            while (process.argv[i + 1] && !process.argv[i + 1].startsWith('-')) {
                 fmfiles.push(process.argv[i + 1]);
                 i++;
             }
@@ -282,6 +285,10 @@ for (let i = 2; i < process.argv.length; i++) {
             jsonMode = true;
         } else if (arg === '-rf' && process.argv[i + 1]) {
             responseSchemaFile = process.argv[i + 1];
+            jsonMode = true;
+            i++;
+        } else if (arg === '-ra' && process.argv[i + 1]) {
+            responseAttributes = process.argv[i + 1].split(',');
             jsonMode = true;
             i++;
         } else if (arg === '-tf' && process.argv[i + 1]) {
@@ -516,6 +523,11 @@ if (jsonMode) {
     requestData.response_format = {"type": "json_object"};
 }
 
+if (responseSchemaFile && responseAttributes) {
+    console.error('Error: Cannot use both -rf and -ra');
+    process.exit(1);
+}
+
 if (responseSchemaFile) { // see https://platform.openai.com/docs/guides/structured-outputs/introduction
     const jsonschema = JSON.parse(fs.readFileSync(resolveFile(responseSchemaFile), 'utf8'));
     let schema = jsonschema; // OpenAI schema description https://platform.openai.com/docs/api-reference/chat/create
@@ -526,6 +538,24 @@ if (responseSchemaFile) { // see https://platform.openai.com/docs/guides/structu
         schema = {name: "responseschema", schema: jsonschema, strict: true};
     }
     requestData.response_format = {"type": "json_schema", "json_schema": schema};
+}
+
+if (responseAttributes) {
+    // create a JSON schema for a simple object that includes exactly those attributes as properties
+    const schema = {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {},
+        "required": responseAttributes,
+        "additionalProperties": false
+    };
+    for (const attribute of responseAttributes) {
+        schema.properties[attribute] = {"type": "string"};
+    }
+    requestData.response_format = {
+        "type": "json_schema",
+        "json_schema": {name: "responseschema", schema: schema, strict: true}
+    };
 }
 
 if (toolsConfigFile) {

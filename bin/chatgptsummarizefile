@@ -35,27 +35,7 @@ if [ -z "$file" ]; then
 fi
 
 json=$(
-chatgpt -f "$file" -rf <(
-cat <<EOF
-{
-  "\$schema": "http://json-schema.org/draft-07/schema#",
-  "type": "object",
-  "properties": {
-    "language": {
-      "type": "string"
-    },
-    "TLDR": {
-      "type": "string"
-    },
-    "title": {
-      "type": "string"
-    }
-  },
-  "required": ["language", "TLDR", "title"],
-  "additionalProperties": false
-}
-EOF
-) 'Make a one paragraph summary of the file and find out the title of the file or give it an appropriate title. If it is a markdown document with a single level one heading then this is usually the title. Use Determine the language of the file and use that language for your output. Output that as JSON like this: {"language": "the language", "TLDR": "the summary", "title": "the title"}' || exit 1
+chatgpt -f "$file" -ra language,TLDR,title 'Make a one paragraph summary of the file and find out the title of the file or give it an appropriate title. If it is a markdown document with a single level one heading then this is usually the title. Use Determine the language of the file and use that language for your output. Output that as JSON like this: {"language": "the language", "TLDR": "the summary", "title": "the title"}' || exit 1
 )
 
 # echo "$json" # for debugging
