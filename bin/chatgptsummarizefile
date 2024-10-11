@@ -1,0 +1,70 @@
+#!/bin/bash
+
+function usage {
+  echo "Usage: $(basename $0) [options] file"
+  echo ""
+  echo "Options:"
+  echo "  --help          Show this help message and exit"
+  echo ""
+  echo "Description:"
+  echo "  This script creates a summary of a file. The output format is like this:"
+  echo "---"
+  echo "filename: <filename>"
+  echo "---"
+  echo "# <title>"
+  echo "<1 paragraph summary>"
+  exit 1
+}
+
+if [ "$#" -eq 0 ] || [ "$1" = "--help" ] || [ "$1" = "-h" ] || [ "$1" = "-?" ]; then
+  usage
+fi
+
+# Format of the summary
+# ---
+# filename: <filename>
+# ---
+# # <title>
+# <1 paragraph summary>
+#
+
+file=$1
+if [ -z "$file" ]; then
+  echo "File does $0 FILE"
+  exit 1
+fi
+
+json=$(
+chatgpt -f "$file" -rf <(
+cat <<EOF
+{
+  "\$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "language": {
+      "type": "string"
+    },
+    "TLDR": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    }
+  },
+  "required": ["language", "TLDR", "title"],
+  "additionalProperties": false
+}
+EOF
+) 'Make a one paragraph summary of the file and find out the title of the file or give it an appropriate title. If it is a markdown document with a single level one heading then this is usually the title. Use Determine the language of the file and use that language for your output. Output that as JSON like this: {"language": "the language", "TLDR": "the summary", "title": "the title"}' || exit 1
+)
+
+# echo "$json" # for debugging
+
+processed=$(echo "$json" | jq -r '"# \(.title)\n\n\(.TLDR)"' || exit 1)
+
+echo "---"
+echo "filename: $file"
+echo "---"
+echo "$processed"
+echo
+echo
