@@ -1,0 +1,63 @@
+#!/bin/bash
+
+inputimage="$1"
+
+if [ -z "$inputimage" ]; then
+    echo "OCR of a scan of a A4 image as markdown using chatgpt"
+    echo "Usage: $(basename $0) IMAGE"
+    exit 1
+fi
+
+width=$(identify -format "%w" "$inputimage")
+height=$(identify -format "%h" "$inputimage")
+
+echo "Image dimensions: $width x $height"
+echo "Should be A4 portrait mode!"
+
+# check that height / width is between 1.4 and 1.5
+ratio=$(echo "scale=2; $height / $width" | bc)
+if [ $(echo "$ratio > 1.5" | bc) -eq 1 ] || [ $(echo "$ratio < 1.4" | bc) -eq 1 ]; then
+    echo "The image does not have the correct aspect ratio for A4 portrait mode - it has a ratio of $ratio"
+    exit 1
+fi
+
+# cut the image into 3 stripes, format 1999x767
+
+stripe_height=$((width * 767 / 1999))
+shift=$(( ($height - $stripe_height) / 4 + 1))
+
+for i in {0..4};
+do
+    top=$((i * shift))
+    if [ "$top" -lt 0 ]; then top=0; fi
+
+    bottom=$((i * shift + stripe_height))
+    if [ "$bottom" -gt "$height" ]; then bottom=$height; fi
+
+    output_image="${inputimage}_stripe$((i + 1)).png"
+    magick "$inputimage" -crop "${width}x$((bottom - top))+$((0))+$top" +repage "$output_image"
+    echo "Saved crop ${width}x$((bottom - top))+$((0))+$top to $output_image"
+done
+
+for fil in ${inputimage}_stripe*.png; do
+  chatgpt -i "$fil" -id high "Output the visible part of a text as raw markdown, without any additional comment and without marking it as code block. IMPORTANT: Do not add or remove anything from the text!"
+  echo "============================================================"
+done > "${inputimage}_transcribed_raw.md"
+
+/bin/rm -f ${inputimage}_stripe*.png
+
+# output file without extension, which might be .jpg, .png and so forth
+outputfil="${inputimage%%.*}"
+
+(cat <<EOF
+The input contains transcriptions of 5 parts of a text, which overlap somewhat. The parts
+of the text are separated with "============================================================" .
+Join the parts of the text together so that the overlaps are removed
+and output the result as raw markdown, without any comments and without marking it as code block.
+EOF
+) | chatgpt -f "${inputimage}_transcribed_raw.md" - > ${outputfil}.md
+
+/bin/rm -f "${inputimage}_transcribed_raw.md"
+echo "Removed temporary files including ${inputimage}_transcribed_raw.md"
+
+echo "Wrote recognized text to ${outputfil}.md"
