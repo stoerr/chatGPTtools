@@ -44,8 +44,6 @@ for fil in ${inputimage}_stripe*.png; do
   echo "============================================================"
 done > "${inputimage}_transcribed_raw.md"
 
-/bin/rm -f ${inputimage}_stripe*.png
-
 # output file without extension, which might be .jpg, .png and so forth
 outputfil="${inputimage%%.*}"
 
@@ -57,6 +55,7 @@ and output the result as raw markdown, without any comments and without marking 
 EOF
 ) | chatgpt -f "${inputimage}_transcribed_raw.md" - > ${outputfil}.md
 
+/bin/rm -f "${inputimage}_stripe*.png"
 /bin/rm -f "${inputimage}_transcribed_raw.md"
 echo "Removed temporary files including ${inputimage}_transcribed_raw.md"
 
