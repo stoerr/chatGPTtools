@@ -64,8 +64,10 @@ const stopRecording = async (event, e1, e2) => {
             let value = document.getElementById('dictation-language').value;
             if (value) formData.append('language', value);
             // Create a prompt from the existing text to guide the transcription
-            const textBefore = textarea.substring(0, cursorPosition);
-            const textAfter = textarea.substring(cursorPosition);
+            let cursorPosition = document.activeElement === textarea ? textarea.selectionStart : lastPosition;
+            let textAreaValue = textarea.value || '';
+            const textBefore = textAreaValue.substring(0, cursorPosition);
+            const textAfter = textAreaValue.substring(cursorPosition);
             var promptText = '';
             if (textAfter) promptText = '... ' + textAfter + '\n\n' + '-'.repeat(80) + '\n\n';
             if (textBefore) promptText = textBefore;
