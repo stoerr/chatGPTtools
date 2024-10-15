@@ -69,6 +69,6 @@ sox $tmpwav $nrmwav norm
 echo -n -e "(Transcribing)\\r" > /dev/tty # alert user that the recording has stopped
 
 # Send the audio to chatgpttranscript
-chatgpttranscription -l "$language" -p "$prompt" -o "$output_file" $nrmwav
+chatgpttranscription -t -l "$language" -p "$prompt" -o "$output_file" $nrmwav
 
 echo "                       " > /dev/tty  # override "Transribing" message

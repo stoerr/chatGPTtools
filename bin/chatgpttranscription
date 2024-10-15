@@ -8,6 +8,7 @@ show_usage() {
     echo "  -p  Text to guide the model's style. Optional."
     echo "  -r  Response format of the transcript output. Options: text, vtt, json, srt, verbose_json. Default is 'text'."
     echo "  -o  Output file to write the response to. If not provided, the response will be printed to stdout."
+    echo "  -t  Trim the output - remove any whitespace at beginning and end of the response."
     echo "  -h  Show this help message and exit."
     echo "  <audio_file> The audio file to transcribe."
     exit 1
@@ -20,9 +21,10 @@ show_usage() {
 model="whisper-1"
 response_format="text"
 output_file=""
+trim_output=0
 
 # Parse options
-while getopts ":m:l:p:r:o:h" opt; do
+while getopts ":m:l:p:r:o:th" opt; do
   case $opt in
     m) model="$OPTARG"
     ;;
@@ -104,6 +106,8 @@ curl_command+=" -F 'response_format=$response_format'"
 if [ -n "$output_file" ]; then
     eval "$curl_command" -o "$output_file"
     echo "Response written to $output_file"
+elif [ $trim_output -eq 1 ]; then
+    eval "$curl_command" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
 else
     eval "$curl_command"
 fi
