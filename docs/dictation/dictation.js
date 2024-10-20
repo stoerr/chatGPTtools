@@ -1,5 +1,6 @@
 // Elements
 const textarea = document.getElementById('dictation-textarea');
+const termsarea = document.getElementById('dictation-termsarea');
 const dictateButton = document.getElementById('dictation-dictate');
 const helpButton = document.getElementById('dictation-help');
 
@@ -66,12 +67,14 @@ const stopRecording = async (event, e1, e2) => {
             // Create a prompt from the existing text to guide the transcription
             let cursorPosition = document.activeElement === textarea ? textarea.selectionStart : lastPosition;
             let textAreaValue = textarea.value || '';
+            let termsAreaValue = termsarea.value;
             const textBefore = textAreaValue.substring(0, cursorPosition);
             const textAfter = textAreaValue.substring(cursorPosition);
             var promptText = '';
             if (textAfter) promptText = '... ' + textAfter + '\n\n' + '-'.repeat(80) + '\n\n';
+            if (termsAreaValue) promptText += termsAreaValue + '\n\n' + '-'.repeat(80) + '\n\n';
             if (textBefore) promptText = textBefore;
-            if (promptText) formData.append('prompt', promptText);
+            if (promptText) formData.append('prompt', promptText + ' ');
 
             const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
                 method: 'POST',
@@ -150,7 +153,9 @@ function resizeTextarea() {
     const footerHeight = document.querySelector('.card-footer').offsetHeight;
     const viewportHeight = window.innerHeight;
     const offset = headerHeight + footerHeight + document.querySelector('.card-footer').offsetHeight; // Correct offset calculation
-    textarea.style.height = `${viewportHeight - offset}px`;
+    const areasheight = viewportHeight - offset;
+    textarea.style.height = `${areasheight * 9 / 10}px`;
+    termsarea.style.height = `${areasheight / 10}px`;
 }
 
 window.addEventListener('resize', resizeTextarea);
