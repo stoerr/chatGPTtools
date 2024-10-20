@@ -15,11 +15,16 @@ let openaiAPIKey;
 let lastTexts = [];
 let lastPosition;
 
+const storage_api_key = 'openai_api_key';
+const storage_relevant_terms = 'net-stoerr-chatgpt-dictation-relevant-terms';
+
+if (!termsarea.value) termsarea.value = localStorage.getItem(storage_relevant_terms) || '';
+
 const getOpenAIKey = () => {
-    openaiAPIKey = localStorage.getItem('openai_api_key');
+    openaiAPIKey = localStorage.getItem(storage_api_key);
     if (!openaiAPIKey) {
         openaiAPIKey = prompt('Enter OpenAI API Key:', '');
-        if (openaiAPIKey) localStorage.setItem('openai_api_key', openaiAPIKey);
+        if (openaiAPIKey) localStorage.setItem(storage_api_key, openaiAPIKey);
     }
     return openaiAPIKey;
 
@@ -68,6 +73,7 @@ const stopRecording = async (event, e1, e2) => {
             let cursorPosition = document.activeElement === textarea ? textarea.selectionStart : lastPosition;
             let textAreaValue = textarea.value || '';
             let termsAreaValue = termsarea.value;
+            if (termsAreaValue) localStorage.setItem(storage_relevant_terms, termsAreaValue);
             const textBefore = textAreaValue.substring(0, cursorPosition);
             const textAfter = textAreaValue.substring(cursorPosition);
             var promptText = '';
