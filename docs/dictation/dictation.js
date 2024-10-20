@@ -117,7 +117,7 @@ const insertResult = (data) => {
     let value = textarea.value || '';
     const textBefore = value.substring(0, cursorPosition);
     const textAfter = value.substring(cursorPosition);
-    textarea.value = `${textBefore}${/\s$/.test(textBefore) ? '' : ' '}${data.text}${/^\s/.test(textAfter) ? '' : ' '}${textAfter}`;
+    textarea.value = `${textBefore}${/\s$/.test(textBefore) || !textBefore ? '' : ' '}${data.text}${/^\s/.test(textAfter) ? '' : ' '}${textAfter}`;
     // set the cursor position just after the inserted text . Observe the possibly inserted space after textBefore, and before textAfter
     textarea.selectionStart = cursorPosition + (/\s$/.test(textBefore) ? 0 : 1) + data.text.length + (/^\s/.test(textAfter) ? 0 : 1);
     textarea.selectionEnd = textarea.selectionStart;
