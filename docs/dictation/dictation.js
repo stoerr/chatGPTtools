@@ -73,8 +73,9 @@ const stopRecording = async (event, e1, e2) => {
             var promptText = '';
             if (textAfter) promptText = '... ' + textAfter + '\n\n' + '-'.repeat(80) + '\n\n';
             if (termsAreaValue) promptText += termsAreaValue + '\n\n' + '-'.repeat(80) + '\n\n';
+            promptText += ' ';
             if (textBefore) promptText = textBefore;
-            if (promptText) formData.append('prompt', promptText + ' ');
+            if (promptText) formData.append('prompt', promptText);
 
             const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
                 method: 'POST',
