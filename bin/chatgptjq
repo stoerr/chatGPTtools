@@ -32,9 +32,8 @@ done
 prompt="$*"
 
 jqgenerateprompt=$(cat << EOF
-Based on the printed JSON snippet and the desired query, write a jq program
-
-Return only the jq program to be executed as a raw string, no string delimiters wrapping it, no yapping, no markdown, no fenced code blocks, what you return will be passed as filter argument to jq directly. For example, if the user asks: extract the name of the first person You return only: .people[0].name
+Based on the printed JSON snippet and the desired query, write a jq program.
+Print as JSON the query as you understand it, then explain how you would extract the desired information, and as last item print the jq filter.
 EOF
 )
 
@@ -49,14 +48,22 @@ if [ "$?" -ne 0 ]; then
 fi
 
 # generate the jq command
-jqcmd=$(head -c 1000 $tmpfil | chatgpt $verbose -f - -s "$jqgenerateprompt" "$prompt")
+jqcmd=$(head -c 1000 $tmpfil | chatgpt $verbose -f - -ra queryasunderstood,explanation,jqfilter -s "$jqgenerateprompt" "$prompt")
 if [ "$?" -ne 0 ]; then
   echo "Error generating jq command"
   exit 1
 fi
+# that looks like
+# {"queryasunderstood":"Create a jq filter to count issues by user login and display the top 3.","explanation":"This filter processes the input JSON array to group issues by user login, counts the occurrences of each login, sorts them in descending order, and picks the top 3.","jqfilter":"map(.user.login) | group_by(.) | map({login: .[0], count: length}) | sort_by(-.count) | .[:3]"}
+
+queryasunderstood=$(echo $jqcmd | jq -r .queryasunderstood)
+explanation=$(echo $jqcmd | jq -r .explanation)
+jqcmd=$(echo $jqcmd | jq -r .jqfilter)
 
 if [ "$silent" = false ]; then
-  echo "jq $jqcmd"
+  echo "Query as understood: $queryasunderstood"
+  echo "Explanation: $explanation"
+  echo "jq command: $jqcmd"
 fi
 
 # run the jq command
