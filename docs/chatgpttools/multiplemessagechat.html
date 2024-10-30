@@ -27,6 +27,7 @@
                     <option value="system">System</option>
                     <option value="user">User</option>
                     <option value="assistant">Assistant</option>
+                    <option value="tool">Tool</option>
                 </select>
                 <a href="#row-2" class="row-up">
                     <i class="fa fa-arrow-up" style="color: white"></i>
@@ -201,7 +202,7 @@
         const rowNumber = $('.row').length;
         row.attr('id', 'row-' + rowNumber);
         row.find('.type').val(type);
-        row.find('.message').val(message.trim());
+        row.find('.message').val(typeof message === 'object' ? JSON.stringify(message) : message.trim());
         row.appendTo('div.messages');
         row.find('a.row-up').attr('href', '#row-' + (rowNumber - 1));
         row.find('a.row-down').attr('href', '#row-' + (rowNumber + 1));
@@ -452,7 +453,12 @@
     function importJson() {
         var json = $('#json').val();
         if (json) {
-            var request = JSON.parse(json);
+            var request;
+            try {
+                request = JSON.parse(json);
+            } catch (e) {
+                request = JSON.parse(json.split(/\r?\n/).map(line => line.trim()).join(''));
+            }
             var messages = request;
             if (request && request.messages) {
                 messages = request.messages;
@@ -476,7 +482,7 @@
                     $('#row-1').find('.message').val("");
                 }
                 first = false;
-                addRow(message.role, message.content);
+                addRow(message.role, message.content || message['tool_calls']);
             }
             adjustTextAreas();
             removeEmptyMessages();
