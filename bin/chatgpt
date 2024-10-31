@@ -29,6 +29,9 @@ Input Options:
   -i imagefile    Includes the given image file as [i]mage, together with the filename. Can be given multiple times.
   -iu imageurl    Includes the given [i]mage [u]rl as image, together with the url. Can be given multiple times.
   -id detaillevel Sets the image [d]etail level. Can be 'low', 'high', or 'auto'. Default is 'auto'.
+  -a audiofile    Includes the given audio file as [a]udio. Can be given multiple times.
+  -au audiourl    Includes the given [a]udio [u]rl as audio. Can be given multiple times.
+  -af format      Sets the audio [f]ormat, if not obvious from the file name or url. Can be 'mp3', 'wav'. Default is 'mp3'.
   
 Prompt Options:
   -p prefix       Prefix the [p]rompt with a string.
@@ -60,7 +63,7 @@ Request Settings etc.:
   -t number       Set max [t]okens for response (default: no limit)
   -v              [V]erbose output : prints the sent and received json message to stderr and gives info about connection retries
   -w column       [W]ord wrap the response to a specified column width using fmt.
-  -a              [A]bbreviate ("clip") the message in the middle if it's too long for the model context window
+  -abbrev         [Abbrev]iate ("clip") the message in the middle if it's too long for the model context window
   -api url        Use this URL instead of the OpenAI chat completion [API] (e.g. for local LLM or OpenAI compatible APIs)
   -o key=value    Other [o]ptions, e.g. for the OpenAI API -o temperature=0.5 . Can be given multiple times.
   -of key=file    Other [o]ptions read from a json [f]ile, e.g. for the OpenAI API tools. Can be given multiple times.
@@ -116,8 +119,8 @@ let imageUrls = [];
 let detailparam = 'auto';
 let abbreviateMiddle = false;
 let helpaimode = false;
-let audioPrefix = false;
-let audioSuffix = false;
+let dictatedPrefix = false;
+let dictatedSuffix = false;
 let conversationFile = undefined;
 let conversationLoad = undefined;
 let conversationPrint = false;
@@ -129,6 +132,9 @@ let toolsConfigFile = undefined;
 let tools = undefined;
 let conversationLoopWithReadline = false;
 let conversationLoopWithDictate = false;
+let audioFiles = [];
+let audioUrls = [];
+let audioFormat = undefined;
 
 function getConversationDir() {
     const conversationDir = `${process.env.HOME}/.chatgpt/conversations`;
@@ -234,12 +240,21 @@ for (let i = 2; i < process.argv.length; i++) {
         } else if (arg === '-id' && process.argv[i + 1]) {
             detailparam = process.argv[i + 1];
             i++;
-        } else if (arg === '-a') {
+        } else if (arg === '-a' && process.argv[i + 1]) {
+            audioFiles.push(process.argv[i + 1]);
+            i++;
+        } else if (arg === '-au' && process.argv[i + 1]) {
+            audioUrls.push(process.argv[i + 1]);
+            i++;
+        } else if (arg === '-af' && process.argv[i + 1]) {
+            audioFormat = process.argv[i + 1];
+            i++;
+        } else if (arg === '-abbrev') {
             abbreviateMiddle = true;
         } else if (arg === '-pa') {
-            audioPrefix = true;
+            dictatedPrefix = true;
         } else if (arg === '-ua') {
-            audioSuffix = true;
+            dictatedSuffix = true;
         } else if (arg === '-cf' && process.argv[i + 1]) {
             conversationFile = process.argv[i + 1];
             i++;
@@ -421,7 +436,7 @@ function dictatePrompt(waitKey = false) {
     return execSync('chatgptdictate' + args, {encoding: 'utf8', stdio: ['inherit', 'pipe', 'pipe']});
 }
 
-if (audioPrefix) {
+if (dictatedPrefix) {
     const audioPrefix = dictatePrompt();
     if (audioPrefix) {
         console.log('Dicated prompt: ' + audioPrefix.trim());
@@ -429,7 +444,7 @@ if (audioPrefix) {
     }
 }
 
-if (audioSuffix) {
+if (dictatedSuffix) {
     const audioSuffix = dictatePrompt();
     if (audioSuffix) {
         console.log('Dictated prompt suffix: ' + audioSuffix.trim());
@@ -452,17 +467,17 @@ if (verbose) {
 
 function addFirstMessage(firstPrompt) {
     let content = firstPrompt;
-
-    if (imageFiles.length > 0 || imageUrls.length > 0) {
-        if (model === 'gpt-3.5-turbo') { // has no vision.
-            model = 'gpt-4o-mini';
-        }
+    // if there is an image or audio input, turn content into an array
+    if (imageFiles.length > 0 || imageUrls.length > 0 || audioFiles.length > 0 || audioUrls.length > 0) {
         content = [
             {
                 "type": "text",
                 "text": firstPrompt
             }
         ];
+    }
+
+    if (imageFiles.length > 0 || imageUrls.length > 0) {
         for (let i = 0; i < imageFiles.length; i++) {
             const imageFile = imageFiles[i];
 
@@ -490,6 +505,30 @@ function addFirstMessage(firstPrompt) {
                 "type": "image_url",
                 "image_url": {
                     "url": imageUrl
+                }
+            });
+        }
+    }
+
+    if (audioFiles.length > 0 || audioUrls.length > 0) {
+        for (let i = 0; i < audioFiles.length; i++) {
+            const audioFile = audioFiles[i];
+            const audioFileContent = fs.readFileSync(resolveFile(audioFile), 'base64');
+            content.push({
+                "type": "input_audio",
+                "input_audio": {
+                    "data": audioFileContent,
+                    "format": audioFormat || path.extname(audioFile).slice(1) || 'mp3'
+                }
+            });
+        }
+        for (let i = 0; i < audioUrls.length; i++) {
+            const audioUrl = audioUrls[i];
+            content.push({
+                "type": "audio",
+                "audio": {
+                    "url": audioUrl,
+                    "format": audioFormat || path.extname(audioUrl).slice(1)
                 }
             });
         }

@@ -2,11 +2,9 @@
 
 Check out competitors, e.g. https://gamma.app/
 ## Next plans:
+- https://simonwillison.net/2024/Oct/18/openai-audio/
 - bookmarklet: add existing answer as context.
-- multichat: if import fails, remove newlines and try again.
 - quick thing: possibly -fu retrieve URLs in chatgpt (though that can be done with curl | chatgpt).
-- functions into multiplemessagechat
-- functions into chatgpt
 - tool to create function description from example (?)
 - Statistiken zu Token / Wort : https://platform.openai.com/tokenizer
 - automatic translation of my webpages
