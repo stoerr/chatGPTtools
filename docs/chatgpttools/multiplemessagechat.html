@@ -27,6 +27,7 @@
                     <option value="system">System</option>
                     <option value="user">User</option>
                     <option value="assistant">Assistant</option>
+                    <option value="toolscalls">Call Tools</option>
                     <option value="tool">Tool</option>
                 </select>
                 <a href="#row-2" class="row-up">
@@ -105,6 +106,15 @@
             </div>
             <div class="col-sm-10">
                 <textarea class="form-control" id="json" rows="3"></textarea>
+            </div>
+        </div>
+        <!-- Added tools textarea -->
+        <div class="row mt-3">
+            <div class="col-sm-2">
+                <label for="tools">Tools:</label>
+            </div>
+            <div class="col-sm-10">
+                <textarea class="form-control" id="tools" rows="5"></textarea>
             </div>
         </div>
     </div>
@@ -197,12 +207,23 @@
     }
 
     /** Adds a new row to the chat. The id row-1 is replaced by row, followed by the number of the row In the select 'type' the given type is preselected. */
-    function addRow(type, message) {
+    function addRow(type, messageObj) {
         const row = $('#row-1').clone();
         const rowNumber = $('.row').length;
         row.attr('id', 'row-' + rowNumber);
         row.find('.type').val(type);
-        row.find('.message').val(typeof message === 'object' ? JSON.stringify(message) : message.trim());
+
+        let messageText;
+        if (typeof messageObj === 'object' && (Object.keys(messageObj).length > 2 || !messageObj.content)) {
+            // Exclude the 'role' field when serializing
+            const { role, ...rest } = messageObj;
+            messageText = JSON.stringify(rest, null, 2);
+        } else if (messageObj && messageObj.content) {
+            messageText = messageObj.content;
+        } else {
+            messageText = messageObj;
+        }
+        row.find('.message').val(messageText);
         row.appendTo('div.messages');
         row.find('a.row-up').attr('href', '#row-' + (rowNumber - 1));
         row.find('a.row-down').attr('href', '#row-' + (rowNumber + 1));
@@ -252,7 +273,11 @@
                 }
             }
 
-            var request = {model: document.getElementById("modelSelector").value, messages: messages}
+            var request = {
+                model: document.getElementById("modelSelector").value,
+                messages: messages
+            };
+
             // add the input fields temperature , max_tokens and n to the request, if they are not empty, but converted to numbers.
             var temperature = $('#temperature').val();
             if (temperature) {
@@ -273,6 +298,13 @@
                     return false;
                 }
                 request.response_format = {"type": "json_object"};
+            }
+            if ($('#tools').val()) {
+                try {
+                    request.tools = JSON.parse($('#tools').val());
+                } catch (e) {
+                    alert('Invalid JSON in tools field');
+                }
             }
 
             return $.ajax({
@@ -320,9 +352,21 @@
         var messages = [];
         $('.row').each(function (index, row) {
             var type = $(row).find('.type').val();
-            var message = $(row).find('.message').val();
-            if (type && message) {
-                messages.push({"role": type, "content": message});
+            if (type == 'toolscalls') type='assistant';
+            var messageText = $(row).find('.message').val();
+            if (type && messageText) {
+                var message;
+                try {
+                    message = JSON.parse(messageText);
+                    if (typeof message === 'object') {
+                        message.role = type;
+                    } else {
+                        message = {"role": type, "content": messageText};
+                    }
+                } catch (e) {
+                    message = {"role": type, "content": messageText};
+                }
+                messages.push(message);
             }
         });
         removeEmptyMessages();
@@ -459,33 +503,35 @@
             } catch (e) {
                 request = JSON.parse(json.split(/\r?\n/).map(line => line.trim()).join(''));
             }
-            var messages = request;
+
             if (request && request.messages) {
-                messages = request.messages;
                 if (request.model) {
                     $('#modelSelector').val(request.model);
                 }
                 if (request["max_tokens"]) {
                     $('#max_tokens').val(request["max_tokens"]);
                 }
-            }
-            reset(" ");
-            var first = true;
-            for (const message of messages) {
-                if (first) {
-                    first = false;
-                    if (message.role === 'system') {
-                        // set #row-1 to the message content
+                if (request.tools) {
+                    $('#tools').val(JSON.stringify(request.tools, null, 2));
+                }
+                reset(" ");
+                var first = true;
+                for (const message of request.messages) {
+                    if (first && message.role === 'system') {
                         $('#row-1').find('.message').val(message.content);
+                        first = false;
                         continue;
                     }
-                    $('#row-1').find('.message').val("");
+                    first = false;
+                    if (message.role === 'assistant' && message.tool_calls) {
+                        addRow('toolscalls', message);
+                    } else {
+                        addRow(message.role, message);
+                    }
                 }
-                first = false;
-                addRow(message.role, message.content || message['tool_calls']);
+                adjustTextAreas();
+                removeEmptyMessages();
             }
-            adjustTextAreas();
-            removeEmptyMessages();
         }
     }
 
@@ -493,12 +539,39 @@
         var messages = [];
         $('.row').each(function (index, row) {
             var type = $(row).find('.type').val();
-            var message = $(row).find('.message').val();
-            if (type && message && message.trim()) {
-                messages.push({"role": type, "content": message});
+            var messageText = $(row).find('.message').val();
+            if (type && messageText && messageText.trim()) {
+                var message;
+                try {
+                    message = JSON.parse(messageText);
+                    if (typeof message === 'object') {
+                        message.role = type === 'toolscalls' ? 'assistant' : type;
+                    } else {
+                        message = {"role": type === 'toolscalls' ? 'assistant' : type, "content": messageText};
+                    }
+                } catch (e) {
+                    message = {"role": type === 'toolscalls' ? 'assistant' : type, "content": messageText};
+                }
+                messages.push(message);
             }
         });
-        $('#json').val(JSON.stringify(messages));
+
+        var request = {
+            model: $('#modelSelector').val(),
+            messages: messages
+        };
+
+        if ($('#max_tokens').val()) {
+            request.max_tokens = Number($('#max_tokens').val());
+        }
+        if ($('#tools').val()) {
+            try {
+                request.tools = JSON.parse($('#tools').val());
+            } catch (e) {
+                alert('Invalid JSON in tools field');
+            }
+        }
+        $('#json').val(JSON.stringify(request, null, 2));
     }
 
 
