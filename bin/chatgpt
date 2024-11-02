@@ -59,7 +59,7 @@ Conversation Options: (only 1 turn per call ${programname} except with -cr/ca; t
 
 Request Settings etc.:
   -m modelname    Use a specific [m]odel (default: ${model})
-  -mh             Use the [m]odel with - the time of updating this script - [h]ighest intelligence ("gpt-4o")
+  -mh             Use the [m]odel with - the time of updating this script - [h]ighest general intelligence ("gpt-4o")
   -t number       Set max [t]okens for response (default: no limit)
   -v              [V]erbose output : prints the sent and received json message to stderr and gives info about connection retries
   -w column       [W]ord wrap the response to a specified column width using fmt.
@@ -73,7 +73,9 @@ Response Options:
   -rj             [R]esponse mode JSON: model outputs a JSON object
   -rf schemafile  Structured output: requests that the [r]esponse conforms to the given JSON schema read from a [f]ile.
   -ra attr1,...   Structured output [r]esponse - JSON with [a]ttributes: comma separated list of attributes to include in the JSON response. 
-                  Alternative to -rf - uses simple schema with these attributes as string properties. 
+                  Alternative to -rf - creates a simple schema with these attributes as string properties.
+  -rar attr1,...  Structured output for JSON [r]esponse [ar]ray of objects with the given attributes - e.g. for extracting
+                  a list of entities from an input. Alternative to -rf and -ra , all are string properties.             
 
 Tooling options:
   -tf configfile  Use the given file as [t]ools configuration [f]ile for tools the LLM could use.
@@ -128,6 +130,7 @@ let openAIOptions = {};
 let jsonMode = false;
 let responseSchemaFile = undefined;
 let responseAttributes = undefined;
+let responseArrayAttributes = undefined;
 let toolsConfigFile = undefined;
 let tools = undefined;
 let conversationLoopWithReadline = false;
@@ -304,6 +307,10 @@ for (let i = 2; i < process.argv.length; i++) {
             i++;
         } else if (arg === '-ra' && process.argv[i + 1]) {
             responseAttributes = process.argv[i + 1].split(',');
+            jsonMode = true;
+            i++;
+        } else if (arg === '-rar' && process.argv[i + 1]) {
+            responseArrayAttributes = process.argv[i + 1].split(',');
             jsonMode = true;
             i++;
         } else if (arg === '-tf' && process.argv[i + 1]) {
@@ -562,27 +569,26 @@ if (jsonMode) {
     requestData.response_format = {"type": "json_object"};
 }
 
-if (responseSchemaFile && responseAttributes) {
-    console.error('Error: Cannot use both -rf and -ra');
+// if it's two of responseSchemaFile, responseAttributes, responseArrayAttributes, we have a conflict
+if ((responseSchemaFile && responseAttributes) || (responseSchemaFile && responseArrayAttributes) ||
+    (responseAttributes && responseArrayAttributes)) {
+    console.error('Error: Cannot use more than one of -rf, -ra and -rar');
     process.exit(1);
 }
 
+let schema = undefined;
+
 if (responseSchemaFile) { // see https://platform.openai.com/docs/guides/structured-outputs/introduction
-    const jsonschema = JSON.parse(fs.readFileSync(resolveFile(responseSchemaFile), 'utf8'));
-    let schema = jsonschema; // OpenAI schema description https://platform.openai.com/docs/api-reference/chat/create
-    if (jsonschema.name) { // we assume this is is an OpenAI description
-        // with name, possibly description, schema, strict
-        schema = jsonschema;
-    } else { // we assume this is a JSON schema
-        schema = {name: "responseschema", schema: jsonschema, strict: true};
+    schema = JSON.parse(fs.readFileSync(resolveFile(responseSchemaFile), 'utf8'));
+    // OpenAI schema description https://platform.openai.com/docs/api-reference/chat/create
+    if (!schema.name) { // if there is a name we assume this is already an OpenAI description
+        schema = {name: "responseschema", schema: schema, strict: true};
     }
-    requestData.response_format = {"type": "json_schema", "json_schema": schema};
 }
 
 if (responseAttributes) {
     // create a JSON schema for a simple object that includes exactly those attributes as properties
-    const schema = {
-        "$schema": "http://json-schema.org/draft-07/schema#",
+    schema = {
         "type": "object",
         "properties": {},
         "required": responseAttributes,
@@ -591,9 +597,39 @@ if (responseAttributes) {
     for (const attribute of responseAttributes) {
         schema.properties[attribute] = {"type": "string"};
     }
+    schema = {name: "responseschema", schema: schema, strict: true};
+}
+
+if (responseArrayAttributes) {
+    // similar to responseAttributes, but for a list; we wrap that into {data:[...]} since OpenAI doesn't support plain arrays yet
+    // for attributes foo,bar the response would be e.g. {data:[{foo:"hi", bar:"ho"},{foo:"hu", bar:"heu"}]}
+    schema = {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": ["data"],
+      "additionalProperties": false
+    }
+    for (const attribute of responseArrayAttributes) {
+        schema.properties.data.items.properties[attribute] = {"type": "string"};
+        schema.properties.data.items.required.push(attribute);
+    }
+    schema = {name: "responseschema", schema: schema, strict: true};
+}
+
+if (schema) {
     requestData.response_format = {
         "type": "json_schema",
-        "json_schema": {name: "responseschema", schema: schema, strict: true}
+        "json_schema": schema
     };
 }
 
@@ -745,6 +781,9 @@ function onContent(assistantMessage) {
         process.exit(7);
     }
     writeConversation();
+    if (responseArrayAttributes) { // parse as JSON, unwrap {data:[]} to the actual array and print that
+        output = JSON.stringify(JSON.parse(output).data);
+    }
     if (wordWrapColumn) {
         const fmt = spawnSync('fmt', ['-w', wordWrapColumn, '-p'], {input: output, encoding: 'utf8'});
         if (fmt.error) {
@@ -830,7 +869,7 @@ function readMessageAndContine(continuecallback) {
     }).on('SIGINT', () => {
         process.exit(130);
     }).on('close', () => {
-        console.log();
+        console.log('(processing)');
         continuecallback(inputBuffer);
     });
     rl.prompt();
