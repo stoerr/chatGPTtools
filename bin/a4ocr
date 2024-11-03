@@ -1,11 +1,17 @@
 #!/bin/bash
 
+function usage() {
+  cat <<EOF
+OCR of a scan of a A4 image as markdown using chatgpt
+Usage: $(basename $0) IMAGE
+EOF
+  exit 1
+}
+
 inputimage="$1"
 
-if [ -z "$inputimage" ]; then
-    echo "OCR of a scan of a A4 image as markdown using chatgpt"
-    echo "Usage: $(basename $0) IMAGE"
-    exit 1
+if [ "$#" -eq 0 ] || [ "$1" = "--help" ] || [ -z "$inputimage" ]; then
+  usage
 fi
 
 width=$(identify -format "%w" "$inputimage")

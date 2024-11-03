@@ -13,7 +13,7 @@ print_help() {
   echo "  filepath             Path of the file to be modified"
   echo "  prompt               Prompt to send to ChatGPT"
   echo ""
-  echo "Descrpition:"
+  echo "Description:"
   echo "The script calls ChatGPT with the given file and prompt, extracts a code block from the output, and creates a new file with the changes. It then displays the differences between the original and the new file using 'idea diff'."
 }
 
