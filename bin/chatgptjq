@@ -35,8 +35,9 @@ done
 prompt="$*"
 
 jqgenerateprompt=$(cat << EOF
-Based on the printed JSON snippet and the desired query, write a jq program.
-Print as JSON the query as you understand it, then explain how you would extract the desired information, and as last item print the jq filter.
+Based on the printed JSON snippet and the desired query, print jq arguments that fulfill that query.
+Print as JSON the query as you understand it, then explain how you would extract the desired information,
+and as last item print the arguments for jq - e.g. ["-r", "sort_by(.name)[] | .name"]. Do not additionally quote the arguments.
 EOF
 )
 
@@ -56,26 +57,30 @@ else
 fi
 
 # generate the jq command
-jqcmd=$(head -c 1000 $jsonfile | chatgpt $verbose -f - -ra queryasunderstood,explanation,jqfilter -s "$jqgenerateprompt" "$prompt")
+jqcmd=$(head -c 1000 $jsonfile | chatgpt $verbose -f - -ra queryasunderstood,explanation,a:jqargs -s "$jqgenerateprompt" "$prompt")
 if [ "$?" -ne 0 ]; then
   echo "Error generating jq command"
   exit 1
 fi
 # that looks like
-# {"queryasunderstood":"Create a jq filter to count issues by user login and display the top 3.","explanation":"This filter processes the input JSON array to group issues by user login, counts the occurrences of each login, sorts them in descending order, and picks the top 3.","jqfilter":"map(.user.login) | group_by(.) | map({login: .[0], count: length}) | sort_by(-.count) | .[:3]"}
+# {"queryasunderstood":"Create a jq filter to count issues by user login and display the top 3.","explanation":"This filter processes the input JSON array to group issues by user login, counts the occurrences of each login, sorts them in descending order, and picks the top 3.","jqargs":["-r", "map(.user.login) | group_by(.) | map({login: .[0], count: length}) | sort_by(-.count) | .[:3]"]}
 
 queryasunderstood=$(echo $jqcmd | jq -r .queryasunderstood)
 explanation=$(echo $jqcmd | jq -r .explanation)
-jqcmd=$(echo $jqcmd | jq -r .jqfilter)
+jqargs=()
+while read -r line; do
+  # echo line $line
+  jqargs+=("$line")
+done < <(echo $jqcmd | jq -r .jqargs[])
 
 if [ "$silent" = false ]; then
   echo "Query as understood: $queryasunderstood"
   echo "Explanation: $explanation"
-  echo "jq command: $jqcmd"
+  echo "jq command: " "$(echo $jqcmd | jq -c .jqargs)"
 fi
 
 # run the jq command
-jq "$jqcmd" $jsonfile
+jq -r "${jqargs[@]}" $jsonfile
 result=$?
 if [ "$result" -ne 0 ]; then
   echo "Error $result running jq command"
