@@ -73,9 +73,11 @@ Response Options:
   -rj             [R]esponse mode JSON: model outputs a JSON object
   -rf schemafile  Structured output: requests that the [r]esponse conforms to the given JSON schema read from a [f]ile.
   -ra attr1,...   Structured output [r]esponse - JSON with [a]ttributes: comma separated list of attributes to include in the JSON response. 
-                  Alternative to -rf - creates a simple schema with these attributes as string properties.
+                  Alternative to -rf - creates a simple schema with these attributes. By default they are strings;
+                  if you add a prefix "a:" it'll be an array of strings, "i:" and integer, "n:" a number, "b:" a boolean.
+                  Can be joined: "a:i:foo" is an array of integers.
   -rar attr1,...  Structured output for JSON [r]esponse [ar]ray of objects with the given attributes - e.g. for extracting
-                  a list of entities from an input. Alternative to -rf and -ra , all are string properties.             
+                  a list of entities from an input. Alternative to -rf and -ra , all are string properties or other, see -ra.          
 
 Tooling options:
   -tf configfile  Use the given file as [t]ools configuration [f]ile for tools the LLM could use.
@@ -597,11 +599,13 @@ if (responseAttributes) {
     schema = {
         "type": "object",
         "properties": {},
-        "required": responseAttributes,
+        "required": [],
         "additionalProperties": false
     };
     for (const attribute of responseAttributes) {
-        schema.properties[attribute] = {"type": "string"};
+        [attrname, typeentry] = parseAttributeName(attribute);
+        schema.properties[attrname] = typeentry;
+        schema.required.push(attrname);
     }
     schema = {name: "responseschema", schema: schema, strict: true};
 }
@@ -626,10 +630,28 @@ if (responseArrayAttributes) {
         "additionalProperties": false
     }
     for (const attribute of responseArrayAttributes) {
-        schema.properties.data.items.properties[attribute] = {"type": "string"};
-        schema.properties.data.items.required.push(attribute);
+        [attrname, typeentry] = parseAttributeName(attribute);
+        schema.properties.data.items.properties[attrname] = typeentry;
+        schema.properties.data.items.required.push(attrname);
     }
     schema = {name: "responseschema", schema: schema, strict: true};
+}
+
+/** Parses the prefixes a:, n:, i: of attributes and creates appropriate json schema entries like {"type": "string"}. */
+function parseAttributeName(attribute) {
+    if (attribute.startsWith("s:")) {
+        return [attribute.slice(2), {"type": "string"}];
+    } else if (attribute.startsWith("i:")) {
+        return [attribute.slice(2), {"type": "integer"}];
+    } else if (attribute.startsWith("n:")) {
+        return [attribute.slice(2), {"type": "number"}];
+    } else if (attribute.startsWith("b:")) {
+        return [attribute.slice(2), {"type": "boolean"}];
+    } else if (attribute.startsWith("a:")) {
+        [entryname, entrytype] = parseAttributeName(attribute.slice(2));
+        return [entryname, {"type": "array", "items": entrytype}];
+    }
+    return [attribute, {"type": "string"}];
 }
 
 if (schema) {
@@ -741,11 +763,11 @@ async function requestChatGPT(successcallback, attempt = 1) {
                 abbreviateMessage(body);
                 setTimeout(() => requestChatGPT(successcallback, attempt + 1), 10);
             } else {
-                console.error('Error: Request failed with status', response.status, 'and message', response.statusText, 'and body', body);
+                console.error('Error: Request failed with status', response.status, 'and message', response.statusText, 'and body', body, 'for request body', JSON.stringify(requestData));
                 process.exit(5);
             }
         } else if (!response.ok) {
-            console.error('Error: Request failed with status', response.status, 'and message', response.statusText, 'and body', await response.text());
+            console.error('Error: Request failed with status', response.status, 'and message', response.statusText, 'and body', await response.text(), 'for request body', JSON.stringify(requestData));
             process.exit(5);
         } else {
             const responseData = await response.json();
