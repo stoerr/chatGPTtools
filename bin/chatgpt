@@ -59,7 +59,8 @@ Conversation Options: (only 1 turn per call ${programname} except with -cr/ca; t
 
 Request Settings etc.:
   -m modelname    Use a specific [m]odel (default: ${model})
-  -mh             Use the [m]odel with - the time of updating this script - [h]ighest general intelligence ("gpt-4o")
+  -mh             Use the [m]odel with - at the time of updating this script - [h]ighest general intelligence ("gpt-4o")
+  -md             Use the [m]odel with - at the time of updating this script - best [d]eliberation ("o1-preview")
   -t number       Set max [t]okens for response (default: no limit)
   -v              [V]erbose output : prints the sent and received json message to stderr and gives info about connection retries
   -w column       [W]ord wrap the response to a specified column width using fmt.
@@ -176,6 +177,8 @@ for (let i = 2; i < process.argv.length; i++) {
             i++;
         } else if (arg === '-4' || arg === "-mh") { // -4 for backwards compatibility
             model = 'gpt-4o';
+        } else if (arg === '-md') {
+            model = 'o1-preview';
         } else if (arg === '-t' && process.argv[i + 1]) {
             maxTokens = parseInt(process.argv[i + 1], 10);
             i++;
