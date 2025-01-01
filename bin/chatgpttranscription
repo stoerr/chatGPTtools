@@ -78,6 +78,7 @@ if [ $(wc -c < "$audio_file") -gt 25000000 ]; then
     ffmpeg -i "$audio_file" -vn -map_metadata -1 -ac 1 -c:a libopus -b:a 12k -application voip "$tmpfile"
   fi
   audio_file=$tmpfile
+  ls -l "$audio_file"
 fi
 
 # Read the OpenAI API key
