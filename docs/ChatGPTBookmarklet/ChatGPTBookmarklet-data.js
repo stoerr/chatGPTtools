@@ -47,7 +47,25 @@
                 '\t•\tOutput only in Markdown format.\n' +
                 '\t•\tUse bulleted lists; do not repeat items.\n' +
                 '\t•\tEnsure all sections are completed according to the specific word and item count instructions.',
-            'Haiku': 'Create 3 Haiku that concisely capture the essence and main points of the provided input.'
+            'Haiku': 'Create 3 Haiku that concisely capture the essence and main points of the provided input.',
+            'For LinkDB': 'Fill the following markdown template with the information about the previous text and print the filled template.\n' +
+                'The same placeholders should get the same content. Include both `---` from the example below.\n' +
+                'Do not change the lines with the UNCHANGEABLEDATEPLACEHOLDER and UNCHANGEABLEURLPLACEHOLDER.\n' +
+                'DO NOT print anything else except the template, not even ``` quotes.\n\n' +
+                '---\n' +
+                'filename: {suggested-filename-from-short-title-in-kebab-case-maximal-5-words}\n' +
+                'category: {up to 3 comma separated list of keywords / categories (words) in Title Case. Prefer IEEE taxonomy.}\n' +
+                'url: UNCHANGEABLEURLPLACEHOLDER\ntitle: {title of the webpage, replace : by a dash}\n' +
+                'description: {One sentence description of the webpage}\n' +
+                'date: UNCHANGEABLEDATEPLACEHOLDER\n' +
+                '---\n' +
+                '{important: include the previous line with the --- separator to separate front matter from the content, but remove this comment}\n\n' +
+                '# {title of the webpage}\n\n' +
+                '[UNCHANGEABLEURLPLACEHOLDER](UNCHANGEABLEURLPLACEHOLDER)\n\n' +
+                '## Description\n\n' +
+                '{One sentence description of the webpage}\n\n' +
+                '## Summary\n\n' +
+                '{summary of the content of the webpage, at most three paragraphs}\n\n'
         }
     };
 
