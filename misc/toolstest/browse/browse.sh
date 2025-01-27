@@ -17,5 +17,6 @@ prompt="$*"
 # This actually executes the tools call
 # chatgpt -cr -tf browseconfig.json -cf log.json "$prompt"
 
-chatgpt -cr -tf browseconfig.json "$prompt"
+# chatgpt -cr -tf browseconfig.json -tf ../dup/duplicate.json "$prompt"
 
+chatgpt -tf browseconfig.json -tf ../dup/duplicate.json "read https://www.stoerr.net/contact.html and use tool duplicate to duplicate the text"

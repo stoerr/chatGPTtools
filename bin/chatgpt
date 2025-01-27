@@ -135,8 +135,7 @@ let jsonMode = false;
 let responseSchemaFile = undefined;
 let responseAttributes = undefined;
 let responseArrayAttributes = undefined;
-let toolsConfigFile = undefined;
-let tools = undefined;
+let tools = [];
 let conversationLoopWithReadline = false;
 let conversationLoopWithDictate = false;
 let audioFiles = [];
@@ -320,7 +319,19 @@ for (let i = 2; i < process.argv.length; i++) {
             jsonMode = true;
             i++;
         } else if (arg === '-tf' && process.argv[i + 1]) {
-            toolsConfigFile = process.argv[i + 1];
+            const toolsConfigFile = process.argv[i + 1];
+            const newTools = JSON.parse(fs.readFileSync(resolveFile(toolsConfigFile), 'utf8'));
+            const configfiledir = toolsConfigFile;
+            console.log(configfiledir);
+            if (Array.isArray(newTools)) {
+                for (const tool of newTools) {
+                    tool.cfgfilelocation = configfiledir;
+                }
+                tools = tools.concat(newTools);
+            } else {
+                newTools.cfgfilelocation = configfiledir;
+                tools.push(newTools);
+            }
             i++;
         } else if (arg === '-api' && process.argv[i + 1]) {
             apiURL = process.argv[i + 1];
@@ -342,6 +353,8 @@ for (let i = 2; i < process.argv.length; i++) {
         prompt += ' ' + arg;
     }
 }
+
+console.log(tools)
 
 const headers = {
     'Content-Type': 'application/json'
@@ -664,8 +677,7 @@ if (schema) {
     };
 }
 
-if (toolsConfigFile) {
-    tools = JSON.parse(fs.readFileSync(resolveFile(toolsConfigFile), 'utf8'));
+if (tools.length) {
     requestData.tools = tools.map(tool => ({"type": "function", "function": tool.function}));
 }
 
@@ -850,7 +862,7 @@ function onMessage(assistantMessage) {
                 stdin = stdin.replace('$' + key, value);
             }
         }
-        commandline[0] = resolveScript(commandline[0]);
+        commandline[0] = resolveScript(commandline[0], tool.cfgfilelocation);
         console.error("Calling tool", toolCall.function.name, ': ', commandline.join(' '),
             'with stdin', stdin.length > 300 ? stdin.slice(0, 300) + '...' : stdin);
         const result = spawnSync(commandline[0], commandline.slice(1), {
@@ -869,14 +881,14 @@ function onMessage(assistantMessage) {
     requestChatGPT(onMessage);
 }
 
-function resolveScript(script) {
+function resolveScript(script, cfgfilelocation) {
     if (script.startsWith('/')) {
         return script;
     }
     if (fs.existsSync(script)) {
         return path.resolve(script);
     }
-    const relativeToCmdFile = path.join(path.dirname(toolsConfigFile), script);
+    const relativeToCmdFile = path.join(path.dirname(cfgfilelocation), script);
     if (fs.existsSync(relativeToCmdFile)) {
         return path.resolve(relativeToCmdFile);
     }
@@ -926,7 +938,7 @@ function maybeContinueConversation() {
     }
 }
 
-const mainCallback = toolsConfigFile ? onMessage : onContent;
+const mainCallback = tools.length ? onMessage : onContent;
 
 if (prompt) {
     addFirstMessage(prompt);
