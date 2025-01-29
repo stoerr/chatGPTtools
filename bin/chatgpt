@@ -81,7 +81,9 @@ Response Options:
                   a list of entities from an input. Alternative to -rf and -ra , all are string properties or other, see -ra.          
 
 Tooling options:
-  -tf configfile  Use the given file as [t]ools configuration [f]ile for tools the LLM could use.
+  -tf configfile  Use the given file as [t]ools configuration [f]ile for tools the LLM could use. Can be given multiple times.
+  -ts toolscript  Use the given script as [t]ool [s]cript for the LLM to use. It has to output a tools configuration file 
+                  to stdout when called with parameter --openaitoolsconfig.
 
 Help Options:
   -h, --help      Show this [h]elp message
@@ -322,7 +324,6 @@ for (let i = 2; i < process.argv.length; i++) {
             const toolsConfigFile = process.argv[i + 1];
             const newTools = JSON.parse(fs.readFileSync(resolveFile(toolsConfigFile), 'utf8'));
             const configfiledir = toolsConfigFile;
-            console.log(configfiledir);
             if (Array.isArray(newTools)) {
                 for (const tool of newTools) {
                     tool.cfgfilelocation = configfiledir;
@@ -330,6 +331,20 @@ for (let i = 2; i < process.argv.length; i++) {
                 tools = tools.concat(newTools);
             } else {
                 newTools.cfgfilelocation = configfiledir;
+                tools.push(newTools);
+            }
+            i++;
+        } else if (arg === '-ts' && process.argv[i + 1]) {
+            const toolScript = process.argv[i + 1];
+            const toolsConfig = execSync(`${toolScript} --openaitoolsconfig`, {encoding: 'utf8'});
+            const newTools = JSON.parse(toolsConfig);
+            if (Array.isArray(newTools)) {
+                for (const tool of newTools) {
+                    tool.cfgfilelocation = toolScript;
+                }
+                tools = tools.concat(newTools);
+            } else {
+                newTools.cfgfilelocation = toolScript;
                 tools.push(newTools);
             }
             i++;
@@ -354,7 +369,10 @@ for (let i = 2; i < process.argv.length; i++) {
     }
 }
 
-console.log(tools)
+if (verbose) {
+    console.log('Available tools:');
+    console.log(tools);
+}
 
 const headers = {
     'Content-Type': 'application/json'
