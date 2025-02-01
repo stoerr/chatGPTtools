@@ -10,7 +10,7 @@ EOF
 
 inputimage="$1"
 
-if [ "$#" -eq 0 ] || [ "$1" = "--help" ] || [ -z "$inputimage" ]; then
+if [ "$#" -eq 0 ] || [ "$1" = "--help" ] || [ "$1" = "-h" ] || [ -z "$inputimage" ]; then
   usage
 fi
 

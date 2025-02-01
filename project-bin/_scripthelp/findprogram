@@ -1,0 +1,2 @@
+Usage: findprogram {program description}
+Searches in the PATH for programs that do what the description says.

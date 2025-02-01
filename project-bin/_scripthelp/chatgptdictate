@@ -1,0 +1,9 @@
+  Usage: chatgptdictate [-t time] [-o output_file] [-p prompt] [-l language]
+  This script records audio from the microphone and sends it to chatgpttranscript and outputs it as text.
+  The audio is recorded until a key is pressed, or until the maximum duration is reached.
+    -t     maximum duration in seconds, default is 60 seconds
+    -o     output file to write the response to. If not provided, the response will be printed to stdout.
+    -p     Text to guide the model's style. Optional.
+    -l     code of the input audio. Optional but improves accuracy.
+    -w     wait with recording until a key is pressed. Default is to start recording immediately.
+    -h, --help  Show this help message and exit

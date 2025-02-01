@@ -48,7 +48,8 @@ Conversation Options: (only 1 turn per call chatgpt except with -cr/ca; the conv
 
 Request Settings etc.:
   -m modelname    Use a specific [m]odel (default: gpt-4o-mini)
-  -mh             Use the [m]odel with - the time of updating this script - [h]ighest general intelligence ("gpt-4o")
+  -mh             Use the [m]odel with - at the time of updating this script - [h]ighest general intelligence ("gpt-4o")
+  -md             Use the [m]odel with - at the time of updating this script - best [d]eliberation ("o1-preview")
   -t number       Set max [t]okens for response (default: no limit)
   -v              [V]erbose output : prints the sent and received json message to stderr and gives info about connection retries
   -w column       [W]ord wrap the response to a specified column width using fmt.
@@ -62,12 +63,14 @@ Response Options:
   -rj             [R]esponse mode JSON: model outputs a JSON object
   -rf schemafile  Structured output: requests that the [r]esponse conforms to the given JSON schema read from a [f]ile.
   -ra attr1,...   Structured output [r]esponse - JSON with [a]ttributes: comma separated list of attributes to include in the JSON response. 
-                  Alternative to -rf - creates a simple schema with these attributes as string properties.
+                  Alternative to -rf - creates a simple schema with these attributes. By default they are strings;
+                  if you add a prefix "a:" it'll be an array of strings, "i:" and integer, "n:" a number, "b:" a boolean.
+                  Can be joined: "a:i:foo" is an array of integers.
   -rar attr1,...  Structured output for JSON [r]esponse [ar]ray of objects with the given attributes - e.g. for extracting
-                  a list of entities from an input. Alternative to -rf and -ra , all are string properties.             
+                  a list of entities from an input. Alternative to -rf and -ra , all are string properties or other, see -ra.          
 
 Tooling options:
-  -tf configfile  Use the given file as [t]ools configuration [f]ile for tools the LLM could use.
+  -tf configfile  Use the given file as [t]ools configuration [f]ile for tools the LLM could use. Can be given multiple times.
   -ts toolscript  Use the given script as [t]ool [s]cript for the LLM to use. It has to output a tools configuration file 
                   to stdout when called with parameter --openaitoolsconfig.
 
@@ -90,6 +93,7 @@ From https://github.com/stoerr/chatGPTtools .
 
 
 # chatgptapplytemplate
+/Users/hps/dev/ml/chatgpt/bin/chatgptapplytemplate: line 1: c#!/bin/bash: No such file or directory
 Apply a ChatGPT chat template to a file and print the result ChatGPT returns to stdou
 Usage: /Users/hps/dev/ml/chatgpt/bin/chatgptapplytemplate templateName fileName
        argument 1 is the name of the template file
@@ -185,6 +189,7 @@ Additional options:
   -h, --help, -?: print this help message
   -v, --verbose: print the request sent to the LLM
   -s, --silent: do not print the command run with jq
+  -n, --no-run: print the command line but do not run it.
 
 
 # chatgptlistmodels
@@ -210,7 +215,7 @@ These lines are not included in the output.
 Usage: chatgptsearchascript [options] [task description]
 
 Options:
-  --help          Show this help message and exit
+ -h, --help          Show this help message and exit
 
 Description:
   This script searches for a suitable ChatGPT related command line utility to perform a task
@@ -257,7 +262,7 @@ filename: <filename>
 Usage: chatgptsummarizeurl [options] url
 
 Options:
-  --help          Show this help message and exit
+  -h, --help          Show this help message and exit
 
 Description:
   This script fetches the content of an URL (returning html) and sends a request to summarize the content to ChatGPT.
@@ -342,7 +347,7 @@ Usage: createJavaUnittest [options] [Java file] [optional additional instruction
 Options:
   -f              Overwrite existing test file if it exists
   -y systemmsg    Use the given string as system message (compare -y for chatgpt script)
-  --help          Show this help message and exit
+  -h, --help      Show this help message and exit
 
 Description:
   This script generates a JUnit 4 test for the given Java file using ChatGPT.
@@ -357,7 +362,7 @@ findfilewithpattern - searches for files with IntelliJ style pattern.
 Usage: findfilewithpattern [pattern]
 
 Options:
-    --help          Show this help message and exit
+    -h, --help          Show this help message and exit
 
 Examples:
     findfilewithpattern src/main/**/MyFile*java
@@ -425,7 +430,8 @@ Conversation Options: (only 1 turn per call chatgpt except with -cr/ca; the conv
 
 Request Settings etc.:
   -m modelname    Use a specific [m]odel (default: gpt-4o-mini)
-  -mh             Use the [m]odel with - the time of updating this script - [h]ighest general intelligence ("gpt-4o")
+  -mh             Use the [m]odel with - at the time of updating this script - [h]ighest general intelligence ("gpt-4o")
+  -md             Use the [m]odel with - at the time of updating this script - best [d]eliberation ("o1-preview")
   -t number       Set max [t]okens for response (default: no limit)
   -v              [V]erbose output : prints the sent and received json message to stderr and gives info about connection retries
   -w column       [W]ord wrap the response to a specified column width using fmt.
@@ -439,12 +445,14 @@ Response Options:
   -rj             [R]esponse mode JSON: model outputs a JSON object
   -rf schemafile  Structured output: requests that the [r]esponse conforms to the given JSON schema read from a [f]ile.
   -ra attr1,...   Structured output [r]esponse - JSON with [a]ttributes: comma separated list of attributes to include in the JSON response. 
-                  Alternative to -rf - creates a simple schema with these attributes as string properties.
+                  Alternative to -rf - creates a simple schema with these attributes. By default they are strings;
+                  if you add a prefix "a:" it'll be an array of strings, "i:" and integer, "n:" a number, "b:" a boolean.
+                  Can be joined: "a:i:foo" is an array of integers.
   -rar attr1,...  Structured output for JSON [r]esponse [ar]ray of objects with the given attributes - e.g. for extracting
-                  a list of entities from an input. Alternative to -rf and -ra , all are string properties.             
+                  a list of entities from an input. Alternative to -rf and -ra , all are string properties or other, see -ra.          
 
 Tooling options:
-  -tf configfile  Use the given file as [t]ools configuration [f]ile for tools the LLM could use.
+  -tf configfile  Use the given file as [t]ools configuration [f]ile for tools the LLM could use. Can be given multiple times.
   -ts toolscript  Use the given script as [t]ool [s]cript for the LLM to use. It has to output a tools configuration file 
                   to stdout when called with parameter --openaitoolsconfig.
 
@@ -517,7 +525,8 @@ Conversation Options: (only 1 turn per call chatgpt except with -cr/ca; the conv
 
 Request Settings etc.:
   -m modelname    Use a specific [m]odel (default: gpt-4o-mini)
-  -mh             Use the [m]odel with - the time of updating this script - [h]ighest general intelligence ("gpt-4o")
+  -mh             Use the [m]odel with - at the time of updating this script - [h]ighest general intelligence ("gpt-4o")
+  -md             Use the [m]odel with - at the time of updating this script - best [d]eliberation ("o1-preview")
   -t number       Set max [t]okens for response (default: no limit)
   -v              [V]erbose output : prints the sent and received json message to stderr and gives info about connection retries
   -w column       [W]ord wrap the response to a specified column width using fmt.
@@ -531,12 +540,14 @@ Response Options:
   -rj             [R]esponse mode JSON: model outputs a JSON object
   -rf schemafile  Structured output: requests that the [r]esponse conforms to the given JSON schema read from a [f]ile.
   -ra attr1,...   Structured output [r]esponse - JSON with [a]ttributes: comma separated list of attributes to include in the JSON response. 
-                  Alternative to -rf - creates a simple schema with these attributes as string properties.
+                  Alternative to -rf - creates a simple schema with these attributes. By default they are strings;
+                  if you add a prefix "a:" it'll be an array of strings, "i:" and integer, "n:" a number, "b:" a boolean.
+                  Can be joined: "a:i:foo" is an array of integers.
   -rar attr1,...  Structured output for JSON [r]esponse [ar]ray of objects with the given attributes - e.g. for extracting
-                  a list of entities from an input. Alternative to -rf and -ra , all are string properties.             
+                  a list of entities from an input. Alternative to -rf and -ra , all are string properties or other, see -ra.          
 
 Tooling options:
-  -tf configfile  Use the given file as [t]ools configuration [f]ile for tools the LLM could use.
+  -tf configfile  Use the given file as [t]ools configuration [f]ile for tools the LLM could use. Can be given multiple times.
   -ts toolscript  Use the given script as [t]ool [s]cript for the LLM to use. It has to output a tools configuration file 
                   to stdout when called with parameter --openaitoolsconfig.
 
@@ -573,7 +584,7 @@ Description:
 Usage: suggestfish [options] [task description]
 
 Options:
-  --help          Show this help message and exit
+  -h, --help          Show this help message and exit
 
 Description:
   This script sends a task description to ChatGPT, which returns a fish
@@ -598,7 +609,7 @@ Description:
 Usage: urltotext url
 
 Options:
-  --help          Show this help message and exit
+  -h, --help          Show this help message and exit
 
 Description:
   This script fetches the content of an URL (returning html) and outputs it as text, incl. some metadata.

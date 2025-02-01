@@ -1,0 +1,10 @@
+Usage: chatgptExtractCodeblock [options]
+
+Description:
+  Extracts and prints the contents of a code block delimited by triple backticks from stdin.
+  The code block can be inline or multiline.
+
+Options:
+  -n, --invert         Print everything except the code block.
+  --help               Show this help message and exit.
+

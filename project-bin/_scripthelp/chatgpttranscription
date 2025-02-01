@@ -1,0 +1,9 @@
+Usage: chatgpttranscription [-m model] [-l language] [-p prompt] [-r response_format] [-o output_file] <audio_file>
+  -m  Model ID to use for transcription. Default is 'whisper-1'.
+  -l  Language code of the input audio. Optional but improves accuracy.
+  -p  Text to guide the model's style. Optional.
+  -r  Response format of the transcript output. Options: text, vtt, json, srt, verbose_json. Default is 'text'.
+  -o  Output file to write the response to. If not provided, the response will be printed to stdout.
+  -t  Trim the output - remove any whitespace at beginning and end of the response.
+  -h  Show this help message and exit.
+  <audio_file> The audio file to transcribe.

@@ -1,0 +1,20 @@
+
+Usage: chatgpttokentool [option] inputfile
+
+Options:
+  -h or --help  Show this help message and exit
+  -c            prints the token count for the input file (NOT QUITE CORRECT - merging not implemented yet)
+  -e            prints a quick estimation of the token count for the input file (faster than -c)
+  -n            prints the token numbers for the input file separated by one space
+  -nv           prints the tokens for the input as token number, tab, token, newline
+  -d            the input file must be a whitespace separated token list; decodes that into the original text and prints it
+  -sm number    shortens the input file to at most the given number of tokens by cutting off the middle
+  -ss number    shortens the input file to at most the given number of tokens by cutting off the start
+  -se number    shortens the input file to at most the given number of tokens by cutting off the end
+
+Description:
+  There always has to be exactly one option given (possibly including a number) and the input file.
+  This script uses tokenization according to ChatGPT-3.5 / ChatGPT-4 tokenization with cl100k_base .
+  If the input file is given as - then the input is read from stdin.
+  If the input file is shortened, the removed part is replaced by ' ... ' . If there is no need for shortening, the input is printed as is.
+

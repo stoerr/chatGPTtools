@@ -1,0 +1,7 @@
+Usage: urltotext url
+
+Options:
+  -h, --help          Show this help message and exit
+
+Description:
+  This script fetches the content of an URL (returning html) and outputs it as text, incl. some metadata.

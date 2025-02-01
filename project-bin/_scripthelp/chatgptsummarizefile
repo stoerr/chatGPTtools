@@ -1,0 +1,12 @@
+Usage: chatgptsummarizefile [options] file
+
+Options:
+  --help          Show this help message and exit
+
+Description:
+  This script creates a summary of a file. The output format is like this:
+---
+filename: <filename>
+---
+# <title>
+<1 paragraph summary>

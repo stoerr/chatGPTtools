@@ -1,10 +1,10 @@
 #!/bin/bash
 
-if [ "$#" -eq 0 ] || [ "$1" = "--help" ]; then
+if [ "$#" -eq 0 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
   echo "Usage: $(basename $0) [options] [task description]"
   echo ""
   echo "Options:"
-  echo "  --help          Show this help message and exit"
+  echo "  -h, --help          Show this help message and exit"
   echo ""
   echo "Description:"
   echo "  This script sends a task description to ChatGPT, which returns a fish"

@@ -1,0 +1,4 @@
+Usage: /Users/hps/dev/ml/chatgpt/bin/chatgptembedding [options] <file>
+Options:
+  -h, --help          Show this help message
+  -m, --model <model> Specify the embedding model to use. Default is text-embedding-3-small

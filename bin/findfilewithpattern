@@ -8,7 +8,7 @@ ${programname} - searches for files with IntelliJ style pattern.
 Usage: ${programname} [pattern]
 
 Options:
-    --help          Show this help message and exit
+    -h, --help          Show this help message and exit
 
 Examples:
     ${programname} src/main/**/MyFile*java
@@ -20,7 +20,7 @@ Details:
     - on boundaries between uppercase and lowercase there are implicit * wildcards - e.g. fooBaz will match FoOBARbaz
 `;
 
-if (process.argv.length < 3 || process.argv.includes('--help')) {
+if (process.argv.length < 3 || process.argv.includes('--help') || process.argv.includes('-h')) {
     console.log(helpMessage);
     process.exit(0);
 }

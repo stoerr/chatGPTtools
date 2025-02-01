@@ -1,0 +1,6 @@
+Print on line short description what the script does.
+Do not mention the options and arguments, since these are described in the script itself.
+Sort the scripts alphabetically by their name.
+Do not mention ChatGPT in the description, since almost all scripts use ChatGPT to perform their function,
+so this would add no information. Rather explain what the script does, without mentioning ChatGPT.
+Print only one line with a short description, no additional text, no bullet points, no list.

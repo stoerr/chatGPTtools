@@ -1,0 +1,3 @@
+/* AIGenVersion(4ebc289a, scriptdescr.prompt-2cae325e, toolsconfigFromCodevActions-4bfa06c8) */
+
+Prints a configuration file usable with specified tools based on conventions for actions in the Co-Developer GPT Engine.

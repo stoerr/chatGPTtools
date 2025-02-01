@@ -1,0 +1,11 @@
+Usage: createJavaUnittest [options] [Java file] [optional additional instructions]
+
+Options:
+  -f              Overwrite existing test file if it exists
+  -y systemmsg    Use the given string as system message (compare -y for chatgpt script)
+  -h, --help      Show this help message and exit
+
+Description:
+  This script generates a JUnit 4 test for the given Java file using ChatGPT.
+  The output test file is placed in the corresponding 'src/test/java'
+  directory with a 'Test.java' suffix.

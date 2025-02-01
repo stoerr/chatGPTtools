@@ -1,0 +1,17 @@
+Usage: chatgptspeak [-m model] [-v voice] [-r format] [-s speed] [-o output_file] [-f text_file] [input_text]
+
+Generates audio from input text using OpenAI's TTS models.
+
+Arguments:
+  input_text           The text input to generate audio for (if -f is not used). Read from stdin if not provided.
+
+Options:
+  -m model             Model ID to use for text-to-speech. Default is 'tts-1'.
+  -v voice             Voice to use for the generated audio. Default is 'shimmer'. Supported voices are alloy, echo, fable, onyx, nova, and shimmer.
+  -r format            Audio format of the response. Default is 'mp3'.
+  -s speed             Speed of the generated audio, from 0.25 to 4.0. Default is 1.
+  -o output_file       Output file to write the audio to. If not provided, audio will be played using afplay.
+  -f text_file         Read input text from a file instead of stdin or command argument.
+
+If no output file is specified with -o, the generated speech will be played immediately using the 'afplay' command.
+The script requires an OpenAI API key, which it will attempt to read from the OPENAI_API_KEY environment variable or the file $HOME/.openai-api-key.txt.

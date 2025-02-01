@@ -1,0 +1,8 @@
+Usage: chatgptsearchascript [options] [task description]
+
+Options:
+ -h, --help          Show this help message and exit
+
+Description:
+  This script searches for a suitable ChatGPT related command line utility to perform a task
+  whose description is given in the command line arguments.

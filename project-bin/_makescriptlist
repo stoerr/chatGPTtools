@@ -2,40 +2,34 @@
 
 $(dirname "$(realpath "$0")")/../bin/_makeusagetxt
 
+cd $(dirname "$(realpath "$0")")
+
 tmp_result=$(mktemp)
 tmp_script=$(mktemp)
 
-trap "rm $tmp_result; rm $tmp_script" EXIT
+trap "rm $tmp_result; rm $tmp_script;" EXIT
 
 echo "<!-- Start scriptlist -->" > $tmp_script
 echo >> $tmp_script
 
-(chatgpt -f bin/_usages.txt - <<EOF
-# Instructions
-From the file bin/_usages.txt that was included here make a description of all scripts mentioned there.
-It should just mention the script name and a one line short description what it does.
-Do not mention the options and arguments, since these are described in the script itself.
-Sort the scripts alphabetically by their name.
-Do not mention ChatGPT in the description, since almost all scripts use ChatGPT to perform their function,
-so this would add no information. Rather explain what the script does, without mentioning ChatGPT.
-Never ever include fragments of the bin/_usages.txt file in the output.
-The only exception where the word ChatGPT is permitted are the scripts chatgpt, chatgptapplytemplate, chatgptsummarizeurl.
-IMPORTANT: include all scripts mentioned in the retrieved usage file.
-
-The output should be a list with the script name as code. Here are examples, which also should be used for the corresponding scripts:
-- \`chatgpt\`: submits a prompt for processing and prints the response, swiss knife type tool with many options.
-- \`chatgptsearchascript\`: searches this toolbox for a suitable command line utility to perform a task described in the command line
-- \`suggestbash\`: prints a bash command line for a problem described on it's command line
-EOF
-) >> $tmp_script
+# for each executable file in ../bin/ that is not named _* call it with --help and write the outpit into tmp_dir/$(basename $file)
+for file in $(find $(dirname "$(realpath "$0")")/../bin/ -maxdepth 1 -type f -perm -u=x ! -name "_*" | sort); do
+  base=$(basename $file)
+  echo
+  echo "Processing $base"
+  $file -h > _scripthelp/$base
+  aigenpipeline -p scriptdescr.prompt _scripthelp/$base -upd -o _scriptdescriptions/$base
+  echo "  - [$base](bin/$base)" $(tail -n +3 _scriptdescriptions/$base) >> $tmp_script
+done
 
 echo >> $tmp_script
 echo "<!-- End scriptlist -->" >> $tmp_script
 
-sed -e '/Start scriptlist/,/End scriptlist/!b' -e "/End scriptlist/r $tmp_script" -e 'd' README.md > $tmp_result
+sed -e '/Start scriptlist/,/End scriptlist/!b' -e "/End scriptlist/r $tmp_script" -e 'd' ../README.md > $tmp_result
 
-cat $tmp_result > README.md
+sleep 3
 
-cat $tmp_script
+cat $tmp_result > ../README.md
+
 echo
 echo "The README.md was updated with the script list."

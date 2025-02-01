@@ -1,0 +1,8 @@
+Usage: suggestfish [options] [task description]
+
+Options:
+  -h, --help          Show this help message and exit
+
+Description:
+  This script sends a task description to ChatGPT, which returns a fish
+  command line for the given task and prints it.

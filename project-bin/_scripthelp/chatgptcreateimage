@@ -1,0 +1,28 @@
+Usage: chatgptimage [options] [prompt]
+
+Generates an image based on a textual prompt using OpenAI's DALL-E 3 model.
+
+If no prompt is given in the command line, -f must be used to specify a file containing the prompt.
+If no output file is given, the raw json response is printed to stdout.
+
+Options:
+  -h                       Show this help message and exit.
+  -m <model>               Model to use for image generation (defaults to dall-e-3).
+  -q <quality>             Image quality: standard or hd (Optional, defaults to standard).
+  -s <size>                Image size (Optional, overrides -p and -l if used).
+  -p                       Use portrait orientation (1024x1792).
+  -l                       Use landscape orientation (1792x1024).
+  -f <file>                Read prompt from a file. Use '-' to read from stdin.
+  -r <format>              Response format url or b64_json (Optional, defaults to url).
+  -o <file>                Output file to write the image to (format .png). Implies response_format b64_json.
+  -u                       Just prints the url to stdout. (Implies response_format url).
+  -v                       View in a file viewer (MacOS open -W); if no -o is given, the file is deleted after viewing (temporary file).
+
+Environment:
+  OPENAI_API_KEY           API key for OpenAI. Sourced from this environment variable, or $HOME/.openai-api-key.txt file.
+
+Examples:
+  chatgptimage "A panoramic view of Mount Everest"
+  chatgptimage -p -m dall-e-3 "A portrait of a young artist as a refined gentleman"
+  chatgptimage -l -q hd -f prompts.txt
+  echo "A still life of various fruits on a table" | chatgptimage -f -

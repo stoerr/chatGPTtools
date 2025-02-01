@@ -1,0 +1,14 @@
+Usage: chatgptfixfile [options] [filepath] [prompt]
+A script to modify a file using the ChatGPT API and display the differences.
+
+Options:
+  -f <additionalfile>  Add an additional file to be passed to ChatGPT with -f option (can be used multiple times)
+  -m <modelname>       Use a specific model (default: gpt-4o-mini)
+  --help               Display this help text and exit
+
+Arguments:
+  filepath             Path of the file to be modified
+  prompt               Prompt to send to ChatGPT
+
+Description:
+The script calls ChatGPT with the given file and prompt, extracts a code block from the output, and creates a new file with the changes. It then displays the differences between the original and the new file using 'idea diff'.

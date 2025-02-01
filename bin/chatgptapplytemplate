@@ -1,4 +1,4 @@
-#!/bin/bash
+c#!/bin/bash
 
 # print usage if there are not 2 arguments or the $2 is not a file or $1 is -h or --help
 if [ "$#" -ne 2 ] || [ ! -f "$2" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then

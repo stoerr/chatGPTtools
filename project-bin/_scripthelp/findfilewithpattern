@@ -1,0 +1,17 @@
+
+findfilewithpattern - searches for files with IntelliJ style pattern.
+
+Usage: findfilewithpattern [pattern]
+
+Options:
+    -h, --help          Show this help message and exit
+
+Examples:
+    findfilewithpattern src/main/**/MyFile*java
+    
+Details:
+    - * are wildcards within a file / directory name
+    - ** are wildcards that can span directories (that is, matches foo/bar/baz)
+    - the matching is case insensitive
+    - on boundaries between uppercase and lowercase there are implicit * wildcards - e.g. fooBaz will match FoOBARbaz
+

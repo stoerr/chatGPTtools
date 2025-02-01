@@ -1,0 +1,7 @@
+Usage: chatgptsummarizeurl [options] url
+
+Options:
+  -h, --help          Show this help message and exit
+
+Description:
+  This script fetches the content of an URL (returning html) and sends a request to summarize the content to ChatGPT.

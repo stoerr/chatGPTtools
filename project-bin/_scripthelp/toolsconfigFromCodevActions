@@ -1,0 +1,11 @@
+Usage: toolsconfigFromCodevActions <tools>
+  Prints a configuration file useable with chatgpt -tf for the tools given on the command line.
+
+Options:
+  --help          Show this help message and exit
+
+Description:
+  This prints a configuration file useable with chatgpt -tf for the tools given on the command line.
+  It assumes that these follow the conventions for actions for the
+  Co-Developer GPT Engine https://codevelopergptengine.stoerr.net/
+  that is, it contains a comment with "Plugin Action:" and a description of the action.
