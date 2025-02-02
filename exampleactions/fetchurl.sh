@@ -15,7 +15,7 @@ show_openaitoolsconfig() {
   cat <<EOF
   {
     "function": {
-      "name": "fetchurl",
+      "name": "$(basename $0 | tr -cd 'a-zA-Z0-9_-')",
       "description": "Reads the text content of a given URL.",
       "parameters": {
         "type": "object",

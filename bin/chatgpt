@@ -338,14 +338,22 @@ for (let i = 2; i < process.argv.length; i++) {
             const toolScript = process.argv[i + 1];
             const toolCmd = resolveScript(toolScript, toolScript);
             const toolsConfig = execSync(`${toolCmd} --openaitoolsconfig`, {encoding: 'utf8'});
-            const newTools = JSON.parse(toolsConfig);
+            var newTools;
+            try {
+                newTools = JSON.parse(toolsConfig);
+            } catch (error) {
+                console.error("Trouble reading / parsing the output of " + toolCmd + " --openaitoolsconfig");
+                throw error;
+            }
             if (Array.isArray(newTools)) {
                 for (const tool of newTools) {
                     tool.cfgfilelocation = toolScript;
+                    if (!tool.commandline) tool.commandline = [toolScript];
                 }
                 tools = tools.concat(newTools);
             } else {
                 newTools.cfgfilelocation = toolScript;
+                if (!newTools.commandline) newTools.commandline = [toolScript];
                 tools.push(newTools);
             }
             i++;
@@ -880,6 +888,8 @@ function onMessage(assistantMessage) {
             for (const [key, value] of Object.entries(parsedArguments)) {
                 stdin = stdin.replace('$' + key, value);
             }
+        } else if (stdin !== ""){
+            stdin = toolCall.function.arguments; // XXX
         }
         commandline[0] = resolveScript(commandline[0], tool.cfgfilelocation);
         console.error("Calling tool", toolCall.function.name, ':', commandline.join(' '),
