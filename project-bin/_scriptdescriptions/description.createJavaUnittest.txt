@@ -1,0 +1,3 @@
+// AIGenVersion(706523a3, scriptdescr.prompt-2cae325e, usage.createJavaUnittest.txt-1551eaeb)
+
+Generates a JUnit 4 test for a specified Java file.

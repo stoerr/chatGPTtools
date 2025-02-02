@@ -1,3 +1,3 @@
-/* AIGenVersion(099a5a60, scriptdescr.prompt-2cae325e, chatgptfixfile-47cb7b05) */
+// AIGenVersion(099a5a60, scriptdescr.prompt-2cae325e, usage.chatgptfixfile.txt-47cb7b05)
 
 A script to modify a file based on a provided prompt and display the differences from the original.

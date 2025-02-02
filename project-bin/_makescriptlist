@@ -17,9 +17,9 @@ for file in $(find $(dirname "$(realpath "$0")")/../bin/ -maxdepth 1 -type f -pe
   base=$(basename $file)
   echo
   echo "Processing $base"
-  $file -h > _scripthelp/$base
-  aigenpipeline -p scriptdescr.prompt _scripthelp/$base -upd -o _scriptdescriptions/$base
-  echo "  - [$base](bin/$base)" $(tail -n +3 _scriptdescriptions/$base) >> $tmp_script
+  $file -h > _scriptusages/usage.$base.txt
+  aigenpipeline -p scriptdescr.prompt _scriptusages/usage.$base.txt -upd -o _scriptdescriptions/description.$base.txt
+  echo "  - [$base](bin/$base)" $(tail -n +3 _scriptdescriptions/description.$base.txt) >> $tmp_script
 done
 
 echo >> $tmp_script

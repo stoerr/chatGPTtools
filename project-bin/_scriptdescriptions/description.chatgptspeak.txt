@@ -1,0 +1,3 @@
+// AIGenVersion(0b3ceb7b, scriptdescr.prompt-2cae325e, usage.chatgptspeak.txt-19f3bf3c)
+
+Generates audio from input text using text-to-speech models.

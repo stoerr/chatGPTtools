@@ -1,0 +1,3 @@
+// AIGenVersion(7c04b7c6, scriptdescr.prompt-2cae325e, usage.findfilewithpattern.txt-688551c7)
+
+findfilewithpattern searches for files matching a specified IntelliJ style pattern.

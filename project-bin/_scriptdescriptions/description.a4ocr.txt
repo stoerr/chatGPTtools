@@ -1,3 +1,3 @@
-/* AIGenVersion(19b744c0, scriptdescr.prompt-2cae325e, a4ocr-04dcbe89) */
+// AIGenVersion(19b744c0, scriptdescr.prompt-2cae325e, usage.a4ocr.txt-04dcbe89)
 
 Converts scanned A4 images into markdown format using optical character recognition.

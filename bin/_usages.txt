@@ -94,7 +94,7 @@ From https://github.com/stoerr/chatGPTtools .
 
 # chatgptapplytemplate
 /Users/hps/dev/ml/chatgpt/bin/chatgptapplytemplate: line 1: c#!/bin/bash: No such file or directory
-Apply a ChatGPT chat template to a file and print the result ChatGPT returns to stdou
+Apply a ChatGPT chat template to a file and print the result ChatGPT returns to stdout
 Usage: /Users/hps/dev/ml/chatgpt/bin/chatgptapplytemplate templateName fileName
        argument 1 is the name of the template file
        argument 2 is the name of the file to apply the template to

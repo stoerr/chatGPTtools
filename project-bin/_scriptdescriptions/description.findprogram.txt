@@ -1,3 +1,3 @@
-/* AIGenVersion(4891ce15, scriptdescr.prompt-2cae325e, findprogram-0424473f) */
+// AIGenVersion(4891ce15, scriptdescr.prompt-2cae325e, usage.findprogram.txt-0424473f)
 
 Searches for programs in the PATH based on a given description of their functionality.

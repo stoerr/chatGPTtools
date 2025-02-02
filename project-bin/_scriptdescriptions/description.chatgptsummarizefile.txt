@@ -1,0 +1,3 @@
+// AIGenVersion(7db331a5, scriptdescr.prompt-2cae325e, usage.chatgptsummarizefile.txt-4a9834bc)
+
+Creates a summary of a specified file.

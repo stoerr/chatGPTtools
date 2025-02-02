@@ -1,0 +1,3 @@
+// AIGenVersion(3a70c486, scriptdescr.prompt-2cae325e, usage.qa.txt-227e47c7)
+
+Asks for a quick answer using audio input to dictate the prompt.

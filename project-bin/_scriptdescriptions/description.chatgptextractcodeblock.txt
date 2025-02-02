@@ -1,3 +1,3 @@
-/* AIGenVersion(30e89e0a, scriptdescr.prompt-2cae325e, chatgptextractcodeblock-2c2c27ae) */
+// AIGenVersion(30e89e0a, scriptdescr.prompt-2cae325e, usage.chatgptextractcodeblock.txt-2c2c27ae)
 
 Extracts and prints the contents of a code block delimited by triple backticks from standard input.

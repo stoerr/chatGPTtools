@@ -1,0 +1,3 @@
+// AIGenVersion(0d36511f, scriptdescr.prompt-2cae325e, usage.urltotext.txt-69425498)
+
+Fetches the content of a URL and outputs it as plain text with metadata.

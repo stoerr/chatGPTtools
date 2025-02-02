@@ -1,0 +1,3 @@
+// AIGenVersion(6950a804, scriptdescr.prompt-2cae325e, usage.chatgpttranscription.txt-01c7c2f7)
+
+Transcribes audio files into text format using a specified model and language.
