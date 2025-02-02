@@ -336,7 +336,8 @@ for (let i = 2; i < process.argv.length; i++) {
             i++;
         } else if (arg === '-ts' && process.argv[i + 1]) {
             const toolScript = process.argv[i + 1];
-            const toolsConfig = execSync(`${toolScript} --openaitoolsconfig`, {encoding: 'utf8'});
+            const toolCmd = resolveScript(toolScript, toolScript);
+            const toolsConfig = execSync(`${toolCmd} --openaitoolsconfig`, {encoding: 'utf8'});
             const newTools = JSON.parse(toolsConfig);
             if (Array.isArray(newTools)) {
                 for (const tool of newTools) {
@@ -371,7 +372,7 @@ for (let i = 2; i < process.argv.length; i++) {
 
 if (verbose) {
     console.log('Available tools:');
-    console.log(tools);
+    console.log(JSON.stringify(tools, null, 2));
 }
 
 const headers = {
@@ -509,8 +510,7 @@ if ((!prompt || !prompt.trim()) && !conversationLoopWithReadline && !conversatio
 
 if (verbose) {
     console.error('Arguments: ', process.argv);
-    console.error('Prompt: ', prompt, '\n');
-    console.error('Prompt word count: ', prompt.split(/\s+/).length, '\n');
+    console.error('Prompt: ', prompt);
     console.error("---------------------------------------------\n\n");
 }
 
@@ -868,6 +868,7 @@ function onMessage(assistantMessage) {
         // replace placeholders ($arg) with corresponding tool_call.function.arguments
         const parsedArguments = JSON.parse(toolCall.function.arguments);
         parsedArguments['toolcall'] = JSON.stringify(toolCall.function, null, 2);
+        if (verbose) console.error("Arguments for tool call", toolCall.function.name, ': ', JSON.stringify(parsedArguments, null, 2));
         // replace arguments in all parts of the commandline
         for (let i = 0; i < commandline.length; i++) {
             for (const [key, value] of Object.entries(parsedArguments)) {
@@ -881,8 +882,8 @@ function onMessage(assistantMessage) {
             }
         }
         commandline[0] = resolveScript(commandline[0], tool.cfgfilelocation);
-        console.error("Calling tool", toolCall.function.name, ': ', commandline.join(' '),
-            'with stdin', stdin.length > 300 ? stdin.slice(0, 300) + '...' : stdin);
+        console.error("Calling tool", toolCall.function.name, ':', commandline.join(' '),
+            'with stdin:', stdin.length > 300 ? stdin.slice(0, 300) + '...' : stdin);
         const result = spawnSync(commandline[0], commandline.slice(1), {
             input: stdin,
             encoding: 'utf8',
@@ -948,7 +949,7 @@ function maybeContinueConversation() {
     } else if (conversationLoopWithDictate) {
         const dictatedMessage = dictatePrompt(true);
         if (dictatedMessage) {
-            console.log('Dicated message: ' + dictatedMessage.trim());
+            console.log('Dicated message:', dictatedMessage.trim());
             messages.push({role: 'user', content: dictatedMessage});
             console.log();
             requestChatGPT(onMessage);
