@@ -2,7 +2,7 @@ c#!/bin/bash
 
 # print usage if there are not 2 arguments or the $2 is not a file or $1 is -h or --help
 if [ "$#" -ne 2 ] || [ ! -f "$2" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-  echo "Apply a ChatGPT chat template to a file and print the result ChatGPT returns to stdou"
+  echo "Apply a ChatGPT chat template to a file and print the result ChatGPT returns to stdout"
   echo "Usage: $0 templateName fileName"
   echo "       argument 1 is the name of the template file"
   echo "       argument 2 is the name of the file to apply the template to"
@@ -18,5 +18,5 @@ if [[ "$fileName" == *.pdf ]]; then
   fileName="$fileName.txt"
 fi
 
-# execute file suggestCommand.js that is in the directory the script is run from with node , even if it is a symlink
+# execute file applyTemplate.js that is in the directory the script is run from with node , even if it is a symlink
 node "$(dirname "$(readlink -f "$0")")/../js/applyTemplate.js" "$templateName" "$fileName"
