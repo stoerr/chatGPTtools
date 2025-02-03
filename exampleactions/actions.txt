@@ -1,0 +1,11 @@
+1. fetchurl.sh
+   - Description: Fetches the text content of a given URL.
+
+2. listfiles.sh
+   - Description: Lists the contents of the given directory, either recursively or not.
+
+3. readfile.sh
+   - Description: Reads the contents of a given file from the current directory or below (truncated if larger than 10,000 bytes).
+
+4. writefile.sh
+   - Description: Overwrites the specified file with content from stdin.
