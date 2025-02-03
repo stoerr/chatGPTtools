@@ -12,14 +12,12 @@ Usage:
 EOF
 }
 
-if [ "$1" = "-h" ] || [ "$1" = "--help" ] || [ $# != 2 ]; then show_usage; exit 0; fi
-
 show_openaitoolsconfig() {
   cat <<EOF
   {
     "function": {
       "name": "$(basename $0 | tr -cd 'a-zA-Z0-9_-')",
-      "description": "Lists the files in the given directory, if requested recursively. Result of \`ls -1F\` or \`ls -1FR\q`",
+      "description": "Lists the files in the given directory, if requested recursively. Result of 'ls -1F' or 'ls -1FR'",
       "parameters": {
         "type": "object",
         "properties": {
@@ -44,6 +42,7 @@ EOF
 }
 
 if [ "$1" = "--openaitoolsconfig" ]; then show_openaitoolsconfig; exit 0; fi
+if [ "$1" = "-h" ] || [ "$1" = "--help" ] || [ $# != 2 ]; then show_usage; exit 0; fi
 
 dirname="$2"
 

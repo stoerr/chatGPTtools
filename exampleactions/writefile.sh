@@ -32,7 +32,7 @@ show_openaitoolsconfig() {
             "description": "The content the file will be overwritten with"
           }
         },
-        "required": [ "filename" ],
+        "required": [ "filename", "content" ],
         "additionalProperties": false
       },
       "strict": true
@@ -51,13 +51,13 @@ filename="$1"
 # the current working directory
 
 abscurdir=$(realpath .)/
-absfilepath=$(realpath "$filename")
-# absfilepath should start with abscurdir
-if [[ $absfilepath != $abscurdir* ]]; then
+absfiledir=$(realpath $(dirname "$filename"))/
+# absfiledir should start with abscurdir
+if [[ $absfiledir != $abscurdir* ]]; then
   echo "Error: The file is not within the current working directory" >&2
   exit 1
 fi
 
-echo "Writing to file: filename" >&2
+echo "Writing to file: $filename" >&2
 
 cat > "$filename"

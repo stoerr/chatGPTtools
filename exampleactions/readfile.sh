@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+MAX_SIZE_BYTES=10000
+
 show_usage() {
   cat <<EOF
 Usage:
@@ -19,7 +21,7 @@ show_openaitoolsconfig() {
   {
     "function": {
       "name": "$(basename $0 | tr -cd 'a-zA-Z0-9_-')",
-      "description": "Reads the contents of the given file.",
+      "description": "Reads the contents of the given file. Files above $MAX_SIZE_BYTES bytes will be truncated.",
       "parameters": {
         "type": "object",
         "properties": {
@@ -56,4 +58,12 @@ fi
 
 echo "Reading file: $filename" >&2
 
-cat "$filename"
+head -c "$MAX_SIZE_BYTES" "$filename"
+
+# if file has $MAX_SIZE_BYTES bytes print a message
+filesize=$(stat -c %s "$filename")
+if [ $filesize -gt $MAX_SIZE_BYTES ]; then
+  echo "... (truncated) ..."
+  echo "CAUTION: File $filename is larger than $MAX_SIZE_BYTES bytes and was truncated."
+  echo "CAUTION: File $filename is larger than $MAX_SIZE_BYTES bytes and was truncated." >&2
+fi
