@@ -166,217 +166,224 @@ function getLastConversationFile() {
     return lastConversationFile;
 }
 
-for (let i = 2; i < process.argv.length; i++) {
-    const arg = process.argv[i];
+function parseArguments(arguments, cwd) {
+    for (let i = 2; i < arguments.length; i++) {
+        const arg = arguments[i];
 
-    if (inOptions) {
-        if (arg === '--help' || arg === '-h' || arg === ' -?') {
-            console.log(helpMessage);
-            process.exit(0);
-        } else if (arg === '-m' && process.argv[i + 1]) {
-            model = process.argv[i + 1];
-            i++;
-        } else if (arg === '-4' || arg === "-mh") { // -4 for backwards compatibility
-            model = 'gpt-4o';
-        } else if (arg === '-md') {
-            model = 'o1-preview';
-        } else if (arg === '-t' && process.argv[i + 1]) {
-            maxTokens = parseInt(process.argv[i + 1], 10);
-            i++;
-        } else if (arg === '-') {
-            readStdin = true;
-        } else if (arg === '-v') {
-            verbose = true;
-        } else if (arg === '-p' && process.argv[i + 1]) {
-            prefix = (prefix ? prefix + '\n\n' : '') + process.argv[i + 1];
-            i++;
-        } else if (arg === '-pf' && process.argv[i + 1]) {
-            prefix = (prefix ? prefix + '\n\n' : '') + fs.readFileSync(process.argv[i + 1], 'utf8');
-            i++;
-        } else if (arg === '-pl' && process.argv[i + 1]) {
-            const promptlibkey = process.argv[i + 1];
-            try {
-                const promptlibOutput = execSync(`chatgptpromptlib ${promptlibkey}`, {encoding: 'utf8'});
-                prompt += '\n' + promptlibOutput + '\n';
-            } catch (e) {
-                console.error('Error: Prompt library key not found (1): ' + promptlibkey);
-                process.exit(1);
-            }
-            i++;
-        } else if (arg === '-u' && process.argv[i + 1]) {
-            suffix = (suffix ? suffix + '\n\n' : '') + process.argv[i + 1];
-            i++;
-        } else if (arg === '-uf' && process.argv[i + 1]) {
-            suffix = (suffix ? suffix + '\n\n' : '') + fs.readFileSync(process.argv[i + 1], 'utf8');
-            i++;
-        } else if (arg === '-s' && process.argv[i + 1]) {
-            systemMsg = process.argv[i + 1];
-            i++;
-        } else if (arg === '-sf' && process.argv[i + 1]) {
-            systemMsg = fs.readFileSync(process.argv[i + 1], 'utf8');
-            i++;
-        } else if (arg === '-sl' && process.argv[i + 1]) {
-            const promptlibkey = process.argv[i + 1];
-            try {
-                systemMsg = execSync(`chatgptpromptlib ${promptlibkey}`, {encoding: 'utf8'});
-            } catch (e) {
-                console.error('Error: Prompt library key not found (2): ' + promptlibkey);
-                process.exit(1);
-            }
-            i++;
-        } else if (arg === '-fp' && process.argv[i + 1]) {
-            files.push(process.argv[i + 1]);
-            i++;
-        } else if ((arg === '-fm' || arg === '-f') && process.argv[i + 1]) { // -fm is for backwards compatibility
-            fmfiles.push(process.argv[i + 1]);
-            i++;
-        } else if (arg === '-ff') {
-            while (process.argv[i + 1] && !process.argv[i + 1].startsWith('-')) {
-                fmfiles.push(process.argv[i + 1]);
+        if (inOptions) {
+            if (arg === '--help' || arg === '-h' || arg === ' -?') {
+                console.log(helpMessage);
+                process.exit(0);
+            } else if (arg === '-m' && arguments[i + 1]) {
+                model = arguments[i + 1];
                 i++;
-            }
-        } else if (arg === '-w' && process.argv[i + 1]) {
-            wordWrapColumn = parseInt(process.argv[i + 1], 10);
-            i++;
-        } else if (arg === '-y' && process.argv[i + 1]) {
-            systemMsg = process.argv[i + 1];
-            i++;
-        } else if (arg === '-i' && process.argv[i + 1]) {
-            imageFiles.push(process.argv[i + 1]);
-            i++;
-        } else if (arg === '-iu' && process.argv[i + 1]) {
-            imageUrls.push(process.argv[i + 1]);
-            i++;
-        } else if (arg === '-id' && process.argv[i + 1]) {
-            detailparam = process.argv[i + 1];
-            i++;
-        } else if (arg === '-a' && process.argv[i + 1]) {
-            audioFiles.push(process.argv[i + 1]);
-            i++;
-        } else if (arg === '-au' && process.argv[i + 1]) {
-            audioUrls.push(process.argv[i + 1]);
-            i++;
-        } else if (arg === '-af' && process.argv[i + 1]) {
-            audioFormat = process.argv[i + 1];
-            i++;
-        } else if (arg === '-abbrev') {
-            abbreviateMiddle = true;
-        } else if (arg === '-pa') {
-            dictatedPrefix = true;
-        } else if (arg === '-ua') {
-            dictatedSuffix = true;
-        } else if (arg === '-cf' && process.argv[i + 1]) {
-            conversationFile = process.argv[i + 1];
-            i++;
-        } else if (arg === '-cn') {
-            const conversationDir = getConversationDir();
-            conversationFile = `${conversationDir}/${new Date().toISOString().replace(/:/g, '-')}.json`;
-            console.error(`Creating new conversation file: ${conversationFile}`);
-        } else if (arg === '-cc') {
-            conversationFile = getLastConversationFile();
-            console.error(`Continuing conversation from ${conversationFile}`);
-        } else if (arg === '-cl' && process.argv[i + 1]) {
-            conversationLoad = process.argv[i + 1];
-            i++;
-        } else if (arg === '-cd') {
-            const lastConversationFile = getLastConversationFile();
-            fs.unlinkSync(lastConversationFile);
-            console.error(`Conversation file ${lastConversationFile} removed. Exiting.`);
-            process.exit(0);
-        } else if (arg === '-cp') {
-            conversationPrint = true;
-        } else if (arg === '-cr') {
-            conversationLoopWithReadline = true;
-        } else if (arg === '-ca') {
-            conversationLoopWithDictate = true;
-        } else if (arg === '-o' && process.argv[i + 1]) {
-            var [key, value] = process.argv[i + 1].split('=');
-            try {
-                value = JSON.parse(value);
-            } catch (e) {
-                // if value is parseable as JSON, parse it, otherwise just take it as string
-            }
-            openAIOptions[key] = value;
-            i++;
-        } else if (arg === '-of' && process.argv[i + 1]) {
-            var [key, filename] = process.argv[i + 1].split('=');
-            try {
-                openAIOptions[key] = JSON.parse(fs.readFileSync(resolveFile(filename), 'utf8'));
-            } catch (e) {
-                console.error('Error: Could not read JSON file: ' + filename);
+            } else if (arg === '-4' || arg === "-mh") { // -4 for backwards compatibility
+                model = 'gpt-4o';
+            } else if (arg === '-md') {
+                model = 'o1-preview';
+            } else if (arg === '-t' && arguments[i + 1]) {
+                maxTokens = parseInt(arguments[i + 1], 10);
+                i++;
+            } else if (arg === '-') {
+                readStdin = true;
+            } else if (arg === '-v') {
+                verbose = true;
+            } else if (arg === '-p' && arguments[i + 1]) {
+                prefix = (prefix ? prefix + '\n\n' : '') + arguments[i + 1];
+                i++;
+            } else if (arg === '-pf' && arguments[i + 1]) {
+                const prefixfile = resolveFile(arguments[i + 1], cwd);
+                prefix = (prefix ? prefix + '\n\n' : '') + fs.readFileSync(prefixfile, 'utf8');
+                i++;
+            } else if (arg === '-pl' && arguments[i + 1]) {
+                const promptlibkey = arguments[i + 1];
+                try {
+                    const promptlibOutput = execSync(`chatgptpromptlib ${promptlibkey}`, {encoding: 'utf8'});
+                    prompt += '\n' + promptlibOutput + '\n';
+                } catch (e) {
+                    console.error('Error: Prompt library key not found (1): ' + promptlibkey);
+                    process.exit(1);
+                }
+                i++;
+            } else if (arg === '-u' && arguments[i + 1]) {
+                suffix = (suffix ? suffix + '\n\n' : '') + arguments[i + 1];
+                i++;
+            } else if (arg === '-uf' && arguments[i + 1]) {
+                const suffixfile = arguments[i + 1];
+                suffix = (suffix ? suffix + '\n\n' : '') + fs.readFileSync(suffixfile, 'utf8');
+                i++;
+            } else if (arg === '-s' && arguments[i + 1]) {
+                systemMsg = arguments[i + 1];
+                i++;
+            } else if (arg === '-sf' && arguments[i + 1]) {
+                const systemMsgFile = arguments[i + 1];
+                systemMsg = fs.readFileSync(systemMsgFile, 'utf8');
+                i++;
+            } else if (arg === '-sl' && arguments[i + 1]) {
+                const promptlibkey = arguments[i + 1];
+                try {
+                    systemMsg = execSync(`chatgptpromptlib ${promptlibkey}`, {encoding: 'utf8'});
+                } catch (e) {
+                    console.error('Error: Prompt library key not found (2): ' + promptlibkey);
+                    process.exit(1);
+                }
+                i++;
+            } else if (arg === '-fp' && arguments[i + 1]) {
+                files.push(arguments[i + 1]);
+                i++;
+            } else if ((arg === '-fm' || arg === '-f') && arguments[i + 1]) { // -fm is for backwards compatibility
+                fmfiles.push(arguments[i + 1]);
+                i++;
+            } else if (arg === '-ff') {
+                while (arguments[i + 1] && !arguments[i + 1].startsWith('-')) {
+                    fmfiles.push(arguments[i + 1]);
+                    i++;
+                }
+            } else if (arg === '-w' && arguments[i + 1]) {
+                wordWrapColumn = parseInt(arguments[i + 1], 10);
+                i++;
+            } else if (arg === '-y' && arguments[i + 1]) {
+                systemMsg = arguments[i + 1];
+                i++;
+            } else if (arg === '-i' && arguments[i + 1]) {
+                imageFiles.push(arguments[i + 1]);
+                i++;
+            } else if (arg === '-iu' && arguments[i + 1]) {
+                imageUrls.push(arguments[i + 1]);
+                i++;
+            } else if (arg === '-id' && arguments[i + 1]) {
+                detailparam = arguments[i + 1];
+                i++;
+            } else if (arg === '-a' && arguments[i + 1]) {
+                audioFiles.push(arguments[i + 1]);
+                i++;
+            } else if (arg === '-au' && arguments[i + 1]) {
+                audioUrls.push(arguments[i + 1]);
+                i++;
+            } else if (arg === '-af' && arguments[i + 1]) {
+                audioFormat = arguments[i + 1];
+                i++;
+            } else if (arg === '-abbrev') {
+                abbreviateMiddle = true;
+            } else if (arg === '-pa') {
+                dictatedPrefix = true;
+            } else if (arg === '-ua') {
+                dictatedSuffix = true;
+            } else if (arg === '-cf' && arguments[i + 1]) {
+                conversationFile = arguments[i + 1];
+                i++;
+            } else if (arg === '-cn') {
+                const conversationDir = getConversationDir();
+                conversationFile = `${conversationDir}/${new Date().toISOString().replace(/:/g, '-')}.json`;
+                console.error(`Creating new conversation file: ${conversationFile}`);
+            } else if (arg === '-cc') {
+                conversationFile = getLastConversationFile();
+                console.error(`Continuing conversation from ${conversationFile}`);
+            } else if (arg === '-cl' && arguments[i + 1]) {
+                conversationLoad = arguments[i + 1];
+                i++;
+            } else if (arg === '-cd') {
+                const lastConversationFile = getLastConversationFile();
+                fs.unlinkSync(lastConversationFile);
+                console.error(`Conversation file ${lastConversationFile} removed. Exiting.`);
+                process.exit(0);
+            } else if (arg === '-cp') {
+                conversationPrint = true;
+            } else if (arg === '-cr') {
+                conversationLoopWithReadline = true;
+            } else if (arg === '-ca') {
+                conversationLoopWithDictate = true;
+            } else if (arg === '-o' && arguments[i + 1]) {
+                var [key, value] = arguments[i + 1].split('=');
+                try {
+                    value = JSON.parse(value);
+                } catch (e) {
+                    // if value is parseable as JSON, parse it, otherwise just take it as string
+                }
+                openAIOptions[key] = value;
+                i++;
+            } else if (arg === '-of' && arguments[i + 1]) {
+                var [key, filename] = arguments[i + 1].split('=');
+                try {
+                    openAIOptions[key] = JSON.parse(fs.readFileSync(resolveFile(filename, cwd), 'utf8'));
+                } catch (e) {
+                    console.error('Error: Could not read JSON file: ' + filename);
+                    process.exit(1);
+                }
+            } else if (arg === '-rj') {
+                jsonMode = true;
+            } else if (arg === '-rf' && arguments[i + 1]) {
+                responseSchemaFile = resolveFile(arguments[i + 1], cwd);
+                jsonMode = true;
+                i++;
+            } else if (arg === '-ra' && arguments[i + 1]) {
+                responseAttributes = arguments[i + 1].split(',');
+                jsonMode = true;
+                i++;
+            } else if (arg === '-rar' && arguments[i + 1]) {
+                responseArrayAttributes = arguments[i + 1].split(',');
+                jsonMode = true;
+                i++;
+            } else if (arg === '-tf' && arguments[i + 1]) {
+                const toolsConfigFile = resolveFile(arguments[i + 1], cwd);
+                const newTools = JSON.parse(fs.readFileSync(resolveFile(toolsConfigFile, cwd), 'utf8'));
+                const configfiledir = toolsConfigFile;
+                if (Array.isArray(newTools)) {
+                    for (const tool of newTools) {
+                        tool.cfgfilelocation = configfiledir;
+                    }
+                    tools = tools.concat(newTools);
+                } else {
+                    newTools.cfgfilelocation = configfiledir;
+                    tools.push(newTools);
+                }
+                i++;
+            } else if (arg === '-ts' && arguments[i + 1]) {
+                const toolScript = resolveFile(arguments[i + 1], cwd);
+                const toolCmd = resolveScript(toolScript, toolScript);
+                const toolsConfig = execSync(`${toolCmd} --openaitoolsconfig`, {encoding: 'utf8'});
+                var newTools;
+                try {
+                    newTools = JSON.parse(toolsConfig);
+                } catch (error) {
+                    console.error("Trouble reading / parsing the output of " + toolCmd + " --openaitoolsconfig");
+                    throw error;
+                }
+                if (Array.isArray(newTools)) {
+                    for (const tool of newTools) {
+                        tool.cfgfilelocation = toolScript;
+                        if (!tool.commandline) tool.commandline = [toolScript];
+                    }
+                    tools = tools.concat(newTools);
+                } else {
+                    newTools.cfgfilelocation = toolScript;
+                    if (!newTools.commandline) newTools.commandline = [toolScript];
+                    tools.push(newTools);
+                }
+                i++;
+            } else if (arg === '-api' && arguments[i + 1]) {
+                apiURL = arguments[i + 1];
+                i++;
+            } else if (arg === '-ha' || arg === '--helpai') {
+                helpaimode = true;
+            } else if (arg === '--') {
+                inOptions = false;
+            } else if (!arg.startsWith('-')) {
+                inOptions = false;
+                prompt += arg;
+            } else {
+                console.error('Error: Unknown option: ' + arg);
+                console.error(helpMessage);
+                console.error('Error: Unknown option: ' + arg);
                 process.exit(1);
             }
-        } else if (arg === '-rj') {
-            jsonMode = true;
-        } else if (arg === '-rf' && process.argv[i + 1]) {
-            responseSchemaFile = process.argv[i + 1];
-            jsonMode = true;
-            i++;
-        } else if (arg === '-ra' && process.argv[i + 1]) {
-            responseAttributes = process.argv[i + 1].split(',');
-            jsonMode = true;
-            i++;
-        } else if (arg === '-rar' && process.argv[i + 1]) {
-            responseArrayAttributes = process.argv[i + 1].split(',');
-            jsonMode = true;
-            i++;
-        } else if (arg === '-tf' && process.argv[i + 1]) {
-            const toolsConfigFile = process.argv[i + 1];
-            const newTools = JSON.parse(fs.readFileSync(resolveFile(toolsConfigFile), 'utf8'));
-            const configfiledir = toolsConfigFile;
-            if (Array.isArray(newTools)) {
-                for (const tool of newTools) {
-                    tool.cfgfilelocation = configfiledir;
-                }
-                tools = tools.concat(newTools);
-            } else {
-                newTools.cfgfilelocation = configfiledir;
-                tools.push(newTools);
-            }
-            i++;
-        } else if (arg === '-ts' && process.argv[i + 1]) {
-            const toolScript = process.argv[i + 1];
-            const toolCmd = resolveScript(toolScript, toolScript);
-            const toolsConfig = execSync(`${toolCmd} --openaitoolsconfig`, {encoding: 'utf8'});
-            var newTools;
-            try {
-                newTools = JSON.parse(toolsConfig);
-            } catch (error) {
-                console.error("Trouble reading / parsing the output of " + toolCmd + " --openaitoolsconfig");
-                throw error;
-            }
-            if (Array.isArray(newTools)) {
-                for (const tool of newTools) {
-                    tool.cfgfilelocation = toolScript;
-                    if (!tool.commandline) tool.commandline = [toolScript];
-                }
-                tools = tools.concat(newTools);
-            } else {
-                newTools.cfgfilelocation = toolScript;
-                if (!newTools.commandline) newTools.commandline = [toolScript];
-                tools.push(newTools);
-            }
-            i++;
-        } else if (arg === '-api' && process.argv[i + 1]) {
-            apiURL = process.argv[i + 1];
-            i++;
-        } else if (arg === '-ha' || arg === '--helpai') {
-            helpaimode = true;
-        } else if (arg === '--') {
-            inOptions = false;
-        } else if (!arg.startsWith('-')) {
-            inOptions = false;
-            prompt += arg;
         } else {
-            console.error('Error: Unknown option: ' + arg);
-            console.error(helpMessage);
-            console.error('Error: Unknown option: ' + arg);
-            process.exit(1);
+            prompt += ' ' + arg;
         }
-    } else {
-        prompt += ' ' + arg;
     }
 }
+
+parseArguments(process.argv.slice(), process.cwd());
 
 if (verbose) {
     console.log('Available tools:');
@@ -439,9 +446,12 @@ if (suffix) {
 
 let filecontents = "";
 
-function resolveFile(file) {
-    let filename = file;
-    return filename.replace('~', homeDir);
+function resolveFile(file, cwd = process.cwd()) {
+    let filename = file.replace(/^~/, homeDir);
+    if (!path.isAbsolute(file)) {
+        filename = path.join(cwd, file);
+    }
+    return filename;
 }
 
 for (let i = 0; i < fmfiles.length; i++) {
@@ -888,8 +898,8 @@ function onMessage(assistantMessage) {
             for (const [key, value] of Object.entries(parsedArguments)) {
                 stdin = stdin.replace('$' + key, value);
             }
-        } else if (stdin !== ""){
-            stdin = toolCall.function.arguments; // XXX
+        } else if (stdin !== "") {
+            stdin = toolCall.function.arguments;
         }
         commandline[0] = resolveScript(commandline[0], tool.cfgfilelocation);
         console.error("Calling tool", toolCall.function.name, ':', commandline.join(' '),

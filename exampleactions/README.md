@@ -43,3 +43,10 @@ This is a tool description corresponding to
 with the `commandline` and `stdin` as optional extension: the `commandline` array is used to call the tool, and 
 `stdin` is the input for the tool. Placehoders like `$url` are replaced by the corresponding argument. If these are
 missing, the JSON arguments OpenAI passes in the toolcall are just passed to the script in stdin.
+
+Example to use the tool with the scripts in this directory:
+
+```bash
+chatgpt -ts listfiles.sh -ts readfile.sh -ts writefile.sh "Read all .sh files in the current directory and write a file actions.txt with a short descript
+ion"
+```
