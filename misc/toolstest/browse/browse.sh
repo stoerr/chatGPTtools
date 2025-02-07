@@ -21,4 +21,6 @@ prompt="$*"
 
 # chatgpt -tf browseconfig.json -tf ../dup/duplicate.json "read https://www.stoerr.net/contact.html and use tool duplicate to duplicate the text"
 
-chatgpt -tf browseconfig.json -ts ../dup/duplicate.sh "read https://www.stoerr.net/contact.html and use tool duplicate to duplicate the text"
+# chatgpt -tf browseconfig.json -ts ../dup/duplicate.sh "read https://www.stoerr.net/contact.html and use tool duplicate to duplicate the text"
+
+chatgpt -ocf browseopt.txt "read https://www.stoerr.net/contact.html and use tool duplicate to duplicate the text"

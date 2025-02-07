@@ -8,15 +8,9 @@
         "properties": {
           "args": {
             "type": "string"
-          },
-          "stdin": {
-            "type": "string"
           }
         },
-        "required": [
-          "args",
-          "stdin"
-        ],
+        "required": [ "args" ],
         "additionalProperties": false
       },
       "strict": true
