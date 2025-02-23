@@ -1,0 +1,8 @@
+#!/bin/bash
+
+echo chatgpt with additional tools like the CoDeveloper GPT engine: list files, read files, write files, fetch url
+echo call e.g. with -cr to have a conversation, -m o3-mini if you want an advanced model
+
+scriptpath=$(dirname $(realpath $0))
+cfgfile=$scriptpath/../exampleactions/chatgptpmcodev.cfg
+exec chatgpt -ocf $cfgfile "$@"

@@ -68,7 +68,7 @@ Request Settings etc.:
   -api url        Use this URL instead of the OpenAI chat completion [API] (e.g. for local LLM or OpenAI compatible APIs)
   -o key=value    Other [o]ptions, e.g. for the OpenAI API -o temperature=0.5 . Can be given multiple times.
   -of key=file    Other [o]ptions read from a json [f]ile. Can be given multiple times.
-  -ocf            [O|ption [c]onfiguration [f]ile: read general options from a file.
+  -ocf cfgfile    [O|ption [c]onfiguration [f]ile: read general options from a file.
   --              Last option - option parsing stops, the rest is taken as prompt. E.g. for finishing a -ff list.
 
 Response Options:
@@ -317,6 +317,8 @@ function parseArguments(arguments, cwd) {
                 i++;
                 const newOptions = fs.readFileSync(resolveFile(optionsConfigFile, cwd), 'utf8');
                 const optArray = newOptions.split(/\s+/);
+                // at process.argv[1] as first element of optArray since parseArguments skips the first argument
+                optArray.unshift(process.argv[1]);
                 parseArguments(optArray, path.dirname(optionsConfigFile));
             } else if (arg === '-rj') {
                 jsonMode = true;

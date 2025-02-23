@@ -25,7 +25,7 @@ show_openaitoolsconfig() {
         "properties": {
           "filename": {
             "type": "string",
-            "description": "relative path to the file to read wrt the current working directory - it's not allowed to read files outside of the current working directory"
+            "description": "relative path to the file to write wrt the current working directory - it's not allowed to write files outside of the current working directory"
           },
           "content": {
             "type": "string",

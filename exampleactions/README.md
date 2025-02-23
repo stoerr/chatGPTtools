@@ -50,3 +50,26 @@ Example to use the tool with the scripts in this directory:
 chatgpt -ts listfiles.sh -ts readfile.sh -ts writefile.sh "Read all .sh files in the current directory and write a file actions.txt with a short descript
 ion"
 ```
+
+Or use the configuration file
+
+```bash
+chatgpt -ocf chatgptpmcodev.cfg
+```
+
+The [chatgptpmcodev](../bin/chatgptpmcodev) script does that for you, and adds the arguments to the chatgpt command line.
+To have a chat you can add the `-cr` option to the command line.
+
+## Example actions in this directory
+
+1. fetchurl.sh
+   - Description: Fetches the text content of a given URL.
+
+2. listfiles.sh
+   - Description: Lists the contents of the given directory, either recursively or not.
+
+3. readfile.sh
+   - Description: Reads the contents of a given file from the current directory or below (truncated if larger than 10,000 bytes).
+
+4. writefile.sh
+   - Description: Overwrites the specified file with content from stdin.
