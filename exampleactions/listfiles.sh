@@ -35,7 +35,7 @@ show_openaitoolsconfig() {
       },
       "strict": true
     },
-    "commandline": [ "$0", "\recursively", "\$dirname" ],
+    "commandline": [ "$0", "\$recursively", "\$dirname" ],
     "stdin": ""
   }
 EOF
