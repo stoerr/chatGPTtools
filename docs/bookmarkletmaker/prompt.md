@@ -1,6 +1,6 @@
 Have a look at index.html - read the complete file.
 
-Please create a new file boomarkletmaker/bookmarkletmaker.html in the same style that can create a bookmarklet from 
+Please create a new file bookmarkletmaker/bookmarkletmaker.html in the same style that can create a bookmarklet from 
 a javascript fragment - including background, colors and frame with separators. It should have:
 1. a one sentence description what it does
 2. a description what a bookmarklet is. Link to index.html as examples for some bookmarklets of mine.
