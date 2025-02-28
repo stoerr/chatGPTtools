@@ -11,7 +11,7 @@ and a "Clear" button that resets the text area to empty.
 6. A text that appears after that button is hit and contains a link with the bookmarklet that can be dragged into 
    the browsers bookmark bar and mention that you can also clock on it to execute the bookmarklet on this page.
    It should be made invisible again when the javascript fragment is changed.
-7. a text that mentions that this page was created from the file prompt.txt in that directory (linked) using 
+7. a text that mentions that this page was created from the file prompt.md in that directory (linked) using 
    `chatgpt -m o3-mini -ocf ../exampleactions/chatgptpmcodev.cfg -pf bookmarkletmaker/prompt.md` , which should 
    always be visible.
 
