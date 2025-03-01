@@ -14,7 +14,7 @@
 <body>
 <div class="container-xxl"
      style="border-radius: 20px; background: linear-gradient(#f0f0f0, #dcdcdc); padding-top: 1em; padding-bottom: 1.5em;">
-    <div class="container-xxl messages">
+    <div class="container-xxl messages" id="top">
         <div class="row">
             <div class="col-sm-11"><h1>Chat simulation / chat template debugger for the OpenAI chat completion API</h1>
             </div>
@@ -30,11 +30,17 @@
                     <option value="toolscalls">Call Tools</option>
                     <option value="tool">Tool</option>
                 </select>
+                <a href="#top">
+                    <i class="fa fa-long-arrow-up" style="color: white"></i>
+                </a>
                 <a href="#row-2" class="row-up">
                     <i class="fa fa-arrow-up" style="color: white"></i>
                 </a>
                 <a href="#row-0" class="row-down">
                     <i class="fa fa-arrow-down" style="color: white"></i>
+                </a>
+                <a href="#actionrow">
+                    <i class="fa fa-long-arrow-down" style="color: white"></i>
                 </a>
             </div>
             <div class="col-sm-11">
@@ -42,7 +48,7 @@
             </div>
         </div>
     </div>
-    <div class="container-xxl">
+    <div class="container-xxl" id="actionrow">
         <div class="row">
             <div class="col-sm-12 buttons mt-3">
                 <button type="button" class="btn btn-primary submitbutton" onclick="submit()"
@@ -65,6 +71,12 @@
                         title="Adds some empty input fields">Add Fields
                 </button>
                 <br/>
+                <a href="#top">
+                    <i class="fa fa-long-arrow-up" style="color: white"></i>
+                </a>
+                <a href="#row-2" class="lastrow-up">
+                    <i class="fa fa-arrow-up" style="color: white"></i>
+                </a>
                 <input type="number" id="historysize" placeholder="Historysize" value=""
                        title="If set, we keep only that many messages to prevent overflowing the API.">
                 <input type="number" id="temperature" placeholder="Temperature" value=""
@@ -125,6 +137,7 @@
         </div>
     </div>
 </div>
+<span id="bottom"></span>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
@@ -231,8 +244,21 @@
         }
         row.find('.message').val(messageText);
         row.appendTo('div.messages');
-        row.find('a.row-up').attr('href', '#row-' + (rowNumber - 1));
-        row.find('a.row-down').attr('href', '#row-' + (rowNumber + 1));
+        fixRowChaining();
+    }
+
+    function fixRowChaining() {
+        var rowNumber = 0;
+        var rowDown;
+        document.querySelectorAll('.messagefields').forEach((row, index) => {
+            rowNumber = index + 1;
+            row.id = 'row-' + rowNumber;
+            row.querySelector('.row-up').href = '#row-' + (rowNumber - 1);
+            rowDown = row.querySelector('.row-down');
+            rowDown.href = '#row-' + (rowNumber + 1);
+        });
+        document.querySelector('.lastrow-up').href = '#row-' + rowNumber;
+        rowDown.href = '#actionrow';
     }
 
     function addFields() {
@@ -269,6 +295,7 @@
         }
 
         function makeCall(resultcb, errorcb) {
+            document.querySelector('#bottom').scrollIntoView(false);
 
             // fetch api key from local storage, or else prompt if not found
             var api_key = localStorage.getItem('openai_api_key');
