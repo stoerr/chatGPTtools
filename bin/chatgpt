@@ -76,11 +76,11 @@ Response Options:
   -rj             [R]esponse mode JSON: model outputs a JSON object
   -rf schemafile  Structured output: requests that the [r]esponse conforms to the given JSON schema read from a [f]ile.
   -ra attr1,...   Structured output [r]esponse - JSON with [a]ttributes: comma separated list of attributes to include in the JSON response.
-                  Alternative to -rf - creates a simple schema with these attributes. By default they are strings;
-                  if you add a prefix "a:" it'll be an array of strings, "i:" and integer, "n:" a number, "b:" a boolean.
-                  Can be joined: "a:i:foo" is an array of integers.
+                  Alternative to -rf - creates a simple schema with these attributes. The attributes can have a type
+                  as suffix, possibly with [] indicating an array, and with : a description. E.g.:
+                  "name[], surname, age int, height number: height in meters, random boolean[]"
   -rar attr1,...  Structured output for JSON [r]esponse [ar]ray of objects with the given attributes - e.g. for extracting
-                  a list of entities from an input. Alternative to -rf and -ra , all are string properties or other, see -ra.
+                  a list of entities from an input. Alternative to -rf and -ra, attribute syntax like with -ra.
 
 Tooling options:
   -tf configfile  Use the given file as [t]ools configuration [f]ile for tools the LLM could use. Can be given multiple times.
@@ -332,11 +332,11 @@ function parseArguments(arguments, cwd) {
                 jsonMode = true;
                 i++;
             } else if (arg === '-ra' && arguments[i + 1]) {
-                responseAttributes = arguments[i + 1].split(',');
+                responseAttributes = arguments[i + 1].trim().split(/\s*,\s*/);
                 jsonMode = true;
                 i++;
             } else if (arg === '-rar' && arguments[i + 1]) {
-                responseArrayAttributes = arguments[i + 1].split(',');
+                responseArrayAttributes = arguments[i + 1].trim().split(/\s*,\s*/);
                 jsonMode = true;
                 i++;
             } else if (arg === '-tf' && arguments[i + 1]) {
@@ -710,19 +710,31 @@ if (responseArrayAttributes) {
 
 /** Parses the prefixes a:, n:, i: of attributes and creates appropriate json schema entries like {"type": "string"}. */
 function parseAttributeName(attribute) {
-    if (attribute.startsWith("s:")) {
-        return [attribute.slice(2), {"type": "string"}];
-    } else if (attribute.startsWith("i:")) {
-        return [attribute.slice(2), {"type": "integer"}];
-    } else if (attribute.startsWith("n:")) {
-        return [attribute.slice(2), {"type": "number"}];
-    } else if (attribute.startsWith("b:")) {
-        return [attribute.slice(2), {"type": "boolean"}];
-    } else if (attribute.startsWith("a:")) {
-        [entryname, entrytype] = parseAttributeName(attribute.slice(2));
-        return [entryname, {"type": "array", "items": entrytype}];
+    const attributeRegex = /^(?<name>\w+)(\s+(?<type>\w+))?(?<array>\s*\[\])?\s*(:\s*(?<description>.*))?$/;
+    const match = attribute.match(attributeRegex);
+    if (!match) {
+        console.error('Error: Could not parse attribute: ' + attribute);
+        process.exit(1);
     }
-    return [attribute, {"type": "string"}];
+    const name = match.groups.name;
+    var typeName = match.groups.type || 'string';
+    if (typeName === 'int') {
+        typeName = 'integer';
+    }
+    if (typeName === 'double' || typeName === 'float' || typeName === 'num') {
+        typeName = 'number';
+    }
+    const description = match.groups.description;
+    var type;
+    if (match.groups.array) {
+        type = {"type": "array", "items": {"type": typeName}};
+    } else {
+        type = {"type": typeName};
+    }
+    if (description) {
+        type.description = description;
+    }
+    return [name, type];
 }
 
 if (schema) {
