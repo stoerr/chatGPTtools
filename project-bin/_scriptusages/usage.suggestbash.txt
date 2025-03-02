@@ -30,7 +30,7 @@ System Message Options:
   -sf systemfile  Use as [s]ystem message the contents of the given file
   -sl key         Add a [s]ystem message from the ChatGPT prompt [l]ibrary using the given key with chatgptpromptlib
 
-Conversation Options: (only 1 turn per call chatgpt except with -cr/ca; the conversation state is kept in a file)chatgpt)
+Conversation Options: (only 1 turn per call chatgpt except with -cr/ca; the conversation state is kept in a file)
   -cf convfile    Use the given file to keep a [c]onversation state [f]ile. Either creates this file or updates it after the answer is received.
   -cn             Starts a new stored [c]onversation: a [n]ew file in directory $HOME/.chatgpt/conversations is created and used as conversation state.
   -cc             [C]onversation [c]ontinue for the last conversation: the last file in directory $HOME/.chatgpt/conversations is used as conversation state.
@@ -45,23 +45,25 @@ Request Settings etc.:
   -mh             Use the [m]odel with - at the time of updating this script - [h]ighest general intelligence ("gpt-4o")
   -md             Use the [m]odel with - at the time of updating this script - best [d]eliberation ("o1-preview")
   -t number       Set max [t]okens for response (default: no limit)
+  -nr number      Generate this [n]umber of [r]esponses in a row (default: 1). Works only in simple settings - no tools etc.
   -v              [V]erbose output : prints the sent and received json message to stderr and gives info about connection retries
   -w column       [W]ord wrap the response to a specified column width using fmt.
   -abbrev         [Abbrev]iate ("clip") the message in the middle if it's too long for the model context window
   -api url        Use this URL instead of the OpenAI chat completion [API] (e.g. for local LLM or OpenAI compatible APIs)
   -o key=value    Other [o]ptions, e.g. for the OpenAI API -o temperature=0.5 . Can be given multiple times.
   -of key=file    Other [o]ptions read from a json [f]ile. Can be given multiple times.
+  -ocf cfgfile    [O|ption [c]onfiguration [f]ile: read general options from a file.
   --              Last option - option parsing stops, the rest is taken as prompt. E.g. for finishing a -ff list.
 
 Response Options:
   -rj             [R]esponse mode JSON: model outputs a JSON object
   -rf schemafile  Structured output: requests that the [r]esponse conforms to the given JSON schema read from a [f]ile.
-  -ra attr1,...   Structured output [r]esponse - JSON with [a]ttributes: comma separated list of attributes to include in the JSON response. 
-                  Alternative to -rf - creates a simple schema with these attributes. By default they are strings;
-                  if you add a prefix "a:" it'll be an array of strings, "i:" and integer, "n:" a number, "b:" a boolean.
-                  Can be joined: "a:i:foo" is an array of integers.
+  -ra attr1,...   Structured output [r]esponse - JSON with [a]ttributes: comma separated list of attributes to include in the JSON response.
+                  Alternative to -rf - creates a simple schema with these attributes. The attributes can have a type
+                  as suffix, possibly with [] indicating an array, and with : a description. E.g.:
+                  "name[], surname, age int, height number: height in meters, random boolean[]"
   -rar attr1,...  Structured output for JSON [r]esponse [ar]ray of objects with the given attributes - e.g. for extracting
-                  a list of entities from an input. Alternative to -rf and -ra , all are string properties or other, see -ra.          
+                  a list of entities from an input. Alternative to -rf and -ra, attribute syntax like with -ra.
 
 Tooling options:
   -tf configfile  Use the given file as [t]ools configuration [f]ile for tools the LLM could use. Can be given multiple times.

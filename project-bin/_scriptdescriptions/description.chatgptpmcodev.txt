@@ -1,0 +1,3 @@
+// AIGenVersion(26d5e9dd, scriptdescr.prompt-2cae325e, usage.chatgptpmcodev.txt-48a55084)
+
+Submits prompts for conversation and retrieves responses while managing conversation state and supporting various input and output formats.

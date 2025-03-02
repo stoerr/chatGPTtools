@@ -60,7 +60,7 @@ else
 fi
 
 # generate the jq command
-jqcmd=$(head -c 1000 $jsonfile | chatgpt $verbose -f - -ra queryasunderstood,explanation,a:jqargs -s "$jqgenerateprompt" "$prompt")
+jqcmd=$(head -c 1000 $jsonfile | chatgpt $verbose -f - -ra 'queryasunderstood,explanation,jqargs[]' -s "$jqgenerateprompt" "$prompt")
 if [ "$?" -ne 0 ]; then
   echo "Error generating jq command"
   exit 1

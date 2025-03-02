@@ -1,3 +1,5 @@
+chatgpt with additional tools like the CoDeveloper GPT engine: list files, read files, write files, fetch url
+call e.g. with -cr to have a conversation, -m o3-mini if you want an advanced model
 
 chatgpt - Submit a prompt to ChatGPT conversation and print the response to stdout. The prompt can be given on the command line or read from stdin.
 
