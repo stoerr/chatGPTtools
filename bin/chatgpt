@@ -62,6 +62,7 @@ Request Settings etc.:
   -mh             Use the [m]odel with - at the time of updating this script - [h]ighest general intelligence ("gpt-4o")
   -md             Use the [m]odel with - at the time of updating this script - best [d]eliberation ("o1-preview")
   -t number       Set max [t]okens for response (default: no limit)
+  -nr number      Generate this [n]umber of [r]esponses in a row (default: 1). Works only in simple settings - no tools etc.
   -v              [V]erbose output : prints the sent and received json message to stderr and gives info about connection retries
   -w column       [W]ord wrap the response to a specified column width using fmt.
   -abbrev         [Abbrev]iate ("clip") the message in the middle if it's too long for the model context window
@@ -112,6 +113,7 @@ const apiKeyFile = `${process.env.HOME}/.openai-api-key.txt`;
 const openAIurldefault = 'https://api.openai.com/v1/chat/completions';
 let apiURL = openAIurldefault;
 let maxTokens;
+let numResponses = undefined;
 let prompt = '';
 let readStdin = false;
 let verbose = false;
@@ -185,6 +187,9 @@ function parseArguments(arguments, cwd) {
                 model = 'o1-preview';
             } else if (arg === '-t' && arguments[i + 1]) {
                 maxTokens = parseInt(arguments[i + 1], 10);
+                i++;
+            } else if (arg === '-nr' && arguments[i + 1]) {
+                numResponses = parseInt(arguments[i + 1], 10);
                 i++;
             } else if (arg === '-') {
                 readStdin = true;
@@ -635,6 +640,10 @@ if (maxTokens) {
     requestData.max_tokens = maxTokens;
 }
 
+if (numResponses) {
+    requestData.n = numResponses;
+}
+
 if (jsonMode) {
     requestData.response_format = {"type": "json_object"};
 }
@@ -783,7 +792,6 @@ function writeConversation() {
     }
 }
 
-// see https://docs.anthropic.com/en/api/messages
 async function requestChatGPT(successcallback, attempt = 1) {
     try {
         requestData.messages = messages;
@@ -856,6 +864,13 @@ async function requestChatGPT(successcallback, attempt = 1) {
                 console.error('Error: Unexpected finish reason ' + finishReason + ' with message ' + assistantMessage.content);
                 process.exit(1);
             }
+
+            if (numResponses && responseData.choices.length > 1) {
+                for (let i = 1; i < responseData.choices.length; i++) {
+                    const otherResponse = responseData.choices[i].message.content;
+                    console.log('\n### alternate response ###\n', otherResponse);
+                }
+            }
         }
     } catch (error) {
         console.error('Error:', error.message);
@@ -885,6 +900,7 @@ function onContent(assistantMessage) {
     maybeContinueConversation();
 }
 
+/** Called when an assistant message comes in. */
 function onMessage(assistantMessage) {
     const toolCalls = assistantMessage["tool_calls"];
     if (!toolCalls) {
