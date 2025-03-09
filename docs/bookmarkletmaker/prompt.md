@@ -1,7 +1,8 @@
 Have a look at index.html - read the complete file.
 
 Please create or update file bookmarkletmaker/bookmarkletmaker.html in the same style that can create a bookmarklet 
-from a javascript fragment - including background, colors and frame with separators. It should have:
+from a javascript fragment - including background, colors and frame with separators. Read and modify the file if it 
+exists. It should have:
 1. a one sentence description what it does
 2. a description what a bookmarklet is. Link to index.html as examples for some bookmarklets of mine.
 3. a text input for the title of the bookmarklet
