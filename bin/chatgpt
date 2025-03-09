@@ -24,6 +24,7 @@ Input Options:
   -               Reads prompt from stdin; if a prompt is given on the command line it is appended
   -f filename     Includes the content of the given [f]ile as additional message in https://www.stoerr.net/blog/aimouth pattern. 
                   Can be given multiple times. if - is given as filename, the content is read from stdin.
+  -fo filename    Same as -f but the [f]ile is [o]ptional.
   -ff filenames   Like -f, but for multiple text [ff]iles - all further arguments are treated as filenames until there is a switch.
   -fp filename    Includes the content of the given [f]ile as codeblock into the [p]rompt, together with the filename. Can be given multiple times.
   -i imagefile    Includes the given image file as [i]mage, together with the filename. Can be given multiple times.
@@ -236,14 +237,20 @@ function parseArguments(arguments, cwd) {
                 }
                 i++;
             } else if (arg === '-fp' && arguments[i + 1]) {
-                files.push(arguments[i + 1]);
+                files.push(resolveFile(arguments[i + 1], cwd));
                 i++;
             } else if ((arg === '-fm' || arg === '-f') && arguments[i + 1]) { // -fm is for backwards compatibility
-                fmfiles.push(arguments[i + 1]);
+                fmfiles.push(resolveFile(arguments[i + 1], cwd));
+                i++;
+            } else if (arg === '-fo' && arguments[i + 1]) {
+                const file = resolveFile(arguments[i + 1], cwd);
+                if (fs.existsSync(file)) {
+                    fmfiles.push(file);
+                }
                 i++;
             } else if (arg === '-ff') {
                 while (arguments[i + 1] && !arguments[i + 1].startsWith('-')) {
-                    fmfiles.push(arguments[i + 1]);
+                    fmfiles.push(resolveFile(arguments[i + 1], cwd));
                     i++;
                 }
             } else if (arg === '-w' && arguments[i + 1]) {
@@ -476,7 +483,7 @@ for (let i = 0; i < fmfiles.length; i++) {
         fmfilemessages.push({role: 'user', content: "Print the raw input text the instructions will apply to."});
         fmfilemessages.push({role: 'assistant', content: filecontent});
     } else {
-        const filecontent = fs.readFileSync(resolveFile(file), 'utf-8');
+        const filecontent = fs.readFileSync(file, 'utf-8');
         fmfilemessages.push({
             role: 'user',
             content: "Print the current raw content of the file " + file.replace(homeDir, '~')
@@ -486,8 +493,7 @@ for (let i = 0; i < fmfiles.length; i++) {
 }
 
 for (let i = 0; i < files.length; i++) {
-    const file = files[i];
-    let filename = file.replace('~', homeDir);
+    const filename = files[i];
     const filePrompt = fs.readFileSync(resolveFile(file), 'utf-8');
 
     if (files.length > 1) {

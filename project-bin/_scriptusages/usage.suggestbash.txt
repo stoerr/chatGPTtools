@@ -7,6 +7,7 @@ Input Options:
   -               Reads prompt from stdin; if a prompt is given on the command line it is appended
   -f filename     Includes the content of the given [f]ile as additional message in https://www.stoerr.net/blog/aimouth pattern. 
                   Can be given multiple times. if - is given as filename, the content is read from stdin.
+  -fo filename    Same as -f but the [f]ile is [o]ptional.
   -ff filenames   Like -f, but for multiple text [ff]iles - all further arguments are treated as filenames until there is a switch.
   -fp filename    Includes the content of the given [f]ile as codeblock into the [p]rompt, together with the filename. Can be given multiple times.
   -i imagefile    Includes the given image file as [i]mage, together with the filename. Can be given multiple times.

@@ -1,3 +1,3 @@
-// AIGenVersion(1ed43608, scriptdescr.prompt-2cae325e, usage.q.txt-22f0e3b2)
+// AIGenVersion(70a07bba, scriptdescr.prompt-2cae325e, usage.q.txt-7e587165)
 
 Asks for a quick answer to a given prompt.
