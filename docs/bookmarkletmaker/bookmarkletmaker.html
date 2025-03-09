@@ -1,65 +1,150 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="A tool to create bookmarklets from JavaScript fragments">
-    <link href="//cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
-    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
-    <title>Bookmarklet Maker</title>
-    <style>
-        body { background-color: #f8f9fa; }
-        .container { margin-top: 20px; }
-        .result { margin-top: 20px; }
-        .footer-link { margin-top: 20px; font-size: 0.8em; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bookmarklet Maker</title>
+  <meta name="description" content="A tool that creates bookmarklets from a JavaScript fragment, with a friendly UI in Bootstrap style.">
+  <link href="//cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+  <!-- SEO Meta Tags -->
+  <meta name="robots" content="index,follow">
+  <meta name="author" content="Hans-Peter Störr">
+  <link rel="canonical" href="bookmarkletmaker.html">
+  <style>
+    body { padding-top: 20px; }
+    .separator { border-top: 1px solid #dee2e6; margin: 20px 0; }
+    #resultSection { display: none; }
+    textarea { resize: vertical; }
+  </style>
 </head>
 <body>
-<div class="container">
-    <h1>Create Your Bookmarklet</h1>
-    <p>This tool allows you to create bookmarklets from JavaScript fragments.</p>
-    <p>A <strong>bookmarklet</strong> is a small JavaScript program stored as a URL within a bookmark in a web browser. You can find examples of my bookmarklets <a href="../index.html">here</a>.</p>
-    <div class="mb-3">
-        <label for="bookmarklet-title" class="form-label">Bookmarklet Title</label>
-        <input type="text" class="form-control" id="bookmarklet-title" placeholder="Enter the title of your bookmarklet">
+  <div class="container">
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h2>Bookmarklet Maker</h2>
+      </div>
+      <div class="card-body">
+        <!-- One sentence description -->
+        <p class="mb-3">This tool creates a bookmarklet from a JavaScript fragment so you can easily execute your code on any page.</p>
+        
+        <!-- Description of bookmarklet with link to index.html -->
+        <p>A bookmarklet is a bookmark stored in your browser that contains JavaScript code to run on any page. See some examples in <a href="../index.html">index.html</a>.</p>
+        
+        <!-- Input for title -->
+        <div class="mb-3">
+          <label for="bookmarkletTitle" class="form-label">Bookmarklet Title</label>
+          <input type="text" class="form-control" id="bookmarkletTitle" placeholder="Enter bookmarklet title">
+        </div>
+        
+        <!-- Textarea for JavaScript fragment -->
+        <div class="mb-3">
+          <label for="jsFragment" class="form-label">JavaScript Fragment</label>
+          <textarea class="form-control" id="jsFragment" rows="6" placeholder="Enter your JavaScript code here..."></textarea>
+        </div>
+        
+        <!-- Buttons: Example and Clear -->
+        <div class="mb-3">
+          <button id="exampleBtn" class="btn btn-secondary me-2">Example</button>
+          <button id="clearBtn" class="btn btn-warning">Clear</button>
+        </div>
+        
+        <!-- Section to display bookmarklet link -->
+        <div id="resultSection" class="mb-3 p-3 border rounded bg-light">
+          <p>Drag this link to your bookmarks bar or click it to execute on this page: <a href="#" id="bookmarkletLink">Your Bookmarklet</a></p>
+        </div>
+        
+        <!-- Text area showing the generated URL -->
+        <div class="mb-3">
+          <label for="bookmarkletURL" class="form-label">Bookmarklet URL</label>
+          <textarea class="form-control" id="bookmarkletURL" rows="3" readonly></textarea>
+        </div>
+        
+        <!-- Buttons: Copy to clipboard and Decode -->
+        <div class="mb-3">
+          <button id="copyBtn" class="btn btn-info me-2">Copy to clipboard</button>
+          <button id="decodeBtn" class="btn btn-outline-primary">Decode</button>
+        </div>
+        
+        <!-- Always visible info linking to prompt.md -->
+        <p class="mt-4"><small>This page was created from the file <a href="prompt.md">prompt.md</a> in this directory using <code>chatgpt -m o3-mini -ocf ../exampleactions/chatgptpmcodev.cfg -pf bookmarkletmaker/prompt.md</code>.</small></p>
+      </div>
     </div>
-    <div class="mb-3">
-        <label for="bookmarklet-script" class="form-label">JavaScript Fragment</label>
-        <textarea class="form-control" id="bookmarklet-script" rows="5" placeholder="Enter your JavaScript code here..."></textarea>
-    </div>
-    <button class="btn btn-primary" id="create-bookmarklet">Create Bookmarklet</button>
-    <button class="btn btn-secondary" id="example-bookmarklet">Example</button>
-    <button class="btn btn-danger" id="clear-script">Clear</button>
-    <div class="result" id="result-container" style="display:none;">
-        <p>Drag this link to your bookmarks bar: <a id="bookmarklet-link" href="#">Your Bookmarklet</a></p>
-        <p>Click on it to execute the bookmarklet on this page.</p>
-    </div>
-    <p class="footer-link">This page was created from <a href="bookmarkletmaker/prompt.md">prompt.md</a> using <code>chatgpt -m o3-mini -ocf ../exampleactions/chatgptpmcodev.cfg -pf bookmarkletmaker/prompt.md</code>.</p>
-</div>
-<script>
-    document.getElementById('create-bookmarklet').onclick = function() {
-        const title = document.getElementById('bookmarklet-title').value;
-        const script = document.getElementById('bookmarklet-script').value;
-        const link = document.getElementById('bookmarklet-link');
-        if (title && script) {
-            const bookmarklet = 'javascript:' + encodeURIComponent(script);
-            link.setAttribute('href', bookmarklet);
-            link.innerText = title;
-            document.getElementById('result-container').style.display = 'block';
+  </div>
+  
+  <script>
+    // Helper function to update the bookmarklet URL and link
+    function updateBookmarklet() {
+      const title = document.getElementById('bookmarkletTitle').value.trim() || 'MyBookmarklet';
+      const jsFragment = document.getElementById('jsFragment').value;
+      const resultSection = document.getElementById('resultSection');
+      const bookmarkletLink = document.getElementById('bookmarkletLink');
+      const bookmarkletURLField = document.getElementById('bookmarkletURL');
+      
+      // Wrap the JS fragment in an IIFE for bookmarklet execution
+      let wrappedCode = `(function(){\n${jsFragment}\n})();`;
+      // Encode the wrapped code using encodeURIComponent
+      let encodedCode = encodeURIComponent(wrappedCode);
+      let bookmarklet = 'javascript:' + encodedCode;
+      
+      // Update link and textarea
+      bookmarkletLink.setAttribute('href', bookmarklet);
+      bookmarkletLink.textContent = title;
+      bookmarkletURLField.value = bookmarklet;
+      
+      // Hide the result section if the JS fragment is changed
+      if(jsFragment === "") {
+        resultSection.style.display = 'none';
+      } else {
+        resultSection.style.display = 'block';
+      }
+    }
+    
+    // Event listeners on input changes
+    document.getElementById('bookmarkletTitle').addEventListener('input', updateBookmarklet);
+    document.getElementById('jsFragment').addEventListener('input', updateBookmarklet);
+    
+    // Example button event: sets the textarea to an example and updates the bookmarklet
+    document.getElementById('exampleBtn').addEventListener('click', function(){
+      const exampleCode = "alert('Hello from your bookmarklet!');";
+      document.getElementById('bookmarkletTitle').value = 'HelloBookmarklet';
+      document.getElementById('jsFragment').value = exampleCode;
+      updateBookmarklet();
+    });
+    
+    // Clear button event: resets all inputs
+    document.getElementById('clearBtn').addEventListener('click', function(){
+      document.getElementById('bookmarkletTitle').value = '';
+      document.getElementById('jsFragment').value = '';
+      updateBookmarklet();
+    });
+    
+    // Copy to clipboard button: copies the bookmarklet URL
+    document.getElementById('copyBtn').addEventListener('click', function(){
+      const bookmarkletURL = document.getElementById('bookmarkletURL');
+      bookmarkletURL.select();
+      document.execCommand('copy');
+      alert('Bookmarklet URL copied to clipboard!');
+    });
+    
+    // Decode button: decodes the javascript fragment from the bookmarklet URL and writes it into the JS fragment textarea
+    document.getElementById('decodeBtn').addEventListener('click', function(){
+      let bookmarklet = document.getElementById('bookmarkletURL').value;
+      if(bookmarklet.startsWith('javascript:')) {
+        let encoded = bookmarklet.substring('javascript:'.length);
+        let decoded = decodeURIComponent(encoded);
+        // Remove wrapping if it exists
+        const prefix = '(function(){\n';
+        const suffix = '\n})();';
+        if(decoded.startsWith(prefix) && decoded.endsWith(suffix)) {
+          decoded = decoded.substring(prefix.length, decoded.length - suffix.length);
         }
-    };
-    document.getElementById('example-bookmarklet').onclick = function() {
-        document.getElementById('bookmarklet-title').value = 'Example Bookmarklet';
-        document.getElementById('bookmarklet-script').value = "alert('This is an example bookmarklet!');";
-        document.getElementById('create-bookmarklet').click();
-    };
-    document.getElementById('clear-script').onclick = function() {
-        document.getElementById('bookmarklet-script').value = '';
-        document.getElementById('result-container').style.display = 'none';
-    };
-    document.getElementById('bookmarklet-script').oninput = function() {
-        document.getElementById('result-container').style.display = 'none';
-    };
-</script>
+        document.getElementById('jsFragment').value = decoded.trim();
+        updateBookmarklet();
+      }
+    });
+    
+    // Initialize the bookmarklet URL on page load
+    updateBookmarklet();
+  </script>
 </body>
 </html>

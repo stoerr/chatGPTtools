@@ -1,2 +1,4 @@
 #!/usr/bin/env bash
-aigenpipeline -m "o3-mini" -p prompt.md -upd -o bookmarkletmaker.html
+cd $(dirname "$0") || exit 3
+cd ..
+chatgpt -m o3-mini -ocf ../exampleactions/chatgptpmcodev.cfg -pf bookmarkletmaker/prompt.md
