@@ -26,7 +26,7 @@ and a "Clear" button that resets all inputs to empty.
 12. A "Generate with AI" textarea where the user can type a prompt
 13. A button "Generate" that sends that prompt to the OpenAI chat completion API with model o3-mini. The OpenAI API 
     key is taken from local storage in the browser with key 'openai_api_key'. If it's not there it's asked for with 
-    'prompt' and saved there. The prompt should be prefixed with : "Print javascript code that follows the following 
-    requirements. Only print the Javascript code, no comments.\n\n"  During the generation a spinner should be shown.
+    'prompt' and saved there. The prompt should be prefixed with : "Print compact javascript code that follows the 
+    following requirements. Only print the Javascript code, no comments.\n\n"  During the generation a spinner should be shown.
 
 Include the proper SEO meta tags and make it a nicely looking UI in bootstrap style.

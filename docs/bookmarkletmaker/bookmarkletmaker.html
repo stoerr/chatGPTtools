@@ -61,7 +61,7 @@
         <!-- Text area showing the generated URL of the bookmarklet -->
         <div class="mb-3">
           <label for="bookmarkletURL" class="form-label">Bookmarklet URL</label>
-          <textarea class="form-control" id="bookmarkletURL" rows="3" readonly></textarea>
+          <textarea class="form-control" id="bookmarkletURL" rows="3"></textarea>
         </div>
         
         <!-- Buttons: Copy to clipboard and Decode -->
@@ -178,7 +178,7 @@
         alert('Please enter a prompt.');
         return;
       }
-      const fullPrompt = "Print javascript code that follows the following requirements. Only print the Javascript code, no comments.\n\n" + aiPrompt;
+      const fullPrompt = "Print compact javascript code that follows the following requirements. Only print the Javascript code, no comments.\n\n" + aiPrompt;
       const spinner = document.getElementById('spinner');
       spinner.style.display = 'inline-block';
       
