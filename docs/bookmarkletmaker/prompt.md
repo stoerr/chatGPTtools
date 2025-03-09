@@ -14,5 +14,7 @@ and a "Clear" button that resets the text area to empty.
 7. a text that mentions that this page was created from the file prompt.md in that directory (linked) using 
    `chatgpt -m o3-mini -ocf ../exampleactions/chatgptpmcodev.cfg -pf bookmarkletmaker/prompt.md` , which should 
    always be visible.
+8. A text area that shows the URL of the bookmarklet that is created.
+9. Buttons after that text area: "Copy to clipboard", "Decode" (which decodes the javascript fragment from the URL)
 
 Include the proper SEO meta tags.
