@@ -416,8 +416,10 @@
         },
 
         showScreenshot() {
+            this.selectIncludeScreenshot.disabled = true;
             this.captureScreenshot(() => {
                 this.screenshotOverlay.classList.remove('hidden');
+                this.selectIncludeScreenshot.disabled = false;
                 this.selectIncludeScreenshot.checked = true;
             });
         },
