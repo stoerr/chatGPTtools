@@ -68,6 +68,7 @@ Request Settings etc.:
   -w column       [W]ord wrap the response to a specified column width using fmt.
   -abbrev         [Abbrev]iate ("clip") the message in the middle if it's too long for the model context window
   -api url        Use this URL instead of the OpenAI chat completion [API] (e.g. for local LLM or OpenAI compatible APIs)
+  -rh key=value   Add a [r]equest [h]eader, e.g. for authorization etc. Can be given multiple times.
   -o key=value    Other [o]ptions, e.g. for the OpenAI API -o temperature=0.5 . Can be given multiple times.
   -of key=file    Other [o]ptions read from a json [f]ile. Can be given multiple times.
   -ocf cfgfile    [O|ption [c]onfiguration [f]ile: read general options from a file.
@@ -146,6 +147,10 @@ let conversationLoopWithDictate = false;
 let audioFiles = [];
 let audioUrls = [];
 let audioFormat = undefined;
+
+const headers = {
+    'Content-Type': 'application/json'
+};
 
 function getConversationDir() {
     const conversationDir = `${process.env.HOME}/.chatgpt/conversations`;
@@ -386,6 +391,10 @@ function parseArguments(arguments, cwd) {
             } else if (arg === '-api' && arguments[i + 1]) {
                 apiURL = arguments[i + 1];
                 i++;
+            } else if (arg === '-rh' && arguments[i + 1]) {
+                var [key, value] = arguments[i + 1].split('=');
+                headers[key] = value;
+                i++;
             } else if (arg === '-ha' || arg === '--helpai') {
                 helpaimode = true;
             } else if (arg === '--') {
@@ -411,10 +420,6 @@ if (verbose) {
     console.log('Available tools:');
     console.log(JSON.stringify(tools, null, 2));
 }
-
-const headers = {
-    'Content-Type': 'application/json'
-};
 
 let messages = [];
 

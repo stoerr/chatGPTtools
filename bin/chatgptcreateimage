@@ -114,7 +114,9 @@ shift $((OPTIND - 1))
 # Read prompt from file/stdin if -f is used
 if [ $FILE_MODE -eq 1 ]; then
     if [ "$PROMPT_FILE" == "-" ]; then
-        read -d '' -r PROMPT
+        read -r PROMPT
+        echo
+        echo "Read prompt: $PROMPT"
     else
         if [ ! -f "$PROMPT_FILE" ]; then
             echo "Error: File $PROMPT_FILE does not exist."
