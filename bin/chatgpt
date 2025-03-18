@@ -60,8 +60,8 @@ Conversation Options: (only 1 turn per call ${programname} except with -cr/ca; t
 
 Request Settings etc.:
   -m modelname    Use a specific [m]odel (default: ${model})
-  -mh             Use the [m]odel with - at the time of updating this script - [h]ighest general intelligence ("gpt-4o")
-  -md             Use the [m]odel with - at the time of updating this script - best [d]eliberation ("o1-preview")
+  -mh             Use the [m]odel with - at the time of updating this script - [h]ighest general intelligence ("gpt-4.5-preview")
+  -md             Use the [m]odel with - at the time of updating this script - best [d]eliberation ("o3-mini")
   -t number       Set max [t]okens for response (default: no limit)
   -nr number      Generate this [n]umber of [r]esponses in a row (default: 1). Works only in simple settings - no tools etc.
   -v              [V]erbose output : prints the sent and received json message to stderr and gives info about connection retries
@@ -188,9 +188,9 @@ function parseArguments(arguments, cwd) {
                 model = arguments[i + 1];
                 i++;
             } else if (arg === '-4' || arg === "-mh") { // -4 for backwards compatibility
-                model = 'gpt-4o';
+                model = 'gpt-4.5-preview';
             } else if (arg === '-md') {
-                model = 'o1-preview';
+                model = 'o3-mini';
             } else if (arg === '-t' && arguments[i + 1]) {
                 maxTokens = parseInt(arguments[i + 1], 10);
                 i++;
