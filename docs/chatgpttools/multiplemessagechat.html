@@ -85,26 +85,19 @@
                        title="The maximum number of tokens to generate in the chat completion.">
                 <input type="number" id="n" placeholder="n" value=""
                        title="How many chat completion choices to generate for each input message.">
-                <!-- https://platform.openai.com/docs/models/gpt-3-5-turbo -->
-                <select id="modelSelector" style="margin-left: 10px;">
-                    <option value="gpt-4o-mini" selected>gpt-4o-mini</option>
-                    <option value="gpt-4o">gpt-4o</option>
-                    <option value="gpt-4.5-preview">gpt-4.5-preview</option>
-                    <option value="o1-mini">o1-mini</option>
-                    <option value="o1">o1</option>
-                    <option value="o3-mini">o3-mini</option>
-                    <option value="gpt-4o-mini-search-preview">gpt-4o-mini-search-preview</option>
-                    <option value="gpt-4o-search-preview">gpt-4o-search-preview</option>
-                    <option value="gpt-4-turbo">gpt-4-turbo</option>
-                    <option value="gpt-4">gpt-4</option>
-                    <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
-                    <option value="computer-use-preview">computer-use-preview</option>
-                </select>
-                &nbsp;
                 <input type="checkbox" id="jsonoutput"
                        title="Check this box to require JSON output. But you'll also need to tell the model to create JSON output, too."
                        value="jsonoutput">&nbsp;
                 require JSON</input>
+                <br/>
+                <select id="apiSelector">
+                    <option value="openai" selected>OpenAI</option>
+                    <option value="anthropic">Anthropic</option>
+                    <option value="gemini">Gemini</option>
+                    <option value="LMStudio" title="http://localhost:1234/v1/chat/completions">LMStudio (local)</option>
+                </select>
+                <select id="modelSelector" style="margin-left: 10px;">
+                </select>
                 <br>
                 <!-- Drop down list for selecting an initial prompt. The first entry is an autoselected option with an empty value and description "default" -->
                 <label for="initialprompt" class="mt-3">For fun, select a different system prompt:</label>
@@ -174,6 +167,12 @@
 </pre>
 
 <script>
+    const models = {
+        'openai':
+            ['gpt-4o-mini', 'gpt-4o', 'gpt-4.5-preview', 'o1-mini', 'o1', 'o3-mini', 'gpt-4o-mini-search-preview', 'gpt-4o-search-preview', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo', 'computer-use-preview'],
+        'anthropic': ['claude-3-7-sonnet-20250219', 'claude-3-haiku-20240307', 'claude-3-opus-20240229'],
+        'gemini': ['gemini-1.5-flash-latest', 'gemini-1.5-pro-latest', 'gemini-pro-vision']
+    }
 
     $(document).ready(function () {
         reset();
@@ -196,7 +195,19 @@
         $('.messages').on('keydown', '.message', submitOnEnter);
         $('.messages').on('focus', '.message', expandOnFocus);
         $('.messages').on('blur', '.message', shrinkOnBlur);
+
+        $('#apiSelector').on('change', setModels);
+        setModels();
     });
+
+    function setModels() {
+        const apiSelector = $('#apiSelector').val();
+        const modelSelector = $('#modelSelector');
+        modelSelector.empty();
+        models[apiSelector].forEach(model => {
+            modelSelector.append(new Option(model, model));
+        });
+    }
 
     function loadPrompts() {
         // read prompts from the hidden pre chatgptprompts and add them to the select element "initialprompt"
@@ -236,7 +247,7 @@
         let messageText;
         if (typeof messageObj === 'object' && (Object.keys(messageObj).length > 2 || !messageObj.content)) {
             // Exclude the 'role' field when serializing
-            const { role, ...rest } = messageObj;
+            const {role, ...rest} = messageObj;
             messageText = JSON.stringify(rest, null, 2);
         } else if (messageObj && messageObj.content) {
             messageText = messageObj.content;
@@ -298,12 +309,24 @@
         function makeCall(resultcb, errorcb) {
             document.querySelector('#bottom').scrollIntoView(false);
 
+            const apiSelector = $('#apiSelector').val();
+            let apiUrl;
+            if (apiSelector === 'LMStudio') {
+                apiUrl = 'http://localhost:1234/v1/chat/completions';
+            } else if (apiSelector === "anthropic") {
+                apiUrl = 'https://api.anthropic.com/v1/chat/completions';
+            } else if (apiSelector === "gemini") {
+                apiUrl = 'https://gemini.googleapis.com/v1/chat/completions';
+            } else {
+                apiUrl = 'https://api.openai.com/v1/chat/completions';
+            }
             // fetch api key from local storage, or else prompt if not found
-            var api_key = localStorage.getItem('openai_api_key');
+            const storageKey = apiSelector + '_api_key';
+            var api_key = localStorage.getItem(storageKey);
             if (!api_key) {
-                api_key = prompt("Please enter your API key, which you can create in your profile at https://platform.openai.com/");
+                api_key = prompt(`Please enter your API key for ${apiSelector}, e.g. from https://platform.openai.com/ for OpenAI.`);
                 if (api_key) {
-                    localStorage.setItem('openai_api_key', api_key);
+                    localStorage.setItem(storageKey, api_key);
                 }
             }
 
@@ -342,12 +365,13 @@
             }
 
             return $.ajax({
-                url: 'https://api.openai.com/v1/chat/completions',
+                url: apiUrl,
                 type: 'POST',
                 dataType: 'json',
                 contentType: 'application/json',
                 headers: {
-                    'Authorization': 'Bearer ' + api_key
+                    'Authorization': 'Bearer ' + api_key,
+                    'anthropic-dangerous-direct-browser-access': 'true'
                 },
                 data: JSON.stringify(request),
                 success: resultcb,
@@ -386,7 +410,7 @@
         var messages = [];
         $('.row').each(function (index, row) {
             var type = $(row).find('.type').val();
-            if (type == 'toolscalls') type='assistant';
+            if (type == 'toolscalls') type = 'assistant';
             var messageText = $(row).find('.message').val();
             if (type && messageText) {
                 var message;
