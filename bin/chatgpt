@@ -489,9 +489,11 @@ for (let i = 0; i < fmfiles.length; i++) {
         fmfilemessages.push({role: 'assistant', content: filecontent});
     } else {
         const filecontent = fs.readFileSync(file, 'utf-8');
+        // calculate file path relative to current directory
+        const relativeFilePath = path.relative(process.cwd(), file);
         fmfilemessages.push({
             role: 'user',
-            content: "Print the current raw content of the file " + file.replace(homeDir, '~')
+            content: "Print the current raw content of the file '" + relativeFilePath + "' the instructions will apply to."
         });
         fmfilemessages.push({role: 'assistant', content: filecontent});
     }
