@@ -207,7 +207,7 @@
         getSummary: async function () {
             const instructions = this.lang === 'de' ?
                 "Erstelle eine Zusammenfassung des folgenden Texts auf Deutsch. Konzentriere dich auf neue oder überraschende Informationen.\n\n" :
-                "Create a summary of this text that you could replace the text with. Focus on new or surprising information.\n\n";
+                "Create a summary of this text that you could replace the text with. Focus on new or surprising information. Use the language the text is written in.\n\n";
             const content = this.getIncludedText().trim();
             const selectedModel = document.getElementById('hps-chatgpt-model-selector').value;
             return this.promptOnText(instructions, content, selectedModel);
