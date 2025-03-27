@@ -52,3 +52,4 @@ if [ "$1" = "--openaitoolsconfig" ]; then show_openaitoolsconfig; exit 0; fi
 # copy stdin to stderr
 echo "Thought:" >&2
 cat >&2
+echo >&2

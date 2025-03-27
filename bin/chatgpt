@@ -50,8 +50,8 @@ System Message Options:
 
 Conversation Options: (only 1 turn per call ${programname} except with -cr/ca; the conversation state is kept in a file)
   -cf convfile    Use the given file to keep a [c]onversation state [f]ile. Either creates this file or updates it after the answer is received.
-  -cn             Starts a new stored [c]onversation: a [n]ew file in directory $HOME/.chatgpt/conversations is created and used as conversation state.
-  -cc             [C]onversation [c]ontinue for the last conversation: the last file in directory $HOME/.chatgpt/conversations is used as conversation state.
+  -cn             Starts a new stored [c]onversation: a [n]ew file in directory $HOME/.chatgpt.js/conversations is created and used as conversation state.
+  -cc             [C]onversation [c]ontinue for the last conversation: the last file in directory $HOME/.chatgpt.js/conversations is used as conversation state.
   -cl convfile    [C]onversation [l]oad from the given file and uses it for the conversation, but is not updating the file.
   -cd             [C]onversation file [d]elete: removes the last automatically created conversation file (-cn) and then exits.
   -cp             [C]onversation - [p]rints the conversation state as JSON and then exits. Use -cc or -cf to specify which file to print.
@@ -72,6 +72,7 @@ Request Settings etc.:
   -o key=value    Other [o]ptions, e.g. for the OpenAI API -o temperature=0.5 . Can be given multiple times.
   -of key=file    Other [o]ptions read from a json [f]ile. Can be given multiple times.
   -ocf cfgfile    [O|ption [c]onfiguration [f]ile: read general options from a file.
+  -op prof,prof.. [O]ption [p]rofile: like -ocf but reads the options from the named files in ~/.chatgpt.js/profiles/
   --              Last option - option parsing stops, the rest is taken as prompt. E.g. for finishing a -ff list.
 
 Response Options:
@@ -153,7 +154,7 @@ const headers = {
 };
 
 function getConversationDir() {
-    const conversationDir = `${process.env.HOME}/.chatgpt/conversations`;
+    const conversationDir = `${process.env.HOME}/.chatgpt.js/conversations`;
     if (!fs.existsSync(conversationDir)) {
         // we don't want to be intrusive - rather let the user do that
         console.error(`Error: Conversation directory ${conversationDir} does not exist - please create it.`);
@@ -338,6 +339,16 @@ function parseArguments(arguments, cwd) {
                 // at process.argv[1] as first element of optArray since parseArguments skips the first argument
                 optArray.unshift(process.argv[1]);
                 parseArguments(optArray, path.dirname(optionsConfigFile));
+            } else if (arg === '-op' && arguments[i + 1]) {
+                const profiles = arguments[i + 1].split(',');
+                for (const profile of profiles) {
+                    const optionsConfigFile = resolveFile(profile, process.env.HOME + '/.chatgpt.js/profiles');
+                    const newOptions = fs.readFileSync(resolveFile(optionsConfigFile, cwd), 'utf8');
+                    const optArray = newOptions.split(/\s+/);
+                    // at process.argv[1] as first element of optArray since parseArguments skips the first argument
+                    optArray.unshift(process.argv[1]);
+                    parseArguments(optArray, path.dirname(optionsConfigFile));
+                }
             } else if (arg === '-rj') {
                 jsonMode = true;
             } else if (arg === '-rf' && arguments[i + 1]) {
