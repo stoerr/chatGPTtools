@@ -89,6 +89,8 @@ Tooling options:
   -tf configfile  Use the given file as [t]ools configuration [f]ile for tools the LLM could use. Can be given multiple times.
   -ts toolscript  Use the given script as [t]ool [s]cript for the LLM to use. It has to output a tools configuration file 
                   to stdout when called with parameter --openaitoolsconfig.
+  -tt             [T]hink [t]ool - add a pseudo tool the AI can write thoughts to, e.g. for some chain of thought prompting
+                  when you want JSON output that doesn't have room for discussion. Outputs the thoughts to stderr.
 
 Help Options:
   -h, --help      Show this [h]elp message
@@ -148,6 +150,7 @@ let conversationLoopWithDictate = false;
 let audioFiles = [];
 let audioUrls = [];
 let audioFormat = undefined;
+let thinkTool = false;
 
 const headers = {
     'Content-Type': 'application/json'
@@ -400,6 +403,8 @@ function parseArguments(arguments, cwd) {
                     tools.push(newTools);
                 }
                 i++;
+            } else if (arg === '-tt') {
+                thinkTool = true;
             } else if (arg === '-api' && arguments[i + 1]) {
                 apiURL = arguments[i + 1];
                 i++;
@@ -671,6 +676,35 @@ if (numResponses) {
 
 if (jsonMode) {
     requestData.response_format = {"type": "json_object"};
+}
+
+if (thinkTool) { // Kudos to https://www.anthropic.com/engineering/claude-think-tool for that neat idea!
+    tools.push({
+        function: {
+            'name': 'think',
+            'description': 'Use this tool to think about something. It will not obtain new information or make any changes, but just record the thought. Use it when complex reasoning or brain brainstorming is needed. For example if there are several unique ways to solve the task you are given, call this tool to discuss and decide between them and assess which of the ways is likely the simplest and most effective.',
+            parameters: {
+                type: 'object',
+                properties: {
+                    thought: {
+                        type: 'string',
+                        description: 'The thought to write.'
+                    }
+                },
+                required: ['thought']
+            }
+        },
+        internal: true
+    });
+}
+
+// if there are several entries in tools with the same name then complain about that and exit
+const toolNames = tools.map(tool => tool.function.name);
+const uniqueToolNames = new Set(toolNames);
+if (toolNames.length !== uniqueToolNames.size) {
+    const duplicatedToolNames = toolNames.filter((item, index) => toolNames.indexOf(item) !== index);
+    console.error('Error: Duplicate tool names found: ' + duplicatedToolNames);
+    process.exit(1);
 }
 
 // if it's two of responseSchemaFile, responseAttributes, responseArrayAttributes, we have a conflict
@@ -945,46 +979,63 @@ function onMessage(assistantMessage) {
     }
     for (const toolCall of toolCalls) {
         const tool = tools.find(tool => tool.function.name === toolCall.function.name);
-        let commandline = Array.isArray(tool.commandline) ? tool.commandline.slice() : tool.commandline.split(' ');
-        // replace placeholders ($arg) with corresponding tool_call.function.arguments
-        const parsedArguments = JSON.parse(toolCall.function.arguments);
-        parsedArguments['toolcall'] = JSON.stringify(toolCall.function, null, 2);
-        if (verbose) console.error("Arguments for tool call", toolCall.function.name, ': ', JSON.stringify(parsedArguments, null, 2));
-        // replace arguments in all parts of the commandline
-        for (let i = 0; i < commandline.length; i++) {
-            for (const [key, value] of Object.entries(parsedArguments)) {
-                commandline[i] = commandline[i].replace('$' + key, value);
+        if (!tool) {
+            console.error('Error: called tool not found: ' + toolCall.function.name);
+            process.exit(7);
+        } else if (tool.internal) {
+            if (tool.function.name === 'think') {
+                messages.push({role: 'tool', content: '', tool_call_id: toolCall.id});
+                console.error('AI has thought: ' + JSON.parse(toolCall.function.arguments).thought + '\n');
+            } else {
+                console.error('Error: Internal tool call not supported: ' + toolCall.function.name);
+                process.exit(7);
             }
-        }
-        let stdin = tool.stdin;
-        if (stdin) {
-            for (const [key, value] of Object.entries(parsedArguments)) {
-                stdin = stdin.replace('$' + key, value);
-            }
-        } else if (stdin !== "") {
-            stdin = toolCall.function.arguments;
-        }
-        commandline[0] = resolveScript(commandline[0], tool.cfgfilelocation);
-        if (stdin) {
-            console.error("Calling tool", toolCall.function.name, ':', commandline.join(' '),
-                'with stdin:', stdin.length > 300 ? stdin.slice(0, 300) + '...' : stdin);
         } else {
-            console.error("Calling tool", toolCall.function.name, ':', commandline.join(' '));
+            executeExternalTool(toolCall, tool);
         }
-        const result = spawnSync(commandline[0], commandline.slice(1), {
-            input: stdin,
-            encoding: 'utf8',
-            timeout: 10000
-        });
-        if (result.error) {
-            console.error('Error: Tool call failed with error', result.error);
-            process.exit(8);
-        }
-        const toolOutput = result.error ? result.error.toString() : result.stderr.toString() + result.stdout.toString();
-        messages.push({role: 'tool', content: toolOutput, tool_call_id: toolCall.id});
     }
     writeConversation();
     requestChatGPT(onMessage);
+}
+
+function executeExternalTool(toolCall, tool) {
+    let commandline = Array.isArray(tool.commandline) ? tool.commandline.slice() : tool.commandline.split(' ');
+    // replace placeholders ($arg) with corresponding tool_call.function.arguments
+    const parsedArguments = JSON.parse(toolCall.function.arguments);
+    parsedArguments['toolcall'] = JSON.stringify(toolCall.function, null, 2);
+    if (verbose) console.error("Arguments for tool call", toolCall.function.name, ': ', JSON.stringify(parsedArguments, null, 2));
+    // replace arguments in all parts of the commandline
+    for (let i = 0; i < commandline.length; i++) {
+        for (const [key, value] of Object.entries(parsedArguments)) {
+            commandline[i] = commandline[i].replace('$' + key, value);
+        }
+    }
+    let stdin = tool.stdin;
+    if (stdin) {
+        for (const [key, value] of Object.entries(parsedArguments)) {
+            stdin = stdin.replace('$' + key, value);
+        }
+    } else if (stdin !== "") {
+        stdin = toolCall.function.arguments;
+    }
+    commandline[0] = resolveScript(commandline[0], tool.cfgfilelocation);
+    if (stdin) {
+        console.error("Calling tool", toolCall.function.name, ':', commandline.join(' '),
+            'with stdin:', stdin.length > 300 ? stdin.slice(0, 300) + '...' : stdin);
+    } else {
+        console.error("Calling tool", toolCall.function.name, ':', commandline.join(' '));
+    }
+    const result = spawnSync(commandline[0], commandline.slice(1), {
+        input: stdin,
+        encoding: 'utf8',
+        timeout: 10000
+    });
+    if (result.error) {
+        console.error('Error: Tool call failed with error', result.error);
+        process.exit(8);
+    }
+    const toolOutput = result.error ? result.error.toString() : result.stderr.toString() + result.stdout.toString();
+    messages.push({role: 'tool', content: toolOutput, tool_call_id: toolCall.id});
 }
 
 function resolveScript(script, cfgfilelocation) {
