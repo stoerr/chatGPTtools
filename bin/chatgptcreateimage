@@ -111,6 +111,14 @@ fi
 
 shift $((OPTIND - 1))
 
+# if the file has an extension (that is, contains a dot) and if it's not .png then complain and exit
+if [ ! -z "$OUTPUT_FILE" ]; then
+    if [[ "$OUTPUT_FILE" == *.* && "${OUTPUT_FILE##*.}" != "png" ]]; then
+        echo "Error: Output file must have a .png extension."
+        exit 1
+    fi
+fi
+
 # Read prompt from file/stdin if -f is used
 if [ $FILE_MODE -eq 1 ]; then
     if [ "$PROMPT_FILE" == "-" ]; then

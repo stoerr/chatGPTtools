@@ -1,4 +1,5 @@
 #!/bin/bash
+# script for using https://platform.openai.com/docs/guides/text-to-speech
 
 # Default values
 model="tts-1"
@@ -21,7 +22,7 @@ usage() {
   echo "Options:"
   echo "  -m model             Model ID to use for text-to-speech. Default is '$model'."
   echo "  -v voice             Voice to use for the generated audio. Default is '$voice'. Supported voices are alloy, echo, fable, onyx, nova, and shimmer."
-  echo "  -r format            Audio format of the response. Default is '$format'."
+  echo "  -r format            Audio format of the response. Default is '$format'. Supported are mp3, opus, aac, flac, wav, pcm."
   echo "  -s speed             Speed of the generated audio, from 0.25 to 4.0. Default is 1."
   echo "  -o output_file       Output file to write the audio to. If not provided, audio will be played using afplay."
   echo "  -f text_file         Read input text from a file instead of stdin or command argument."

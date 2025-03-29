@@ -93,7 +93,7 @@ Tooling options:
                   when you want JSON output that doesn't have room for discussion. Outputs the thoughts to stderr.
 
 Help Options:
-  -h, --help      Show this [h]elp message
+  -h, --help, -?  Show this [h]elp message
   -ha, --helpai   Answer a question about the tool from this [h]elptext using [A]I and exit. The rest of the command line (prompt) is the question.
   
 If the prompt or system message contain a construct like promptlib:key , the chatgptpromptlib command will be called with that key
@@ -185,7 +185,7 @@ function parseArguments(arguments, cwd) {
         if (!arg) continue;
 
         if (inOptions) {
-            if (arg === '--help' || arg === '-h' || arg === ' -?') {
+            if (arg === '--help' || arg === '-h' || arg === '-?') {
                 console.log(helpMessage);
                 process.exit(0);
             } else if (arg === '-m' && arguments[i + 1]) {
@@ -338,16 +338,21 @@ function parseArguments(arguments, cwd) {
                 const optionsConfigFile = resolveFile(arguments[i + 1], cwd);
                 i++;
                 const newOptions = fs.readFileSync(resolveFile(optionsConfigFile, cwd), 'utf8');
-                const optArray = newOptions.split(/\s+/);
+                const optArray = parseOptionFile(newOptions);
                 // at process.argv[1] as first element of optArray since parseArguments skips the first argument
                 optArray.unshift(process.argv[1]);
                 parseArguments(optArray, path.dirname(optionsConfigFile));
             } else if (arg === '-op' && arguments[i + 1]) {
                 const profiles = arguments[i + 1].split(',');
+                i++;
                 for (const profile of profiles) {
                     const optionsConfigFile = resolveFile(profile, process.env.HOME + '/.chatgpt.js/profiles');
+                    if (!fs.existsSync(optionsConfigFile)) {
+                        console.error('Error: Profile file not found: ' + optionsConfigFile);
+                        process.exit(1);
+                    }
                     const newOptions = fs.readFileSync(resolveFile(optionsConfigFile, cwd), 'utf8');
-                    const optArray = newOptions.split(/\s+/);
+                    const optArray = parseOptionFile(newOptions);
                     // at process.argv[1] as first element of optArray since parseArguments skips the first argument
                     optArray.unshift(process.argv[1]);
                     parseArguments(optArray, path.dirname(optionsConfigFile));
@@ -429,6 +434,24 @@ function parseArguments(arguments, cwd) {
             prompt += ' ' + arg;
         }
     }
+}
+
+/* Parses the contents of an option configuration file. Lines starting with # are ignored,
+* Other lines are together split at whitespace and we return an array of String with the words.
+* We permit " quoted Strings to enable having whitespace in one "word". */
+function parseOptionFile(fileContent) {
+    const lines = fileContent.split('\n');
+    const result = [];
+    for (const line of lines) {
+        if (line.startsWith('#')) continue;
+        const words = line.match(/"[^"]+"|\S+/g);
+        if (words) {
+            for (const word of words) {
+                result.push(word.replace(/"/g, ''));
+            }
+        }
+    }
+    return result;
 }
 
 parseArguments(process.argv.slice(1), process.cwd());
