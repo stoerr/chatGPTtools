@@ -73,6 +73,7 @@ Request Settings etc.:
   -of key=file    Other [o]ptions read from a json [f]ile. Can be given multiple times.
   -ocf cfgfile    [O|ption [c]onfiguration [f]ile: read general options from a file.
   -op prof,prof.. [O]ption [p]rofile: like -ocf but reads the options from the named files in ~/.chatgpt.js/profiles/
+  -nt             [N]o [t]houghts - removes a <think>...</think> at the start of the response - e.g. DeepSeek-R1 does that.
   --              Last option - option parsing stops, the rest is taken as prompt. E.g. for finishing a -ff list.
 
 Response Options:
@@ -151,6 +152,7 @@ let audioFiles = [];
 let audioUrls = [];
 let audioFormat = undefined;
 let thinkTool = false;
+let noThoughts = false;
 
 const headers = {
     'Content-Type': 'application/json'
@@ -410,6 +412,8 @@ function parseArguments(arguments, cwd) {
                 i++;
             } else if (arg === '-tt') {
                 thinkTool = true;
+            } else if (arg === '-nt') {
+                noThoughts = true;
             } else if (arg === '-api' && arguments[i + 1]) {
                 apiURL = arguments[i + 1];
                 i++;
@@ -997,6 +1001,13 @@ function onContent(assistantMessage) {
             process.exit(7);
         }
         output = fmt.stdout;
+    }
+    if (noThoughts && output.startsWith("<think>")) { // remove DeepSeek-R1 thoughts: remove everything until the
+        // first occurrence of </think> on a line of it's own.
+        const end = output.indexOf('\n</think>\n\n');
+        if (end !== -1) {
+            output = output.slice(end + 11);
+        }
     }
     console.log(output);
     maybeContinueConversation();
