@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Character Counter</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <div class="container py-5">
+    <h2 class="mb-4">Live Character Counter</h2>
+    <div class="mb-3">
+      <textarea class="form-control" id="textInput" rows="10" placeholder="Start typing..."></textarea>
+    </div>
+    <div class="text-end">
+      <span id="charCount" class="badge bg-secondary">0 Characters</span>
+    </div>
+  </div>
+
+  <script>
+    const textarea = document.getElementById('textInput');
+    const charCount = document.getElementById('charCount');
+
+    textarea.addEventListener('input', () => {
+      const length = textarea.value.length;
+      charCount.textContent = `${length} Character${length !== 1 ? 's' : ''}`;
+    });
+  </script>
+</body>
+</html>

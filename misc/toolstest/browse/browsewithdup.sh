@@ -8,4 +8,4 @@ fi
 
 prompt="$*"
 
-chatgpt -ocf ../browse/browseopt.txt "read https://www.stoerr.net/contact.html and use tool duplicate to duplicate the text"
+chatgpt -ocf browseopt.txt "read https://www.stoerr.net/contact.html and use tool duplicate to duplicate the text"
