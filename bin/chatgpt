@@ -886,6 +886,14 @@ function writeConversation() {
     }
 }
 
+function shortJson(object) {
+    return shortText(JSON.stringify(object).replaceAll(/[a-zA-Z0-9+\/]{200,}/g, '<<data>>'));
+}
+
+function shortText(text){
+    return text.replaceAll(/[a-zA-Z0-9+\/]{200,}/g, '<<data>>');
+}
+
 async function requestChatGPT(successcallback, attempt = 1) {
     try {
         requestData.messages = messages;
@@ -926,11 +934,11 @@ async function requestChatGPT(successcallback, attempt = 1) {
                 abbreviateMessage(body);
                 setTimeout(() => requestChatGPT(successcallback, attempt + 1), 10);
             } else {
-                console.error('Error: Request failed with status', response.status, 'and message', response.statusText, 'and body', body, 'for request body', JSON.stringify(requestData));
+                console.error('Error: Request failed with status', response.status, 'and message', shortText(response.statusText), 'and body', shortText(body), 'for request body', shortJson(requestData));
                 process.exit(5);
             }
         } else if (!response.ok) {
-            console.error('Error: Request failed with status', response.status, 'and message', response.statusText, 'and body', await response.text(), 'for request body', JSON.stringify(requestData));
+            console.error('Error: Request failed with status', response.status, 'and message', shortText(response.statusText), 'and body', shortText(await response.text()), 'for request body', shortJson(requestData));
             process.exit(5);
         } else {
             const responseData = await response.json();
