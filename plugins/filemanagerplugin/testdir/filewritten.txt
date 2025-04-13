@@ -1,3 +1,0 @@
-testcontent line one
-line two \
- with quoted backslashing 

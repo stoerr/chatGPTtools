@@ -1,3 +1,0 @@
-code-runner-plugin.vercel.app
-https://discord.com/channels/974519864045756446/1107718049777324193/1115646859290095626
-https://code-runner-plugin.vercel.app/.well-known/ai-plugin.json
