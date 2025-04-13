@@ -14,4 +14,45 @@ fi
 
 machinedescription="For a $(sysctl -n hw.model) with $(sysctl -n hw.machine) architecture running $(sw_vers -productName) $(sw_vers -productVersion) ,"
 
-exec chatgpt -mh -s "$machinedescription write a bash command line including explanation, or answer a question" "$@"
+# prints a tool description that can be used by the AI to check the path for programs
+function checkactiondescription() {
+cat<<EOF
+[
+  {
+    "function": {
+      "name": "checkpath",
+      "description": "Can be used to check which tools exist in the path. Only the first 100 tools are returned - please limit by using the prefix and / or the regex parameter.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "prefix": {
+            "type": "string",
+            "description": "The prefix to check for. If empty, all tools in the path are returned. This argument prefix is given to 'compgen -c \$prefix'."
+          },
+          "regex": {
+            "type": "string",
+            "description": "An egrep regular expression to match the returned tool names. If empty, no additional filter is applied"
+          }
+        },
+        "required": [ "prefix", "regex" ],
+        "additionalProperties": false
+      },
+      "strict": true
+    },
+    "commandline": [
+      "bash", "-c", "compgen -c '\$prefix' | egrep '\$regex' | head -n 100"
+    ],
+    "stdin": ""
+  }
+]
+EOF
+}
+
+function sysmessage() {
+cat<<EOF
+$machinedescription write a bash command line including explanation, or answer a question.
+Check whether optional tools are in the path with the checkpath tool, and give installation instructions if they are not.
+EOF
+}
+
+exec chatgpt -m gpt-4o -tf <(checkactiondescription) -s "$(sysmessage)" "$@"
