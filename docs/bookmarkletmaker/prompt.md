@@ -22,7 +22,8 @@ and a "Clear" button that resets all inputs to empty.
 8. A text area that shows the URL of the bookmarklet that is created.
 9. The link and that area are always updated when the inputs are changed.
 10. Buttons after that text area: "Copy to clipboard", "Decode" (which decodes the javascript fragment from the URL)
-11. The "Decode" button writes the decoded javascript fragment into the first text area for the javascript fragment
+11. The "Decode" button writes the decoded javascript fragment into the first text area for the javascript fragment. 
+    The decoding should remove any existing (function(){...})(); wrapper to the bookmarklet.
 12. A "Generate with AI" textarea where the user can type a prompt
 13. A button "Generate" that sends that prompt to the OpenAI chat completion API with model o3-mini. The OpenAI API 
     key is taken from local storage in the browser with key 'openai_api_key'. If it's not there it's asked for with 
