@@ -27,6 +27,7 @@ Input Options:
                   Can be given multiple times. if - is given as filename, the content is read from stdin.
   -fo filename    Same as -f but the [f]ile is [o]ptional.
   -ff filenames   Like -f, but for multiple text [ff]iles - all further arguments are treated as filenames until there is a switch.
+  -ffe            End for -ff sequence (essentially a noop)
   -fp filename    Includes the content of the given [f]ile as codeblock into the [p]rompt, together with the filename. Can be given multiple times.
   -i imagefile    Includes the given image file as [i]mage, together with the filename. Can be given multiple times.
   -iu imageurl    Includes the given [i]mage [u]rl as image, together with the url. Can be given multiple times.
@@ -62,7 +63,7 @@ Conversation Options: (only 1 turn per call ${programname} except with -cr/ca; t
 Request Settings etc.:
   -m modelname    Use a specific [m]odel (default: ${model})
   -mh             Use the [m]odel with - at the time of updating this script - [h]ighest general intelligence ("gpt-4.5-preview")
-  -md             Use the [m]odel with - at the time of updating this script - best [d]eliberation ("o3-mini" , -o reasoning_effort=high)
+  -md             Use the [m]odel with - at the time of updating this script - best [d]eliberation ("o4-mini" , -o reasoning_effort=high)
   -t number       Set max [t]okens for response (default: no limit)
   -nr number      Generate this [n]umber of [r]esponses in a row (default: 1). Works only in simple settings - no tools etc.
   -v              [V]erbose output : prints the sent and received json message to stderr and gives info about connection retries
@@ -266,6 +267,8 @@ function parseArguments(arguments, cwd) {
                     fmfiles.push(resolveFile(arguments[i + 1], cwd));
                     i++;
                 }
+            } else if (arg === '-ffe') {
+                // noop; only there since sometimes you don't know in a script whether the next thing is an option or the prompt
             } else if (arg === '-w' && arguments[i + 1]) {
                 wordWrapColumn = parseInt(arguments[i + 1], 10);
                 i++;
@@ -596,6 +599,9 @@ if ((!prompt || !prompt.trim()) && !conversationLoopWithReadline && !conversatio
     console.error('Error: No prompt provided');
     console.error(helpMessage);
     console.error('Error: No prompt provided');
+    if (verbose) {
+        console.error('Arguments: ', process.argv)
+    }
     process.exit(1);
 }
 
