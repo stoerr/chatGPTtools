@@ -522,6 +522,9 @@ if (suffix) {
 let filecontents = "";
 
 function resolveFile(file, cwd = process.cwd()) {
+    if (file === '-') { // this is a placeholder for stdin - just leave it.
+        return file;
+    }
     let filename = file.replace(/^~/, homeDir);
     if (!path.isAbsolute(file)) {
         filename = path.join(cwd, file);
