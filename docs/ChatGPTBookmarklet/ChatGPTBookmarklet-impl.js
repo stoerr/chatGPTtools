@@ -428,6 +428,8 @@
 
         captureScreenshot(callback) {
             const origpage = document.getElementById('hpsChatGPTDialog-origpage') || document.body;
+            const dlg = this.dialog;
+            dlg.classList.add('hidden');
             html2canvas(origpage, {
                 onclone: function (clonedDoc) {
                     clonedDoc.body.style.overflow = 'hidden';
@@ -437,6 +439,8 @@
                 if (callback) {
                     callback();
                 }
+            }).finally(() => {
+                dlg.classList.remove('hidden');
             });
         },
 
