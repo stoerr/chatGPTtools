@@ -2,5 +2,14 @@
 
 cd $(dirname $0)
 
-prof=dsr1
-CHATGPT_TEST_ARGS="-op $prof" ./it_test.bats
+for prof in claude dsr1 dsv3 gemini phi4; do
+
+  echo
+
+  echo "###############################################################################"
+  echo "Running tests for profile: $prof"
+  echo "###############################################################################"
+  CHATGPT_TEST_ARGS="-op $prof" ./it_test.bats
+  echo
+done
+

@@ -3,7 +3,7 @@
 (function (window) {
     /** Some CSS selectors that, if they match something, are taken as the text content of the page. Useful e.g.
      * to cut out a frame. */
-    const contentElements = ['main div#content-body','article', 'iframe#thirdPartyFrame_mail', 'iframe#detail-body-iframe'];
+    const contentElements = ['main div#content-body', 'article', 'iframe#thirdPartyFrame_mail', 'iframe#detail-body-iframe'];
 
     var hpsChatGPTBookmarklet = {
 
@@ -59,6 +59,37 @@
             }
         },
 
+        loadModelList: async function () {
+            try {
+                // Use this.apikey if available (set in ChatGPTBookmarklet-data.js)
+                const headers = this.apikey ? {"Authorization": "Bearer " + this.apikey} : {};
+                const response = await fetch("https://api.openai.com/v1/models", {headers});
+                if (!response.ok) throw new Error("Failed to load models");
+                const result = await response.json();
+                const select = document.getElementById("hps-chatgpt-model-selector");
+                const currentSelection = select.value;
+                select.innerHTML = "";
+                // Filter models: include if model id starts with "gpt-" or matches /^o[0-9]/; exclude ones with date patterns like -202[09]-
+                result.data.filter(model =>
+                    ((model.id.startsWith("gpt-") || /^o[0-9]/.test(model.id)) &&
+                        !/-202[0-9]-/.test(model.id) &&
+                        !/-[0-9][0-9][0-9][0-9]$/.test(model.id) &&
+                        !/-audio|-realtime|-transcribe|-tts/.test(model.id)
+                    )
+                ).sort((a, b) => a.id.localeCompare(b.id)).forEach(model => {
+                    const option = document.createElement("option");
+                    option.value = model.id;
+                    option.text = model.id;
+                    if (model.id === currentSelection) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                });
+            } catch (e) {
+                console.log("Failed to load model list:", e);
+            }
+        },
+
         initPredefinedPrompts: function () {
             const select = this.predefinedPromptSelect;
             for (let key in this.prompts) {
@@ -97,7 +128,8 @@
         },
 
         openDialogImpl: async function () {
-            this.init();
+            await this.init();
+            this.loadModelList();
             this.showDialog();
             try {
                 this.answerfield.innerHTML = 'Contacting ChatGPT for summary...<br/><br/>' + this.helptext;
