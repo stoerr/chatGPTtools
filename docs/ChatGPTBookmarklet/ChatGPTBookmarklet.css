@@ -166,7 +166,7 @@
     max-height: calc(100vh - 300px) !important;
 }
 
-.hps-chatgpt-dialog .hidden {
+.hpsChatGPTDialog-container .hidden {
     display: none !important;
 }
 

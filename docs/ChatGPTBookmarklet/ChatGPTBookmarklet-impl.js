@@ -14,6 +14,7 @@
                 // Detect user's preferred language
                 const userLang = navigator.language || navigator.userLanguage;
                 this.lang = userLang.startsWith('de') ? 'de' : 'en';
+                this.dialog = document.querySelector('.hps-chatgpt-dialog');
 
                 this.selectedText = this.getSelectedText();
                 this.pageContent = this.getPageContent();
@@ -192,10 +193,10 @@
                     content = element;
                 }
             }
+            // make dialog invisible while we extract the text
+            this.dialog.classList.add('hidden');
             const text = content.innerText;
-            if (!text) {
-                alert('Bug: no text found on the page. Please report this page to the bookmarklet developer.');
-            }
+            this.dialog.classList.remove('hidden');
             return text;
         },
 
