@@ -12,7 +12,7 @@ const path = require('path');
 const {execSync, spawnSync} = require('child_process');
 const readline = require('readline');
 
-let model = 'gpt-4.1-nano';
+let model = process.env.OPENAI_API_DEFAULTMODEL || 'gpt-4.1-nano';
 const programname = path.basename(process.argv[1]);
 const homeDir = process.env.HOME;
 
@@ -61,15 +61,16 @@ Conversation Options: (only 1 turn per call ${programname} except with -cr/ca; t
   -ca             [C]onversation - multi turn conversation with dictated [a]udio - abort the program to end this.
 
 Request Settings etc.:
-  -m modelname    Use a specific [m]odel (default: ${model})
-  -mh             Use the [m]odel with - at the time of updating this script - [h]ighest general intelligence ("gpt-4.5-preview")
-  -md             Use the [m]odel with - at the time of updating this script - best [d]eliberation ("o4-mini" , -o reasoning_effort=high)
+  -m modelname    Use a specific [m]odel (default: environment OPENAI_API_DEFAULTMODEL or ${model})
+  -mh             Use the [m]odel with - at the time of updating this script - [h]ighest general intelligence ("gpt-4.5-preview" overridden with environment variable OPENAI_API_HIGHMODEL)
+  -md             Use the [m]odel with - at the time of updating this script - best [d]eliberation ("o4-mini" overridden with environment variable OPENAI_API_THINKINGMODEL , -o reasoning_effort=high)
   -t number       Set max [t]okens for response (default: no limit)
   -nr number      Generate this [n]umber of [r]esponses in a row (default: 1). Works only in simple settings - no tools etc.
   -v              [V]erbose output : prints the sent and received json message to stderr and gives info about connection retries
   -w column       [W]ord wrap the response to a specified column width using fmt.
   -abbrev         [Abbrev]iate ("clip") the message in the middle if it's too long for the model context window
-  -api url        Use this URL instead of the OpenAI chat completion [API] (e.g. for local LLM or OpenAI compatible APIs)
+  -api url        Use this URL instead of the OpenAI chat completion [API] (e.g. for local LLM or OpenAI compatible APIs);
+                  the environment variable OPENAI_API_BASE would also override this, with /chat/completions added.
   -rh key=value   Add a [r]equest [h]eader, e.g. for authorization etc. Can be given multiple times.
   -o key=value    Other [o]ptions, e.g. for the OpenAI API -o temperature=0.5 . Can be given multiple times.
   -of key=file    Other [o]ptions read from a json [f]ile. Can be given multiple times.
@@ -118,7 +119,7 @@ if (process.argv.length < 3) {
 }
 
 const apiKeyFile = `${process.env.HOME}/.openai-api-key.txt`;
-const openAIurldefault = 'https://api.openai.com/v1/chat/completions';
+const openAIurldefault = process.env.OPENAI_API_BASE ? process.env.OPENAI_API_BASE + "/chat/completions" : 'https://api.openai.com/v1/chat/completions';
 let apiURL = openAIurldefault;
 let maxTokens;
 let numResponses = undefined;
@@ -196,9 +197,9 @@ function parseArguments(arguments, cwd) {
                 model = arguments[i + 1];
                 i++;
             } else if (arg === '-4' || arg === "-mh") { // -4 for backwards compatibility
-                model = 'gpt-4.1';
+                model = process.env.OPENAI_API_HIGHMODEL || 'gpt-4.1';
             } else if (arg === '-md') {
-                model = 'o4-mini';
+                model = process.env.OPENAI_API_THINKINGMODEL || 'o4-mini';
                 openAIOptions['reasoning_effort'] = 'high';
             } else if (arg === '-t' && arguments[i + 1]) {
                 maxTokens = parseInt(arguments[i + 1], 10);

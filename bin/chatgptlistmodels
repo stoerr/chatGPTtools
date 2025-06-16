@@ -1,8 +1,10 @@
 #!/bin/bash
 
-if [[ "$1" == "-h" || "$1" == "--help" ]]; then
-  echo "chatgptlistmodels lists all models available for chatgpt. Use -v for a raw listing."
-  exit 0
+set -evx
+
+url=https://api.openai.com/v1/models
+if [[ -n "$OPENAI_API_BASE" ]]; then
+  url="$OPENAI_API_BASE/models"
 fi
 
 # read OPENAI_API_KEY from file $HOME/.openai-api-key.txt if it's not already set
@@ -16,9 +18,9 @@ if [[ -z "$OPENAI_API_KEY" ]]; then
 fi
 
 if [[ "$1" == "-v" || "$1" == "--verbose" ]]; then
-  curl -s https://api.openai.com/v1/models -H "Authorization: Bearer $OPENAI_API_KEY" | less
+  curl -s $url -H "Authorization: Bearer $OPENAI_API_KEY" | less
 else
-  curl -s https://api.openai.com/v1/models -H "Authorization: Bearer $OPENAI_API_KEY" | jq '.data[] | del(.permission)' | jq .id | sort | less
+  curl -s $url -H "Authorization: Bearer $OPENAI_API_KEY" | jq '.data[] | del(.permission)' | jq .id | sort | less
 fi
 
 # curl -s https://api.openai.com/v1/models/gpt-4o-mini -H "Authorization: Bearer $OPENAI_API_KEY"
