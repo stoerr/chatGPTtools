@@ -39,7 +39,8 @@
                 });
                 document.getElementById('hps-chatgpt-model-selector')
                     .addEventListener('change', this.getIncludedText.bind(this));
-
+                this.backendSelector = document.getElementById('hpsChatGPTBackendSelector');
+                this.backendSelector.addEventListener('change', this.onBackendChanged.bind(this));
                 this.dictateButton = document.getElementById('hpsChatGPTRecord');
                 this.dictateButton.addEventListener('mousedown', this.startDictation.bind(this));
                 this.dictateButton.addEventListener('mouseup', this.stopDictation.bind(this));
@@ -56,23 +57,102 @@
 
                 setTimeout(this.sidebyside.bind(this), 0);
 
+                this.configDialog = document.getElementById('hpsChatGPTConfigDialog');
+                this.configTextarea = document.getElementById('hpsChatGPTConfigTextarea');
+                this.configStatus = document.getElementById('hpsChatGPTConfigStatus');
+
+                this.loadConfig();
+                this.setupBackendSelector();
+
                 this.initialized = true;
             }
         },
 
-        loadModelList: async function () {
+        loadConfig: function () {
+            let configStr = localStorage.getItem('net.stoerr.chatgptbookmarklet.config');
+            let config;
             try {
-                // Use this.apikey if available (set in ChatGPTBookmarklet-data.js)
-                const headers = this.apikey ? {"Authorization": "Bearer " + this.apikey} : {};
-                const response = await fetch("https://api.openai.com/v1/models", {headers});
+                config = configStr ? JSON.parse(configStr) : {};
+            } catch (e) {
+                config = {};
+            }
+            this.config = config;
+            this.backends = (config && config.backends) ? config.backends : [{
+                name: "OpenAI",
+                baseUrl: "https://api.openai.com/v1",
+                authHeaders: [{ name: "Authorization", value: "Bearer " + this.apikey }]
+            }];
+            this.backends.forEach(backend => {
+                if (backend.baseUrl.endsWith('/')) {
+                    backend.baseUrl = backend.baseUrl.slice(0, -1);
+                }
+            });
+
+            // --- autoSelect backend based on URL ---
+            this.selectedBackendIndex = 0;
+            const url = window.location.href;
+            for (let i = 0; i < this.backends.length; ++i) {
+                const backend = this.backends[i];
+                if (backend.autoSelect) {
+                    try {
+                        const re = new RegExp(backend.autoSelect);
+                        if (re.test(url)) {
+                            this.selectedBackendIndex = i;
+                            break;
+                        }
+                    } catch (e) {
+                        console.error('invalid backend select regex ' + backend.autoSelect);
+                    }
+                }
+            }
+        },
+
+        setupBackendSelector: function () {
+            // Remove all options
+            this.backendSelector.innerHTML = "";
+            if (this.backends.length > 1) {
+                this.backendSelector.classList.remove('hps-chatgpt-hidden');
+                this.backends.forEach((backend, idx) => {
+                    const opt = document.createElement('option');
+                    opt.value = idx;
+                    opt.text = backend.name;
+                    this.backendSelector.appendChild(opt);
+                });
+                this.backendSelector.selectedIndex = this.selectedBackendIndex;
+            } else {
+                this.backendSelector.classList.add('hps-chatgpt-hidden');
+            }
+        },
+
+        onBackendChanged: function () {
+            this.selectedBackendIndex = this.backendSelector.selectedIndex;
+            this.loadModelList();
+        },
+
+        getSelectedBackend: function () {
+            return this.backends[this.selectedBackendIndex] || this.backends[0];
+        },
+
+        loadModelList: async function () {
+            const backend = this.getSelectedBackend();
+            if (backend.models) return models; // from config, no need to load
+            try {
+                // Compose headers from backend config
+                const headers = {};
+                if (backend.authHeaders) {
+                    backend.authHeaders.forEach(h => headers[h.name] = h.value);
+                }
+                let url = backend.baseUrl + "/models";
+                const response = await fetch(url, { headers });
                 if (!response.ok) throw new Error("Failed to load models");
                 const result = await response.json();
                 const select = document.getElementById("hps-chatgpt-model-selector");
-                const currentSelection = select.value;
+                const currentSelection = backend.defaultModel || select.value;
                 select.innerHTML = "";
                 // Filter models: include if model id starts with "gpt-" or matches /^o[0-9]/; exclude ones with date patterns like -202[09]-
-                result.data.filter(model =>
-                    ((model.id.startsWith("gpt-") || /^o[0-9]/.test(model.id)) &&
+                const modelIncludeRegex =  new RegExp(this.config.modelIncludeRegex || '^(gpt-.*|o[0-9]-.*|.*claude.*|.*-smart)$');
+                (result.data || []).filter(model =>
+                    ((model.id && modelIncludeRegex.test(model.id)) &&
                         !/-202[0-9]-/.test(model.id) &&
                         !/-[0-9][0-9][0-9][0-9]$/.test(model.id) &&
                         !/-audio|-realtime|-transcribe|-tts/.test(model.id)
@@ -130,7 +210,7 @@
 
         openDialogImpl: async function () {
             await this.init();
-            this.loadModelList();
+            await this.loadModelList();
             this.showDialog();
             try {
                 this.answerfield.innerHTML = 'Contacting ChatGPT for summary...<br/><br/>' + this.helptext;
@@ -146,14 +226,14 @@
 
         showDialog: function () {
             if (this.dialog) {
-                this.dialog.style.display = 'block';
+                this.dialog.classList.remove('hps-chatgpt-hidden');
             }
         },
 
         hideDialog: function () {
             this.undoFraming();
             if (this.dialog) {
-                this.dialog.style.display = 'none';
+                this.dialog.classList.add('hps-chatgpt-hidden');
             }
         },
 
@@ -459,6 +539,51 @@
                 this.selectIncludeScreenshot.disabled = false;
                 this.selectIncludeScreenshot.checked = true;
             });
+        },
+
+        // ===== Config Dialog Logic =====
+        showConfigDialog: function () {
+            if (!this.configDialog) {
+                this.configDialog = document.getElementById('hpsChatGPTConfigDialog');
+                this.configTextarea = document.getElementById('hpsChatGPTConfigTextarea');
+                this.configStatus = document.getElementById('hpsChatGPTConfigStatus');
+            }
+            let config = localStorage.getItem('net.stoerr.chatgptbookmarklet.config');
+            this.configTextarea.value = config ? config : '{}';
+            this.configStatus.style.display = 'none';
+            this.configDialog.classList.remove('hidden');
+        },
+
+        hideConfigDialog: function () {
+            if (this.configDialog) {
+                this.configDialog.classList.add('hidden');
+            }
+        },
+
+        saveConfig: function () {
+            const val = this.configTextarea.value;
+            try {
+                JSON.parse(val);
+                localStorage.setItem('net.stoerr.chatgptbookmarklet.config', val);
+                this.configStatus.style.display = 'none';
+                // Reload config and backend selector after saving
+                this.loadConfig();
+
+                // check whether all autoSelect keys are correct regexes
+                this.backends.forEach(backend => {
+                    if (backend.autoSelect) {
+                        new RegExp(backend.autoSelect);
+                    }
+                });
+
+                this.setupBackendSelector();
+                this.loadModelList();
+                this.hideConfigDialog();
+            } catch (e) {
+                console.error('Failed to save configuration: ', val, e);
+                this.configStatus.textContent = 'Invalid configuration ' + e;
+                this.configStatus.style.display = '';
+            }
         },
 
         /** Used here but declared in another file:

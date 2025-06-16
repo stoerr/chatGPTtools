@@ -1,0 +1,79 @@
+- configure alternative backends
+    - permanently for certain pages
+    - location: local storage
+    - visibly show used backend
+    - edit as json?
+
+- choose element and grab text from it (mouse click, go upward to expand selection)
+- chat?
+- grab text from previous element with focus
+- insert into previous element with focus
+
+- show text in title of "include text", incl. prompt fragment.
+
+- Article containers: article, body
+- Exclude nav, aside, ?header, ?foot
+- ?? List of element types
+
+- edit summary command
+
+# Deprecated / perhaps
+
+- Chrome plugin?
+
+- thinking spinner
+
+- use an iframe instead? -> iframe cannot access parent document directly - communication via postMessage . But it could store settings and api key in local storage!
+
+- scroll the answer if too long (didn't work, no idea why.)
+- Use ChatGPT webapp as backend
+
+====== Configurability ======
+
+There should be a configuration dialog with a description and a text field where one can input JSON.
+It should be shown when a configuration button with the "wrench" symbol is clicked.
+The configuration is stored in local storage with the key "net.stoerr.chatgptbookmarklet.config".
+
+====== Spec for alternative backends ======
+
+There should be a dropdown list "backend" that is shown if there are more than one backend configured.
+If that's changed then the list of models should be updated according to what list models returns for the selected backend.
+
+There can also be an 'autoselect' option that selects the backend automatically based on the URL of the current page.
+It contains a regular expression that is matched against the URL of the current page.
+First backend that matches the URL is selected, otherwise the first backend in the list is selected.
+
+The configuration contains per backend:
+    - name (e.g. "OpenAI", "Anthropic", "Mistral"),
+    - base URL (in case of OpenAI https://api.openai.com/v1)
+    - list of objects with authentication header name (in case of Open AI "Authorization") and value ("Authorization Bearer <api key>")
+for example:
+```json
+{
+    "backends": [
+        {
+            "name": "OpenAI",
+            "baseUrl": "https://api.openai.com/v1",
+            "authHeaders": [
+                {
+                    "name": "Authorization",
+                    "value": "Bearer <api key>"
+                }
+            ],
+            "defaultModel": "gpt-4.1",
+        },
+        {
+            "name": "Anthropic",
+            "baseUrl": "https://api.anthropic.com/v1",
+            "authHeaders": [
+                {
+                    "name": "Authorization",
+                    "value": "Bearer <api key>"
+                }
+            ],
+            "defaultModel": "gpt-4.1",
+            "autoSelect": ".*intranet.*"
+        }
+    ]
+}
+```

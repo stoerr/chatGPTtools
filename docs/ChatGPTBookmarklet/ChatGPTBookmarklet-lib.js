@@ -32,12 +32,23 @@
          * @throws Will throw an error if the API limit is exceeded without a specified retry time or if there is a problem fetching data from the API.
          */
         sendChatGPTRequest: async function (messages, selectedModel = 'gpt-4o-mini', maxTokens = 500) {
+            // Use backend config if available
+            const backend = window.hpsChatGPTBookmarklet && window.hpsChatGPTBookmarklet.getSelectedBackend
+                ? window.hpsChatGPTBookmarklet.getSelectedBackend()
+                : {
+                    baseUrl: "https://api.openai.com/v1",
+                    authHeaders: [{ name: "Authorization", value: `Bearer ${this.apikey}` }]
+                };
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+            if (backend.authHeaders) {
+                backend.authHeaders.forEach(h => headers[h.name] = h.value);
+            }
+            const url = backend.baseUrl + "/chat/completions";
             const requestOptions = {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.apikey}`,
-                },
+                headers: headers,
                 body: JSON.stringify({
                     model: selectedModel,
                     messages: messages,
@@ -49,7 +60,7 @@
             let response;
 
             while (retries < 3) {
-                response = await fetch('https://api.openai.com/v1/chat/completions', requestOptions);
+                response = await fetch(url, requestOptions);
 
                 if (response.status === 429) {
                     const retryAfterText = await response.text();

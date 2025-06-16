@@ -20,6 +20,8 @@
     font-family: Arial, sans-serif !important;
     border-radius: 5px !important;
     box-shadow: 0 3px 9px rgba(0, 0, 0, 0.5) !important;
+    background-color: #ffffff !important;
+    color: #333333 !important;
 }
 
 .hps-chatgpt-maximize-maximized {
@@ -88,6 +90,20 @@
 .hps-chatgpt-controls button,
 .hps-chatgpt-controls input[type="checkbox"] + label {
     margin-right: 10px !important;
+    color: #4c8bf5 !important;
+    font-size: 18px !important;
+    padding: 0 3px !important;
+    border: none !important;
+    border-radius: 5px !important;
+    background-color: transparent !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    vertical-align: middle !important;
+}
+
+.hps-chatgpt-controls button:hover {
+    background-color: #4c8bf5 !important;
+    color: #ffffff !important;
 }
 
 .hps-chatgpt-response {
@@ -166,13 +182,22 @@
     max-height: calc(100vh - 300px) !important;
 }
 
-.hpsChatGPTDialog-container .hidden {
+.hpsChatGPTDialog-container .hps-chatgpt-hidden {
     display: none !important;
 }
 
 #hps-chatgpt-model-selector {
-    width: auto !important;
+    width: 100px !important;
     margin-left: 10px !important;
+}
+
+#hpsChatGPTBackendSelector {
+    width: 110px !important;
+    margin-right: 10px !important;
+}
+
+#hpsChatGPTPredefinedPrompt {
+    width: 100px !important;
 }
 
 #hps-chatgpt-dragheader {
@@ -208,4 +233,105 @@
     cursor: pointer !important;
 }
 
+/* --- Configuration Dialog Modal --- */
+.hps-chatgpt-config-dialog {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0,0,0,0.35) !important;
+    z-index: 1000000000 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
 
+.hps-chatgpt-config-dialog.hidden {
+    display: none !important;
+}
+
+.hps-chatgpt-config-content {
+    background: #fff !important;
+    color: #222 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.25) !important;
+    padding: 24px 20px 16px 20px !important;
+    min-width: 320px !important;
+    max-width: 80vw !important;
+    max-height: 95vh !important;
+    width: 80vw !important;
+    height: 95vh !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    overflow: auto !important;
+}
+
+.hps-chatgpt-config-content h3 {
+    margin-top: 0 !important;
+    margin-bottom: 8px !important;
+    font-size: 20px !important;
+    color: #4c8bf5 !important;
+}
+
+.hps-chatgpt-config-content p {
+    margin: 0 0 10px 0 !important;
+    font-size: 14px !important;
+    color: #444 !important;
+}
+
+#hpsChatGPTConfigTextarea {
+    font-family: monospace !important;
+    font-size: 14px !important;
+    border: 1px solid #e5e5e5 !important;
+    border-radius: 4px !important;
+    padding: 8px !important;
+    resize: vertical !important;
+    min-height: 100px !important;
+    max-height: 250px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    background: #f8f9fa !important;
+    color: #222 !important;
+}
+
+.hps-chatgpt-config-content button {
+    margin-right: 8px !important;
+    min-width: 70px !important;
+    padding: 6px 12px !important;
+    font-size: 14px !important;
+    border-radius: 4px !important;
+    border: none !important;
+    background: #4c8bf5 !important;
+    color: #fff !important;
+    cursor: pointer !important;
+    transition: background 0.2s !important;
+}
+
+.hps-chatgpt-config-content button:hover {
+    background: #3c7be0 !important;
+}
+
+#hpsChatGPTConfigStatus {
+    font-size: 13px !important;
+    color: #d32f2f !important;
+    vertical-align: middle !important;
+}
+
+/* Hide elements with .hidden class */
+.hidden {
+    display: none !important;
+}
+
+@media (max-width: 480px) {
+    .hps-chatgpt-config-content {
+        width: 95vw !important;
+        min-width: 0 !important;
+        padding: 12px 4vw 8px 4vw !important;
+    }
+    #hpsChatGPTConfigTextarea {
+        font-size: 12px !important;
+    }
+}

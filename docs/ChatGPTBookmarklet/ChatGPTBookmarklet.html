@@ -45,25 +45,12 @@
                     <input type="checkbox" id="hpsChatGPTIncludeScreenshot" class="hps-chatgpt-include-screenshot"/>
                     <label for="hpsChatGPTIncludeScreenshot">screenshot</label>
                 </span>
+                <select id="hpsChatGPTBackendSelector" class="hps-chatgpt-backend-selector hps-chatgpt-backend-selector-hidden"></select>
                 <select id="hps-chatgpt-model-selector">
                     <option value="gpt-4.1" selected>gpt-4.1</option>
-                    <option value="gpt-4.1-mini">gpt-4.1-mini</option>
-                    <option value="gpt-4.1-nano">gpt-4.1-nano</option>
-                    <option value="gpt-4o">gpt-4o</option>
-                    <option value="gpt-4o-mini">gpt-4o-mini</option>
-                    <option value="gpt-4.5-preview">gpt-4.5-preview</option>
-                    <option value="o1-mini">o1-mini</option>
-                    <option value="o1">o1</option>
-                    <option value="o3-mini">o3-mini</option>
-                    <option value="gpt-4o-mini-search-preview">gpt-4o-mini-search-preview</option>
-                    <option value="gpt-4o-search-preview">gpt-4o-search-preview</option>
-                    <option value="gpt-4-turbo">gpt-4-turbo</option>
-                    <option value="gpt-4">gpt-4</option>
-                    <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
-                    <option value="computer-use-preview">computer-use-preview</option>
                 </select>
                 <select id="hpsChatGPTPredefinedPrompt">
-                    <option value="">Optionally, select a predefined prompt.</option>
+                    <option value="">Prompt examples</option>
                 </select>
                 <span id="clipped" class="hidden"
                       title="The content had too many words - we replaced the middle with ... to avoid hitting ChatGPT limits.">(clipped)</span></label>
@@ -95,11 +82,39 @@
                 <button id="hpsChatGPTScreenshot" onclick="window.hpsChatGPTBookmarklet.showScreenshot()"
                         title="Take a screenshot">&#x1F4F7;
                 </button>
+                <button id="hpsChatGPTConfig" onclick="window.hpsChatGPTBookmarklet.showConfigDialog()"
+                        title="Configure ChatGPT Bookmarklet">&#x1F527;</button>
             </div>
         </div>
     </div>
     <div id="hpsChatGPTScreenshotOverlay" onclick="window.hpsChatGPTBookmarklet.hideScreenshotOverlay()" class="hidden">
         <img id="hpsChatGPTOverlayImage" alt="Screenshot that will be transmitted to ChatGPT"/>
+    </div>
+    <!-- Configuration Dialog -->
+    <div id="hpsChatGPTConfigDialog" class="hps-chatgpt-config-dialog hidden">
+        <div class="hps-chatgpt-config-content">
+            <h3>Backends configuration</h3>
+            <p>
+                Enter configuration as JSON. This will be stored in your browser's local storage.<br>
+                You can override the list of models for each backend by specifying a <code>models</code> array in the backend configuration.
+                If <code>models</code> is not set the backends list models API call will be used. Example:
+                <pre style="background:#f6f6f6;padding:8px;border-radius:4px;white-space:pre-wrap;">
+{"backends": [
+    {
+      "name": "OpenAI", "baseUrl": "https://api.openai.com/v1", "defaulModel": "gpt-4.1",
+      "authHeaders": [{ "name": "Authorization", "value": "Bearer YOUR_API_KEY" }],
+    },
+    { "name": "Local", "baseUrl": "http://localhost:8000", "models": ["mistral-7b", "llama-2-13b"]}
+]}
+                </pre>
+            </p>
+            <textarea id="hpsChatGPTConfigTextarea" rows="15" style="width:100% !important;"></textarea>
+            <div style="margin-top:8px;">
+                <button onclick="window.hpsChatGPTBookmarklet.saveConfig()">Save</button>
+                <button onclick="window.hpsChatGPTBookmarklet.hideConfigDialog()">Cancel</button>
+                <span id="hpsChatGPTConfigStatus" style="margin-left:10px;color:red;display:none;"></span>
+            </div>
+        </div>
     </div>
 </div>
 </body>
