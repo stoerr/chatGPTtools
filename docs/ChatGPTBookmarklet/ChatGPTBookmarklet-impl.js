@@ -135,7 +135,7 @@
 
         loadModelList: async function () {
             const backend = this.getSelectedBackend();
-            if (backend.models) return models; // from config, no need to load
+            if (backend.models) return backend.models; // from config, no need to load
             try {
                 // Compose headers from backend config
                 const headers = {};
