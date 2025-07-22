@@ -129,6 +129,15 @@
                 <textarea class="form-control" id="tools" rows="5"></textarea>
             </div>
         </div>
+        <!-- Added response_format textarea -->
+        <div class="row mt-3">
+            <div class="col-sm-2">
+                <label for="response_format">Response format:</label>
+            </div>
+            <div class="col-sm-10">
+                <textarea class="form-control" id="response_format" rows="5"></textarea>
+            </div>
+        </div>
     </div>
 </div>
 <span id="bottom"></span>
@@ -363,6 +372,14 @@
                     alert('Invalid JSON in tools field');
                 }
             }
+            // parse response_format JSON if provided
+            if ($('#response_format').val()) {
+                try {
+                    request.response_format = JSON.parse($('#response_format').val());
+                } catch (e) {
+                    alert('Invalid JSON in response_format field');
+                }
+            }
 
             return $.ajax({
                 url: apiUrl,
@@ -562,6 +579,11 @@
                 if (request.tools) {
                     $('#tools').val(JSON.stringify(request.tools, null, 2));
                 }
+                // populate response_format textarea
+                debugger;
+                if (request.response_format) {
+                    $('#response_format').val(JSON.stringify(request.response_format, null, 2));
+                }
                 reset(" ");
                 var first = true;
                 for (const message of request.messages) {
@@ -617,6 +639,14 @@
                 request.tools = JSON.parse($('#tools').val());
             } catch (e) {
                 alert('Invalid JSON in tools field');
+            }
+        }
+        // include response_format from textarea
+        if ($('#response_format').val()) {
+            try {
+                request.response_format = JSON.parse($('#response_format').val());
+            } catch (e) {
+                alert('Invalid JSON in response_format field');
             }
         }
         $('#json').val(JSON.stringify(request, null, 2));
