@@ -413,17 +413,7 @@
             if (type == 'toolscalls') type = 'assistant';
             var messageText = $(row).find('.message').val();
             if (type && messageText) {
-                var message;
-                try {
-                    message = JSON.parse(messageText);
-                    if (typeof message === 'object') {
-                        message.role = type;
-                    } else {
-                        message = {"role": type, "content": messageText};
-                    }
-                } catch (e) {
-                    message = {"role": type, "content": messageText};
-                }
+                var message = {"role": type, "content": messageText};
                 messages.push(message);
             }
         });
