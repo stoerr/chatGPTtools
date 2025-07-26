@@ -912,12 +912,19 @@ function shortText(text){
 async function requestChatGPT(successcallback, attempt = 1) {
     try {
         requestData.messages = messages;
-        if (verbose) console.error("Request: ", JSON.stringify(requestData, null, 4));
+        if (verbose) {
+            console.error('URI: ', apiURL);
+            console.error("Request: ", JSON.stringify(requestData, null, 4));
+        }
         const response = await fetch(apiURL, {
             method: 'POST',
             headers,
             body: JSON.stringify(requestData),
-        });
+        }).catch(error => {
+                console.error('Error: Request failed with error', error);
+                process.exit(2);
+            }
+        );
         if (verbose) console.error("Response status: ", response.status);
 
         if (response.status === 429) {
