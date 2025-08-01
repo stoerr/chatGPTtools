@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ChatGPT Bookmarklet - HPS' ChatGPT Tools</title>
+    <meta name="description" content="ChatGPT Bookmarklet for summarizing and asking questions about web page content">
+    <link href="//cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+    <link rel="shortcut icon" type="image/x-icon" href="../favicon.ico">
+    <link rel="canonical" href="https://chatGPTtools.stoerr.net/ChatGPTBookmarklet/"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-fork-ribbon-css/0.2.3/gh-fork-ribbon.min.css" />
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-SL01MYCNDC"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-SL01MYCNDC');
+    </script>
+    <style>.github-fork-ribbon:before { background-color: #090; }</style>
+</head>
+<body>
+<div class="container-xxl">
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="card">
+                <h1 class="card-header">ChatGPT Bookmarklet</h1>
+                <div class="card-body">
+                    <a class="github-fork-ribbon" href="https://github.com/stoerr/chatGPTtools" data-ribbon="Fork me on GitHub" title="Fork me on GitHub">Fork me on GitHub</a>
+
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="../index.html">HPS' ChatGPT Tools</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">ChatGPT Bookmarklet</li>
+                        </ol>
+                    </nav>
+
+                    <p class="card-text">
+                        This bookmarklet allows you to send the text of any page to ChatGPT for summarization. You can also ask any
+                        followup question on the content.
+                        It has growing functionality - see the help for details.
+                        See also my blog <a href="http://www.stoerr.net/blog/2023-04-10-readingWithChatGPT.html">Reading
+                        with ChatGPT</a> about this.
+                    </p>
+
+                    <p>
+                        You'll need your own ChatGPT API key to run that, which you can get at <a
+                            href="//platform.openai.com/">https://platform.openai.com/</a>.
+                        After logging in there with your ChatGPT credentials, you can create an API key in the
+                        profile settings (top right corner) at "View API keys".
+                        Enter that in the field below. Don't worry - that is just put into the bookmarklet, not
+                        transmitted anywhere, except to OpenAI's API when using the bookmarklet.
+                    </p>
+
+                    <div class="mb-3">
+                        <label for="chatgptapikey" class="form-label">ChatGPT API Key</label>
+                        <input type="text" class="form-control" id="chatgptapikey" rows="1" autofocus
+                               onchange="makeChatGPTLet(this);"></textarea>
+                    </div>
+
+                    <p class="card-text">Bookmarklet to drag: <a id="chatgptbookmarklet">Enter a ChatGPT API Key
+                        first.</a> (If you want a quick preview of the dialog, you can
+                        <a id="bookmarkletpreview"
+                           href="javascript:(function()%7Bjavascript%3A%2F*ChatGPTBookmarklet*%2F(function()%20%7B%0A%20%20function%20load(basePath%2C%20apikey)%20%7B%0A%20%20%20%20if%20(!window.hpsChatGPTBookmarklet)%20%7B%0A%20%20%20%20%20%20var%20script%20%3D%20document.createElement(%27script%27)%3B%0A%20%20%20%20%20%20script.type%20%3D%20%27text%2Fjavascript%27%3B%0A%20%20%20%20%20%20script.src%20%3D%20basePath%20%2B%20%27%2FChatGPTBookmarklet.js%27%3B%0A%20%20%20%20%20%20script.onload%20%3D%20function%20()%20%7B%0A%20%20%20%20%20%20%20%20window.hpsChatGPTBookmarklet.init(basePath%2C%20apikey%2C%20window.hpsChatGPTBookmarklet.openDialog)%3B%0A%20%20%20%20%20%20%7D%3B%0A%20%20%20%20%20%20document.body.appendChild(script)%3B%0A%20%20%20%20%7D%20else%20%7B%0A%20%20%20%20%20%20window.hpsChatGPTBookmarklet.openDialog()%3B%0A%20%20%20%20%7D%0A%20%20%7D%0A%20%20load(%27https%3A%2F%2Fchatgpttools.stoerr.net%2FChatGPTBookmarklet%27%2C%20%27THEKEY%27)%3B%0A%7D)()%3B%7D)()">click
+                            here</a>.
+                        However, that doesn't really work until you enter a working API key.)
+                    </p>
+
+                    <script>
+                        const baseurl = location.protocol + '//' + location.host + location.pathname.replace("index.html", "");
+
+                        function makeChatGPTLet() {
+                            var apikey = document.getElementById("chatgptapikey").value;
+                            var element = document.getElementById("chatgptbookmarklet");
+                            var preview = document.getElementById("bookmarkletpreview");
+                            if (apikey && apikey.startsWith('sk-') && apikey.trim().length == 51) {
+                                var bookmarklet = "javascript:(function()%7Bjavascript%3A%2F*ChatGPTBookmarklet*%2F(function()%20%7B%0A%20%20function%20load(basePath%2C%20apikey)%20%7B%0A%20%20%20%20if%20(!window.hpsChatGPTBookmarklet)%20%7B%0A%20%20%20%20%20%20var%20script%20%3D%20document.createElement(%27script%27)%3B%0A%20%20%20%20%20%20script.type%20%3D%20%27text%2Fjavascript%27%3B%0A%20%20%20%20%20%20script.src%20%3D%20basePath%20%2B%20%27%2FChatGPTBookmarklet.js%27%3B%0A%20%20%20%20%20%20script.onload%20%3D%20function%20()%20%7B%0A%20%20%20%20%20%20%20%20window.hpsChatGPTBookmarklet.init(basePath%2C%20apikey%2C%20window.hpsChatGPTBookmarklet.openDialog)%3B%0A%20%20%20%20%20%20%7D%3B%0A%20%20%20%20%20%20document.body.appendChild(script)%3B%0A%20%20%20%20%7D%20else%20%7B%0A%20%20%20%20%20%20window.hpsChatGPTBookmarklet.openDialog()%3B%0A%20%20%20%20%7D%0A%20%20%7D%0A%20%20load(%27THEURL%27%2C%20%27THEKEY%27)%3B%0A%7D)()%3B%7D)()";
+                                var url = baseurl;
+                                element.setAttribute("href", bookmarklet.replace("THEURL", encodeURIComponent(url)).replace('THEKEY', apikey.trim()));
+                                element.innerText = "ChatGPT Bookmarklet";
+                                preview.setAttribute("href", bookmarklet.replace("THEURL", encodeURIComponent(url)).replace('THEKEY', apikey.trim()));
+                            } else {
+                                element.innerText = "Enter a ChatGPT API Key first.";
+                            }
+                        }
+                    </script>
+
+                    <hr>
+
+                    <h4 class="card-subtitle mb-2">About</h4>
+                    <p class="card-text">
+                        This is part of my <a href="https://github.com/stoerr/chatGPTtools">ChatGPT tools</a> collection.
+                        For more tools and information, visit the <a href="../index.html">main page</a>.
+                    </p>
+
+                    <p>If you have problems, please contact me, <a href="http://www.stoerr.net/">Hans-Peter Störr</a>.
+                        See also my <a href="https://github.com/stoerr">other projects on Github</a>,
+                        links to <a href="https://www.stoerr.net/ai.html">AI related projects</a> and
+                        <a href="https://www.stoerr.net/blog.html">my blog</a>.
+                    </p>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="//cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
+        crossorigin="anonymous"></script>
+</body>
+</html>
