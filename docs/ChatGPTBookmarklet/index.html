@@ -79,10 +79,11 @@
                         <pre style="background:#f6f6f6;padding:8px;border-radius:4px;white-space:pre-wrap;">
 {"backends": [
     {
-      "name": "OpenAI", "baseUrl": "https://api.openai.com/v1", "defaulModel": "gpt-4.1",
+      "name": "OpenAI", "baseUrl": "https://api.openai.com/v1",
       "authHeaders": [{ "name": "Authorization", "value": "Bearer YOUR_API_KEY" }],
     },
-    { "name": "Local", "baseUrl": "http://localhost:8000", "models": ["mistral-7b", "llama-2-13b"]}
+    { "name": "Local", "baseUrl": "http://localhost:8000", "models": ["mistral-7b", "llama-2-13b"],
+      "autoselect": ".*intranet.*" }
 ]}
                 </pre>
                         </p>
@@ -96,7 +97,7 @@
                     </div>
 
                     <script>
-                        const baseurl = location.protocol + '//' + location.host + location.pathname.replace("index.html", "");
+                        const baseurl = (location.protocol + '//' + location.host + location.pathname.replace("/index.html", ""));
 
                         // Handle hash parameters on page load
                         window.addEventListener('load', function () {
