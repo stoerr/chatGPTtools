@@ -70,12 +70,21 @@
             let config = window.hpsChatGPTBookmarklet.config || {};
             this.config = config;
 
-            // If no embedded config, create default with API key
-            this.backends = (config && config.backends) ? config.backends : [{
-                name: "OpenAI",
-                baseUrl: "https://api.openai.com/v1",
-                headers: [{ name: "Authorization", value: "Bearer " + window.hpsChatGPTBookmarklet.apikey }]
-            }];
+            // If no embedded config, create default with API key (only if API key is provided)
+            if (config && config.backends) {
+                this.backends = config.backends;
+            } else if (window.hpsChatGPTBookmarklet.apikey) {
+                // Only create default OpenAI backend if API key is provided
+                this.backends = [{
+                    name: "OpenAI",
+                    baseUrl: "https://api.openai.com/v1",
+                    headers: [{ name: "Authorization", value: "Bearer " + window.hpsChatGPTBookmarklet.apikey }]
+                }];
+            } else {
+                // No config and no API key - this should not happen with proper validation
+                console.error("No backend configuration or API key provided");
+                this.backends = [];
+            }
 
             this.backends.forEach(backend => {
                 if (backend.baseUrl.endsWith('/')) {
@@ -166,8 +175,19 @@
                     const option = document.createElement("option");
                     option.value = modelId;
                     option.text = modelId;
+                    // Select the defaultModel if specified and matches
+                    if (backend.defaultModel && modelId === backend.defaultModel) {
+                        option.selected = true;
+                    }
                     select.appendChild(option);
                 });
+                // If defaultModel was specified but not found in models array, select the first one and log a warning
+                if (backend.defaultModel && !backend.models.includes(backend.defaultModel)) {
+                    console.warn(`Default model "${backend.defaultModel}" not found in configured models for backend "${backend.name}". Using first available model.`);
+                    if (select.options.length > 0) {
+                        select.options[0].selected = true;
+                    }
+                }
                 return;
             }
 
@@ -185,25 +205,48 @@
                 select.innerHTML = "";
                 // Filter models: include if model id starts with "gpt-" or matches /^o[0-9]/; exclude ones with date patterns like -202[09]-
                 const modelIncludeRegex =  new RegExp(this.config.modelIncludeRegex || '^(gpt-.*|o[0-9]-.*|.*claude.*|.*-smart)$');
-                (result.data || []).filter(model =>
+                const filteredModels = (result.data || []).filter(model =>
                     ((model.id && modelIncludeRegex.test(model.id)) &&
                         !/-202[0-9]-/.test(model.id) &&
                         !/-[0-9][0-9][0-9][0-9]$/.test(model.id) &&
                         !/-audio|-realtime|-transcribe|-tts/.test(model.id)
                     )
-                ).sort((a, b) => a.id.localeCompare(b.id)).forEach(model => {
+                ).sort((a, b) => a.id.localeCompare(b.id));
+
+                let defaultModelFound = false;
+                filteredModels.forEach(model => {
                     const option = document.createElement("option");
                     option.value = model.id;
                     option.text = model.id;
-                    if (model.id === currentSelection) {
+                    // Select the defaultModel if specified and matches
+                    if (backend.defaultModel && model.id === backend.defaultModel) {
+                        option.selected = true;
+                        defaultModelFound = true;
+                    } else if (!backend.defaultModel && model.id === currentSelection) {
                         option.selected = true;
                     }
                     select.appendChild(option);
                 });
+
+                // If defaultModel was specified but not found in the filtered models, log a warning and select first available
+                if (backend.defaultModel && !defaultModelFound) {
+                    console.warn(`Default model "${backend.defaultModel}" not found in available models for backend "${backend.name}". Using first available model.`);
+                    if (select.options.length > 0) {
+                        select.options[0].selected = true;
+                    }
+                }
             } catch (e) {
                 console.log("Failed to load model list:", e);
-                // Leave the select empty if model loading fails
+                // Leave the select empty if model loading fails, but if defaultModel is specified, add it as an option
                 select.innerHTML = "";
+                if (backend.defaultModel) {
+                    const option = document.createElement("option");
+                    option.value = backend.defaultModel;
+                    option.text = backend.defaultModel;
+                    option.selected = true;
+                    select.appendChild(option);
+                    console.log(`Using defaultModel "${backend.defaultModel}" as fallback since model loading failed.`);
+                }
             }
         },
 

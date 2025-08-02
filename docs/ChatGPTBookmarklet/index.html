@@ -64,7 +64,7 @@
                     </p>
 
                     <div class="mb-3">
-                        <label for="chatgptapikey" class="form-label">ChatGPT API Key</label>
+                        <label for="chatgptapikey" class="form-label">ChatGPT API Key (Optional if using advanced configuration)</label>
                         <input type="text" class="form-control" id="chatgptapikey" rows="1" autofocus
                                onchange="makeChatGPTLet(this);"></textarea>
                     </div>
@@ -86,6 +86,7 @@
 {"backends": [
     {
       "name": "OpenAI", "baseUrl": "https://api.openai.com/v1",
+      "defaultModel": "gpt-4.1",
       "headers": [{ "name": "Authorization", "value": "Bearer YOUR_API_KEY" }]
     },
     { "name": "Local", "baseUrl": "http://localhost:8000", "models": ["mistral-7b", "llama-2-13b"],
@@ -160,38 +161,47 @@
                             var element = document.getElementById("chatgptbookmarklet");
                             var preview = document.getElementById("bookmarkletpreview");
 
-                            if (apikey && apikey.startsWith('sk-') && apikey.trim().length >= 51) {
-                                // Validate config JSON if provided
-                                var configObj = null;
-                                if (config.trim()) {
-                                    try {
-                                        configObj = JSON.parse(config);
-                                    } catch (e) {
-                                        element.innerText = "Invalid JSON configuration.";
-                                        return;
-                                    }
+                            // Validate config JSON if provided
+                            var configObj = null;
+                            var hasAdvancedConfig = false;
+                            if (config.trim()) {
+                                try {
+                                    configObj = JSON.parse(config);
+                                    hasAdvancedConfig = configObj && configObj.backends && configObj.backends.length > 0;
+                                } catch (e) {
+                                    element.innerText = "Invalid JSON configuration.";
+                                    return;
                                 }
-
-                                var bookmarklet = "javascript:" + encodeURIComponent(
-                                    "/*ChatGPTBookmarklet*/(function () {" +
-                                    load.toString() +
-                                    "\nload('THEURL', 'THEKEY', THECONFIG);" +
-                                    "})()"
-                                )
-                                var url = baseurl;
-                                // Compact JSON for bookmarklet (no pretty printing)
-                                var configStr = configObj ? JSON.stringify(configObj) : 'null';
-                                var finalBookmarklet = bookmarklet
-                                    .replace("THEURL", encodeURIComponent(url))
-                                    .replace('THEKEY', apikey.trim())
-                                    .replace('THECONFIG', configStr);
-                                console.log("Bookmarklet: " + finalBookmarklet);
-                                element.setAttribute("href", finalBookmarklet);
-                                element.innerText = "ChatGPT Bookmarklet";
-                                preview.setAttribute("href", finalBookmarklet);
-                            } else {
-                                element.innerText = "Enter a ChatGPT API Key first.";
                             }
+
+                            // API key is required only if no advanced backend configuration is provided
+                            var needsApiKey = !hasAdvancedConfig;
+                            var hasValidApiKey = apikey && apikey.startsWith('sk-') && apikey.trim().length >= 51;
+
+                            if (needsApiKey && !hasValidApiKey) {
+                                element.innerText = "Enter a ChatGPT API Key first, or provide advanced backend configuration.";
+                                return;
+                            }
+
+                            var bookmarklet = "javascript:" + encodeURIComponent(
+                                "/*ChatGPTBookmarklet*/(function () {" +
+                                load.toString() +
+                                "\nload('THEURL', 'THEKEY', THECONFIG);" +
+                                "})()"
+                            )
+                            var url = baseurl;
+                            // Compact JSON for bookmarklet (no pretty printing)
+                            var configStr = configObj ? JSON.stringify(configObj) : 'null';
+                            // Use API key if provided, otherwise use empty string for advanced configs
+                            var apikeyStr = hasValidApiKey ? apikey.trim() : '';
+                            var finalBookmarklet = bookmarklet
+                                .replace("THEURL", encodeURIComponent(url))
+                                .replace('THEKEY', apikeyStr)
+                                .replace('THECONFIG', configStr);
+                            console.log("Bookmarklet: " + finalBookmarklet);
+                            element.setAttribute("href", finalBookmarklet);
+                            element.innerText = "ChatGPT Bookmarklet";
+                            preview.setAttribute("href", finalBookmarklet);
                         }
                     </script>
 

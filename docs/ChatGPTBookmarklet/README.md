@@ -29,11 +29,11 @@ The tool extracts the main content from web pages (avoiding navigation, ads, etc
 
 ### Getting Started
 
-1. **Get a ChatGPT API Key**: Visit [OpenAI's platform](https://platform.openai.com/), log in, and create an API key under "View API keys" in your profile settings.
+1. **Get a ChatGPT API Key (Optional with Advanced Configuration)**: Visit [OpenAI's platform](https://platform.openai.com/), log in, and create an API key under "View API keys" in your profile settings. This is required for the default OpenAI configuration, but optional if you provide advanced backend configuration with embedded authentication.
 
 2. **Create the Bookmarklet**: 
    - Visit the bookmarklet generator page (index.html)
-   - Enter your API key in the provided field
+   - Either enter your API key for simple OpenAI usage, OR provide advanced JSON backend configuration with embedded authentication headers
    - Drag the generated "ChatGPT Bookmarklet" link to your browser's bookmarks bar
 
 3. **Use the Bookmarklet**: Click the bookmark on any web page to open the dialog and start asking questions.
@@ -58,7 +58,8 @@ The tool extracts the main content from web pages (avoiding navigation, ads, etc
       "name": "OpenAI", 
       "baseUrl": "https://api.openai.com/v1",
       "headers": [{"name": "Authorization", "value": "Bearer sk-..."}],
-      "models": ["gpt-4", "gpt-3.5-turbo"]
+      "models": ["gpt-4", "gpt-3.5-turbo"],
+      "defaultModel": "gpt-4"
     },
     {
       "name": "Anthropic",
@@ -67,6 +68,7 @@ The tool extracts the main content from web pages (avoiding navigation, ads, etc
         {"name": "x-api-key", "value": "YOUR_ANTHROPIC_KEY"},
         {"name": "anthropic-version", "value": "2023-06-01"}
       ],
+      "defaultModel": "claude-3-sonnet-20240229",
       "autoselect": ".*anthropic.*"
     }
   ]
@@ -79,6 +81,7 @@ The tool extracts the main content from web pages (avoiding navigation, ads, etc
 - `baseUrl`: API endpoint URL  
 - `headers`: Authentication headers
 - `models`: Optional custom model list (otherwise fetched from API)
+- `defaultModel`: Optional model to pre-select when switching to this backend
 - `autoselect`: Regex pattern to auto-select backend based on current URL
 
 **Backend Selection:**
