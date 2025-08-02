@@ -53,7 +53,6 @@ The tool extracts the main content from web pages (avoiding navigation, ads, etc
 **Configuration structure:**
 ```json
 {
-  "defaultBackend": "OpenAI",
   "backends": [
     {
       "name": "OpenAI", 
@@ -75,13 +74,17 @@ The tool extracts the main content from web pages (avoiding navigation, ads, etc
 ```
 
 **Configuration options:**
-- `defaultBackend`: Name of the default backend to use
 - `backends`: Array of AI service configurations
 - `name`: Display name for the backend
 - `baseUrl`: API endpoint URL  
 - `headers`: Authentication headers
 - `models`: Optional custom model list (otherwise fetched from API)
 - `autoselect`: Regex pattern to auto-select backend based on current URL
+
+**Backend Selection:**
+- The first backend in the array is selected by default
+- If a backend has an `autoselect` regex pattern, it will be automatically selected when the current page URL matches that pattern
+- Users can manually switch between backends using the dropdown selector (if multiple backends are configured)
 
 **Security**: The configuration link uses URL hash parameters that are immediately removed from browser history after reading to protect sensitive API keys.
 

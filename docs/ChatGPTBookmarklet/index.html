@@ -69,30 +69,37 @@
                                onchange="makeChatGPTLet(this);"></textarea>
                     </div>
 
+                    <!-- Advanced Configuration Section (Collapsible) -->
                     <div class="mb-3">
-                        <label for="chatgptconfig" class="form-label">Backends configuration (Optional JSON)</label>
-                        <p>
-                            Enter configuration as JSON. This will be stored in your browser's local storage.<br>
-                            You can override the list of models for each backend by specifying a <code>models</code>
-                            array in the backend configuration.
-                            If <code>models</code> is not set the backends list models API call will be used. Example:
-                        <pre style="background:#f6f6f6;padding:8px;border-radius:4px;white-space:pre-wrap;">
+                        <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#advancedConfig" aria-expanded="false" aria-controls="advancedConfig">
+                            Advanced Configuration (Optional)
+                        </button>
+                        <div class="collapse" id="advancedConfig">
+                            <div class="card card-body mt-2">
+                                <label for="chatgptconfig" class="form-label">Backends configuration (Optional JSON)</label>
+                                <p>
+                                    Enter configuration as JSON for multiple AI backends. Leave empty to use default OpenAI configuration with the API key above.<br>
+                                    You can override the list of models for each backend by specifying a <code>models</code>
+                                    array in the backend configuration.
+                                    If <code>models</code> is not set the backends list models API call will be used. Example:
+                                <pre style="background:#f6f6f6;padding:8px;border-radius:4px;white-space:pre-wrap;">
 {"backends": [
     {
       "name": "OpenAI", "baseUrl": "https://api.openai.com/v1",
-      "authHeaders": [{ "name": "Authorization", "value": "Bearer YOUR_API_KEY" }],
+      "headers": [{ "name": "Authorization", "value": "Bearer YOUR_API_KEY" }]
     },
     { "name": "Local", "baseUrl": "http://localhost:8000", "models": ["mistral-7b", "llama-2-13b"],
       "autoselect": ".*intranet.*" }
 ]}
                 </pre>
-                        </p>
-                        <textarea class="form-control" id="chatgptconfig" rows="10"
-                                  placeholder='{"backends": [{"name": "OpenAI", "baseUrl": "https://api.openai.com/v1", "headers": [{"name": "Authorization", "value": "Bearer YOUR_API_KEY"}]}]}'
-                                  onchange="makeChatGPTLet(this);"></textarea>
-                        <div class="form-text">
-                            Enter JSON configuration for multiple AI backends. Leave empty to use default OpenAI
-                            configuration with the API key above.
+                                </p>
+                                <textarea class="form-control" id="chatgptconfig" rows="10"
+                                          placeholder='{"backends": [{"name": "OpenAI", "baseUrl": "https://api.openai.com/v1", "headers": [{"name": "Authorization", "value": "Bearer YOUR_API_KEY"}]}]}'
+                                          onchange="makeChatGPTLet(this);"></textarea>
+                                <div class="form-text">
+                                    <strong>Backend Selection:</strong> The first backend is selected by default. Use <code>autoselect</code> regex patterns to automatically select backends based on page URL.
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -111,7 +118,15 @@
                                         document.getElementById('chatgptapikey').value = apikey;
                                     }
                                     if (config) {
-                                        document.getElementById('chatgptconfig').value = decodeURIComponent(config);
+                                        // Pretty print the JSON configuration for better readability
+                                        const configObj = JSON.parse(decodeURIComponent(config));
+                                        document.getElementById('chatgptconfig').value = JSON.stringify(configObj, null, 2);
+
+                                        // Expand the advanced configuration section since we have config data
+                                        const advancedConfigCollapse = document.getElementById('advancedConfig');
+                                        const advancedConfigButton = document.querySelector('[data-bs-target="#advancedConfig"]');
+                                        advancedConfigCollapse.classList.add('show');
+                                        advancedConfigButton.setAttribute('aria-expanded', 'true');
                                     }
 
                                     // Generate bookmarklet with pre-filled data
@@ -164,6 +179,7 @@
                                     "})()"
                                 )
                                 var url = baseurl;
+                                // Compact JSON for bookmarklet (no pretty printing)
                                 var configStr = configObj ? JSON.stringify(configObj) : 'null';
                                 var finalBookmarklet = bookmarklet
                                     .replace("THEURL", encodeURIComponent(url))
