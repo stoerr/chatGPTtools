@@ -57,10 +57,7 @@
 
                 setTimeout(this.sidebyside.bind(this), 0);
 
-                this.configDialog = document.getElementById('hpsChatGPTConfigDialog');
-                this.configTextarea = document.getElementById('hpsChatGPTConfigTextarea');
-                this.configStatus = document.getElementById('hpsChatGPTConfigStatus');
-
+                // Remove obsolete config dialog references
                 this.loadConfig();
                 this.setupBackendSelector();
 
@@ -559,51 +556,6 @@
                 this.selectIncludeScreenshot.disabled = false;
                 this.selectIncludeScreenshot.checked = true;
             });
-        },
-
-        // ===== Config Dialog Logic =====
-        showConfigDialog: function () {
-            if (!this.configDialog) {
-                this.configDialog = document.getElementById('hpsChatGPTConfigDialog');
-                this.configTextarea = document.getElementById('hpsChatGPTConfigTextarea');
-                this.configStatus = document.getElementById('hpsChatGPTConfigStatus');
-            }
-            let config = localStorage.getItem('net.stoerr.chatgptbookmarklet.config');
-            this.configTextarea.value = config ? config : '{}';
-            this.configStatus.style.display = 'none';
-            this.configDialog.classList.remove('hidden');
-        },
-
-        hideConfigDialog: function () {
-            if (this.configDialog) {
-                this.configDialog.classList.add('hidden');
-            }
-        },
-
-        saveConfig: function () {
-            const val = this.configTextarea.value;
-            try {
-                JSON.parse(val);
-                localStorage.setItem('net.stoerr.chatgptbookmarklet.config', val);
-                this.configStatus.style.display = 'none';
-                // Reload config and backend selector after saving
-                this.loadConfig();
-
-                // check whether all autoSelect keys are correct regexes
-                this.backends.forEach(backend => {
-                    if (backend.autoSelect) {
-                        new RegExp(backend.autoSelect);
-                    }
-                });
-
-                this.setupBackendSelector();
-                this.loadModelList();
-                this.hideConfigDialog();
-            } catch (e) {
-                console.error('Failed to save configuration: ', val, e);
-                this.configStatus.textContent = 'Invalid configuration ' + e;
-                this.configStatus.style.display = '';
-            }
         },
 
         /** Used here but declared in another file:

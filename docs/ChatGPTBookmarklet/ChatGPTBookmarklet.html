@@ -90,32 +90,6 @@
     <div id="hpsChatGPTScreenshotOverlay" onclick="window.hpsChatGPTBookmarklet.hideScreenshotOverlay()" class="hidden">
         <img id="hpsChatGPTOverlayImage" alt="Screenshot that will be transmitted to ChatGPT"/>
     </div>
-    <!-- Configuration Dialog -->
-    <div id="hpsChatGPTConfigDialog" class="hps-chatgpt-config-dialog hidden">
-        <div class="hps-chatgpt-config-content">
-            <h3>Backends configuration</h3>
-            <p>
-                Enter configuration as JSON. This will be stored in your browser's local storage.<br>
-                You can override the list of models for each backend by specifying a <code>models</code> array in the backend configuration.
-                If <code>models</code> is not set the backends list models API call will be used. Example:
-                <pre style="background:#f6f6f6;padding:8px;border-radius:4px;white-space:pre-wrap;">
-{"backends": [
-    {
-      "name": "OpenAI", "baseUrl": "https://api.openai.com/v1", "defaulModel": "gpt-4.1",
-      "authHeaders": [{ "name": "Authorization", "value": "Bearer YOUR_API_KEY" }],
-    },
-    { "name": "Local", "baseUrl": "http://localhost:8000", "models": ["mistral-7b", "llama-2-13b"]}
-]}
-                </pre>
-            </p>
-            <textarea id="hpsChatGPTConfigTextarea" rows="15" style="width:100% !important;"></textarea>
-            <div style="margin-top:8px;">
-                <button onclick="window.hpsChatGPTBookmarklet.saveConfig()">Save</button>
-                <button onclick="window.hpsChatGPTBookmarklet.hideConfigDialog()">Cancel</button>
-                <span id="hpsChatGPTConfigStatus" style="margin-left:10px;color:red;display:none;"></span>
-            </div>
-        </div>
-    </div>
 </div>
 </body>
 </html>
