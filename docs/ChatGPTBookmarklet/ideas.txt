@@ -1,3 +1,5 @@
+## A couple of ideas for the ChatGPT Bookmarklet, not scheduled for implementation yet
+
 - configure alternative backends
     - permanently for certain pages
     - location: local storage
