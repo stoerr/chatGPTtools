@@ -69,16 +69,68 @@
                                onchange="makeChatGPTLet(this);"></textarea>
                     </div>
 
+                    <div class="mb-3">
+                        <label for="chatgptconfig" class="form-label">Backends configuration (Optional JSON)</label>
+                        <p>
+                            Enter configuration as JSON. This will be stored in your browser's local storage.<br>
+                            You can override the list of models for each backend by specifying a <code>models</code>
+                            array in the backend configuration.
+                            If <code>models</code> is not set the backends list models API call will be used. Example:
+                        <pre style="background:#f6f6f6;padding:8px;border-radius:4px;white-space:pre-wrap;">
+{"backends": [
+    {
+      "name": "OpenAI", "baseUrl": "https://api.openai.com/v1", "defaulModel": "gpt-4.1",
+      "authHeaders": [{ "name": "Authorization", "value": "Bearer YOUR_API_KEY" }],
+    },
+    { "name": "Local", "baseUrl": "http://localhost:8000", "models": ["mistral-7b", "llama-2-13b"]}
+]}
+                </pre>
+                        </p>
+                        <textarea class="form-control" id="chatgptconfig" rows="10"
+                                  placeholder='{"backends": [{"name": "OpenAI", "baseUrl": "https://api.openai.com/v1", "headers": [{"name": "Authorization", "value": "Bearer YOUR_API_KEY"}]}]}'
+                                  onchange="makeChatGPTLet(this);"></textarea>
+                        <div class="form-text">
+                            Enter JSON configuration for multiple AI backends. Leave empty to use default OpenAI
+                            configuration with the API key above.
+                        </div>
+                    </div>
+
                     <script>
                         const baseurl = location.protocol + '//' + location.host + location.pathname.replace("index.html", "");
 
-                        function load(basePath, apikey) {
+                        // Handle hash parameters on page load
+                        window.addEventListener('load', function () {
+                            if (window.location.hash) {
+                                try {
+                                    const params = new URLSearchParams(window.location.hash.slice(1));
+                                    const apikey = params.get('apikey');
+                                    const config = params.get('config');
+
+                                    if (apikey) {
+                                        document.getElementById('chatgptapikey').value = apikey;
+                                    }
+                                    if (config) {
+                                        document.getElementById('chatgptconfig').value = decodeURIComponent(config);
+                                    }
+
+                                    // Generate bookmarklet with pre-filled data
+                                    makeChatGPTLet();
+
+                                    // Immediately clean the URL from browser history
+                                    history.replaceState({}, document.title, window.location.pathname);
+                                } catch (e) {
+                                    console.error('Error parsing hash parameters:', e);
+                                }
+                            }
+                        });
+
+                        function load(basePath, apikey, config) {
                             if (!window.hpsChatGPTBookmarklet) {
                                 var script = document.createElement('script');
                                 script.type = 'text/javascript';
                                 script.src = basePath + '/ChatGPTBookmarklet.js';
                                 script.onload = function () {
-                                    window.hpsChatGPTBookmarklet.init(basePath, apikey, window.hpsChatGPTBookmarklet.openDialog);
+                                    window.hpsChatGPTBookmarklet.init(basePath, apikey, config, window.hpsChatGPTBookmarklet.openDialog);
                                 };
                                 document.body.appendChild(script);
                             } else {
@@ -86,20 +138,36 @@
                             }
                         }
 
-
                         function makeChatGPTLet() {
                             var apikey = document.getElementById("chatgptapikey").value;
+                            var config = document.getElementById("chatgptconfig").value;
                             var element = document.getElementById("chatgptbookmarklet");
                             var preview = document.getElementById("bookmarkletpreview");
+
                             if (apikey && apikey.startsWith('sk-') && apikey.trim().length >= 51) {
+                                // Validate config JSON if provided
+                                var configObj = null;
+                                if (config.trim()) {
+                                    try {
+                                        configObj = JSON.parse(config);
+                                    } catch (e) {
+                                        element.innerText = "Invalid JSON configuration.";
+                                        return;
+                                    }
+                                }
+
                                 var bookmarklet = "javascript:" + encodeURIComponent(
                                     "/*ChatGPTBookmarklet*/(function () {" +
                                     load.toString() +
-                                    "\nload('THEURL', 'THEKEY');" +
+                                    "\nload('THEURL', 'THEKEY', THECONFIG);" +
                                     "})()"
                                 )
                                 var url = baseurl;
-                                var finalBookmarklet = bookmarklet.replace("THEURL", encodeURIComponent(url)).replace('THEKEY', apikey.trim());
+                                var configStr = configObj ? JSON.stringify(configObj) : 'null';
+                                var finalBookmarklet = bookmarklet
+                                    .replace("THEURL", encodeURIComponent(url))
+                                    .replace('THEKEY', apikey.trim())
+                                    .replace('THECONFIG', configStr);
                                 console.log("Bookmarklet: " + finalBookmarklet);
                                 element.setAttribute("href", finalBookmarklet);
                                 element.innerText = "ChatGPT Bookmarklet";

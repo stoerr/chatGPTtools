@@ -4,12 +4,13 @@
 
     const that = window.hpsChatGPTBookmarklet;
 
-    that.init = async function (basePath, apikey, callbackWhenHTMLLoaded) {
+    that.init = async function (basePath, apikey, config, callbackWhenHTMLLoaded) {
         try {
             that.basePath = basePath;
             // remove trailing slash
 
             that.apikey = apikey;
+            that.config = config;
 
             if (!that.dialog) {
                 const response = await fetch(this.basePath + '/ChatGPTBookmarklet.html');

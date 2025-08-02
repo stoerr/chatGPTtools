@@ -40,23 +40,30 @@ The tool extracts the main content from web pages (avoiding navigation, ads, etc
 
 ### Advanced Configuration
 
-The bookmarklet supports multiple AI backends through a JSON configuration stored in your browser's local storage. Click the configuration button (🔧) in the dialog to access these settings.
+**Important**: Since the bookmarklet runs on many different websites, configuration must be embedded directly into the bookmarklet code itself, similar to how the API key is currently handled.
 
-**Example configuration for multiple backends:**
+**Configuration workflow:**
+1. Visit the bookmarklet generator (index.html) 
+2. Enter your API key and optional JSON backend configuration
+3. Generate a bookmarklet that embeds both the API key and full configuration
+4. Within the dialog, a "Configure" button links back to index.html with current settings in the URL hash
+5. The generator pre-fills the form fields and immediately removes the hash from browser history
+6. Modify settings and generate a new bookmarklet to replace the old one
+
+**Configuration structure:**
 ```json
 {
+  "defaultBackend": "OpenAI",
   "backends": [
     {
-      "name": "OpenAI",
+      "name": "OpenAI", 
       "baseUrl": "https://api.openai.com/v1",
-      "headers": [
-        {"name": "Authorization", "value": "Bearer YOUR_OPENAI_KEY"}
-      ],
+      "headers": [{"name": "Authorization", "value": "Bearer sk-..."}],
       "models": ["gpt-4", "gpt-3.5-turbo"]
     },
     {
       "name": "Anthropic",
-      "baseUrl": "https://api.anthropic.com/v1",
+      "baseUrl": "https://api.anthropic.com/v1", 
       "headers": [
         {"name": "x-api-key", "value": "YOUR_ANTHROPIC_KEY"},
         {"name": "anthropic-version", "value": "2023-06-01"}
@@ -68,12 +75,15 @@ The bookmarklet supports multiple AI backends through a JSON configuration store
 ```
 
 **Configuration options:**
+- `defaultBackend`: Name of the default backend to use
 - `backends`: Array of AI service configurations
 - `name`: Display name for the backend
-- `baseUrl`: API endpoint URL
+- `baseUrl`: API endpoint URL  
 - `headers`: Authentication headers
 - `models`: Optional custom model list (otherwise fetched from API)
 - `autoselect`: Regex pattern to auto-select backend based on current URL
+
+**Security**: The configuration link uses URL hash parameters that are immediately removed from browser history after reading to protect sensitive API keys.
 
 ## Implementation remarks
 

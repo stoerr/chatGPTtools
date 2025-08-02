@@ -69,19 +69,17 @@
         },
 
         loadConfig: function () {
-            let configStr = localStorage.getItem('net.stoerr.chatgptbookmarklet.config');
-            let config;
-            try {
-                config = configStr ? JSON.parse(configStr) : {};
-            } catch (e) {
-                config = {};
-            }
+            // Use embedded configuration from the bookmarklet instead of localStorage
+            let config = window.hpsChatGPTBookmarklet.config || {};
             this.config = config;
+
+            // If no embedded config, create default with API key
             this.backends = (config && config.backends) ? config.backends : [{
                 name: "OpenAI",
                 baseUrl: "https://api.openai.com/v1",
-                authHeaders: [{ name: "Authorization", value: "Bearer " + this.apikey }]
+                headers: [{ name: "Authorization", value: "Bearer " + window.hpsChatGPTBookmarklet.apikey }]
             }];
+
             this.backends.forEach(backend => {
                 if (backend.baseUrl.endsWith('/')) {
                     backend.baseUrl = backend.baseUrl.slice(0, -1);
@@ -93,18 +91,40 @@
             const url = window.location.href;
             for (let i = 0; i < this.backends.length; ++i) {
                 const backend = this.backends[i];
-                if (backend.autoSelect) {
+                if (backend.autoselect) {
                     try {
-                        const re = new RegExp(backend.autoSelect);
+                        const re = new RegExp(backend.autoselect);
                         if (re.test(url)) {
                             this.selectedBackendIndex = i;
                             break;
                         }
                     } catch (e) {
-                        console.error('invalid backend select regex ' + backend.autoSelect);
+                        console.error('Error in autoselect regex for backend ' + backend.name + ':', e);
                     }
                 }
             }
+        },
+
+        openConfigGenerator: function () {
+            // Create URL with current settings in hash
+            const currentApiKey = window.hpsChatGPTBookmarklet.apikey;
+            const currentConfig = window.hpsChatGPTBookmarklet.config;
+
+            let configUrl = window.hpsChatGPTBookmarklet.basePath + '/index.html#';
+            const params = new URLSearchParams();
+
+            if (currentApiKey) {
+                params.set('apikey', currentApiKey);
+            }
+
+            if (currentConfig) {
+                params.set('config', encodeURIComponent(JSON.stringify(currentConfig)));
+            }
+
+            configUrl += params.toString();
+
+            // Open configuration page in new tab
+            window.open(configUrl, '_blank');
         },
 
         setupBackendSelector: function () {
