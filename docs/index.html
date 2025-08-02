@@ -9,7 +9,8 @@
           integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
     <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
     <link rel="canonical" href="https://chatGPTtools.stoerr.net/"/>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-fork-ribbon-css/0.2.3/gh-fork-ribbon.min.css" />
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/github-fork-ribbon-css/0.2.3/gh-fork-ribbon.min.css"/>
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-SL01MYCNDC"></script>
     <script>
@@ -23,7 +24,9 @@
 
         gtag('config', 'G-SL01MYCNDC');
     </script>
-    <style>.github-fork-ribbon:before { background-color: #090; }</style>
+    <style>.github-fork-ribbon:before {
+        background-color: #090;
+    }</style>
 </head>
 <body>
 <div class="container-xxl">
@@ -32,7 +35,8 @@
             <div class="card">
                 <h1 class="card-header">Some tools around ChatGPT / OpenAI APIs</h1>
                 <div class="card-body">
-                    <a class="github-fork-ribbon" href="https://github.com/stoerr/chatGPTtools" data-ribbon="Fork me on GitHub" title="Fork me on GitHub">Fork me on GitHub</a>
+                    <a class="github-fork-ribbon" href="https://github.com/stoerr/chatGPTtools"
+                       data-ribbon="Fork me on GitHub" title="Fork me on GitHub">Fork me on GitHub</a>
                     <p class="card-text">
                         The main part of my
                         <a href="https://github.com/stoerr/chatGPTtools">ChatGPT tools</a> (available on Github)
@@ -58,8 +62,10 @@
                         bookmarks bar. Or you can right-click and copy the link, then add it as a bookmark manually. You
                         can even try this on this page by clicking on it.
                         BTW: if you like creating bookmarklets - I had the
-                        <a href="https://github.com/stoerr/chatGPTtools/blob/develop/docs/bookmarkletmaker">AI make</a> a
-                        <a href="https://chatgpttools.stoerr.net/bookmarkletmaker/bookmarkletmaker.html">Bookmarklet Maker</a>
+                        <a href="https://github.com/stoerr/chatGPTtools/blob/develop/docs/bookmarkletmaker">AI make</a>
+                        a
+                        <a href="https://chatgpttools.stoerr.net/bookmarkletmaker/bookmarkletmaker.html">Bookmarklet
+                            Maker</a>
                         for that.
                     </p>
                     <p>If you have problems, please contact me, <a href="http://www.stoerr.net/">Hans-Peter Störr</a>.
@@ -112,8 +118,27 @@
                     <p class="card-text">Bookmarklet to drag: <a id="grabstyles"></a></p>
 
                     <script>
-                        var bookmarklet = "javascript:(function()%7Bjavascript%3A%2F*net.stoerr.chatGPT.grabStyles*%2F(function () %7B%0A    function load(basePath) %7B%0A        if (!window.netStoerrGrabStyles) %7B%0A            var script %3D document.createElement(%27script%27)%3B%0A            script.type %3D %27text%2Fjavascript%27%3B%0A            script.src %3D basePath %2B %27%2FgrabStyles.js%27%3B%0A            script.onload %3D function () %7B%0A                window.netStoerrGrabStyles.init(basePath)%3B%0A                window.netStoerrGrabStyles.start()%3B%0A            %7D%3B%0A            document.body.appendChild(script)%3B%0A        %7D else %7B%0A            window.netStoerrGrabStyles.start()%3B%0A        %7D%0A    %7D%0A%0A    load(%27THEURL%27)%3B%0A%7D)()%3B%7D)()";
-                        // https%3A%2F%2Fchatgpttools.stoerr.net%2FgrabStyles
+                        function load(basePath) {
+                            if (!window.netStoerrGrabStyles) {
+                                var script = document.createElement('script');
+                                script.type = 'text/javascript';
+                                script.src = basePath + '/grabStyles.js';
+                                script.onload = function () {
+                                    window.netStoerrGrabStyles.init(basePath);
+                                    window.netStoerrGrabStyles.start();
+                                };
+                                document.body.appendChild(script);
+                            } else {
+                                window.netStoerrGrabStyles.start();
+                            }
+                        }
+
+                        var bookmarklet = "javascript:" + encodeURIComponent(
+                            "/*net.stoerr.chatGPT.grabStyles*/(function () {" +
+                            load.toString() +
+                            "\nload('THEURL');" +
+                            "})()"
+                        )
                         var url = baseurl + "grabStyles";
                         var element = document.getElementById("grabstyles");
                         element.setAttribute("href", bookmarklet.replace("THEURL", encodeURIComponent(url)));

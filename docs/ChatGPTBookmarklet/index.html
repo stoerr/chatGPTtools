@@ -9,7 +9,8 @@
           integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
     <link rel="shortcut icon" type="image/x-icon" href="../favicon.ico">
     <link rel="canonical" href="https://chatGPTtools.stoerr.net/ChatGPTBookmarklet/"/>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-fork-ribbon-css/0.2.3/gh-fork-ribbon.min.css" />
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/github-fork-ribbon-css/0.2.3/gh-fork-ribbon.min.css"/>
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-SL01MYCNDC"></script>
     <script>
@@ -23,7 +24,9 @@
 
         gtag('config', 'G-SL01MYCNDC');
     </script>
-    <style>.github-fork-ribbon:before { background-color: #090; }</style>
+    <style>.github-fork-ribbon:before {
+        background-color: #090;
+    }</style>
 </head>
 <body>
 <div class="container-xxl">
@@ -32,7 +35,8 @@
             <div class="card">
                 <h1 class="card-header">ChatGPT Bookmarklet</h1>
                 <div class="card-body">
-                    <a class="github-fork-ribbon" href="https://github.com/stoerr/chatGPTtools" data-ribbon="Fork me on GitHub" title="Fork me on GitHub">Fork me on GitHub</a>
+                    <a class="github-fork-ribbon" href="https://github.com/stoerr/chatGPTtools"
+                       data-ribbon="Fork me on GitHub" title="Fork me on GitHub">Fork me on GitHub</a>
 
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb">
@@ -42,7 +46,8 @@
                     </nav>
 
                     <p class="card-text">
-                        This bookmarklet allows you to send the text of any page to ChatGPT for summarization. You can also ask any
+                        This bookmarklet allows you to send the text of any page to ChatGPT for summarization. You can
+                        also ask any
                         followup question on the content.
                         It has growing functionality - see the help for details.
                         See also my blog <a href="http://www.stoerr.net/blog/2023-04-10-readingWithChatGPT.html">Reading
@@ -67,12 +72,32 @@
                     <script>
                         const baseurl = location.protocol + '//' + location.host + location.pathname.replace("index.html", "");
 
+                        function load(basePath, apikey) {
+                            if (!window.hpsChatGPTBookmarklet) {
+                                var script = document.createElement('script');
+                                script.type = 'text/javascript';
+                                script.src = basePath + '/ChatGPTBookmarklet.js';
+                                script.onload = function () {
+                                    window.hpsChatGPTBookmarklet.init(basePath, apikey, window.hpsChatGPTBookmarklet.openDialog);
+                                };
+                                document.body.appendChild(script);
+                            } else {
+                                window.hpsChatGPTBookmarklet.openDialog();
+                            }
+                        }
+
+
                         function makeChatGPTLet() {
                             var apikey = document.getElementById("chatgptapikey").value;
                             var element = document.getElementById("chatgptbookmarklet");
                             var preview = document.getElementById("bookmarkletpreview");
                             if (apikey && apikey.startsWith('sk-') && apikey.trim().length >= 51) {
-                                var bookmarklet = "javascript:(function()%7Bjavascript%3A%2F*ChatGPTBookmarklet*%2F(function()%20%7B%0A%20%20function%20load(basePath%2C%20apikey)%20%7B%0A%20%20%20%20if%20(!window.hpsChatGPTBookmarklet)%20%7B%0A%20%20%20%20%20%20var%20script%20%3D%20document.createElement(%27script%27)%3B%0A%20%20%20%20%20%20script.type%20%3D%20%27text%2Fjavascript%27%3B%0A%20%20%20%20%20%20script.src%20%3D%20basePath%20%2B%20%27%2FChatGPTBookmarklet.js%27%3B%0A%20%20%20%20%20%20script.onload%20%3D%20function%20()%20%7B%0A%20%20%20%20%20%20%20%20window.hpsChatGPTBookmarklet.init(basePath%2C%20apikey%2C%20window.hpsChatGPTBookmarklet.openDialog)%3B%0A%20%20%20%20%20%20%7D%3B%0A%20%20%20%20%20%20document.body.appendChild(script)%3B%0A%20%20%20%20%7D%20else%20%7B%0A%20%20%20%20%20%20window.hpsChatGPTBookmarklet.openDialog()%3B%0A%20%20%20%20%7D%0A%20%20%7D%0A%20%20load(%27THEURL%27%2C%20%27THEKEY%27)%3B%0A%7D)()%3B%7D)()";
+                                var bookmarklet = "javascript:" + encodeURIComponent(
+                                    "/*ChatGPTBookmarklet*/(function () {" +
+                                    load.toString() +
+                                    "\nload('THEURL', 'THEKEY');" +
+                                    "})()"
+                                )
                                 var url = baseurl;
                                 var finalBookmarklet = bookmarklet.replace("THEURL", encodeURIComponent(url)).replace('THEKEY', apikey.trim());
                                 console.log("Bookmarklet: " + finalBookmarklet);
@@ -97,7 +122,8 @@
 
                     <h4 class="card-subtitle mb-2">About</h4>
                     <p class="card-text">
-                        This is part of my <a href="https://github.com/stoerr/chatGPTtools">ChatGPT tools</a> collection.
+                        This is part of my <a href="https://github.com/stoerr/chatGPTtools">ChatGPT tools</a>
+                        collection.
                         For more tools and information, visit the <a href="../index.html">main page</a>.
                     </p>
 
