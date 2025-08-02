@@ -44,14 +44,18 @@
                 <span title="Send a picture of the web page to the AI.">
                     <input type="checkbox" id="hpsChatGPTIncludeScreenshot" class="hps-chatgpt-include-screenshot"/>
                     <label for="hpsChatGPTIncludeScreenshot">screenshot</label>
+                    <select id="hpsChatGPTPredefinedPrompt">
+                        <option value="">Prompt examples</option>
+                    </select>
                 </span>
-                <select id="hpsChatGPTBackendSelector" class="hps-chatgpt-backend-selector hps-chatgpt-backend-selector-hidden"></select>
-                <select id="hps-chatgpt-model-selector">
-                    <option value="gpt-4.1" selected>gpt-4.1</option>
-                </select>
-                <select id="hpsChatGPTPredefinedPrompt">
-                    <option value="">Prompt examples</option>
-                </select>
+                <div class="hps-chatgpt-selectors">
+                    <label for="hpsChatGPTBackendSelector">Backend:</label>
+                    <select id="hpsChatGPTBackendSelector" class="hps-chatgpt-backend-selector"></select>
+                    <label for="hps-chatgpt-model-selector">Model:</label>
+                    <select id="hps-chatgpt-model-selector">
+                        <option value="gpt-4.1" selected>gpt-4.1</option>
+                    </select>
+                </div>
                 <span id="clipped" class="hidden"
                       title="The content had too many words - we replaced the middle with ... to avoid hitting ChatGPT limits.">(clipped)</span></label>
             </div>
@@ -83,7 +87,8 @@
                         title="Take a screenshot">&#x1F4F7;
                 </button>
                 <button id="hpsChatGPTConfig" onclick="window.hpsChatGPTBookmarklet.openConfigGenerator()"
-                        title="Configure ChatGPT Bookmarklet">&#x1F527;</button>
+                        title="Configure ChatGPT Bookmarklet">&#x1F527;
+                </button>
             </div>
         </div>
     </div>

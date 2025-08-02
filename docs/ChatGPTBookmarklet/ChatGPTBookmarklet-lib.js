@@ -37,13 +37,13 @@
                 ? window.hpsChatGPTBookmarklet.getSelectedBackend()
                 : {
                     baseUrl: "https://api.openai.com/v1",
-                    authHeaders: [{ name: "Authorization", value: `Bearer ${this.apikey}` }]
+                    headers: [{ name: "Authorization", value: `Bearer ${this.apikey}` }]
                 };
             const headers = {
                 'Content-Type': 'application/json',
             };
-            if (backend.authHeaders) {
-                backend.authHeaders.forEach(h => headers[h.name] = h.value);
+            if (backend.headers) {
+                backend.headers.forEach(h => headers[h.name] = h.value);
             }
             const url = backend.baseUrl + "/chat/completions";
             const requestOptions = {

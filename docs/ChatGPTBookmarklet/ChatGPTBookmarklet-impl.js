@@ -127,8 +127,10 @@
         setupBackendSelector: function () {
             // Remove all options
             this.backendSelector.innerHTML = "";
+
+            // Only show the backend selector if there are multiple backends
             if (this.backends.length > 1) {
-                this.backendSelector.classList.remove('hps-chatgpt-hidden');
+                this.backendSelector.classList.remove('hps-chatgpt-backend-selector-hidden');
                 this.backends.forEach((backend, idx) => {
                     const opt = document.createElement('option');
                     opt.value = idx;
@@ -137,8 +139,11 @@
                 });
                 this.backendSelector.selectedIndex = this.selectedBackendIndex;
             } else {
-                this.backendSelector.classList.add('hps-chatgpt-hidden');
+                this.backendSelector.classList.add('hps-chatgpt-backend-selector-hidden');
             }
+
+            // Load models for the selected backend
+            this.loadModelList();
         },
 
         onBackendChanged: function () {
@@ -152,18 +157,30 @@
 
         loadModelList: async function () {
             const backend = this.getSelectedBackend();
-            if (backend.models) return backend.models; // from config, no need to load
+            const select = document.getElementById("hps-chatgpt-model-selector");
+
+            if (backend.models) {
+                // Use models from config
+                select.innerHTML = "";
+                backend.models.forEach(modelId => {
+                    const option = document.createElement("option");
+                    option.value = modelId;
+                    option.text = modelId;
+                    select.appendChild(option);
+                });
+                return;
+            }
+
+            // Try to load models from backend API
             try {
-                // Compose headers from backend config
                 const headers = {};
-                if (backend.authHeaders) {
-                    backend.authHeaders.forEach(h => headers[h.name] = h.value);
+                if (backend.headers) {
+                    backend.headers.forEach(h => headers[h.name] = h.value);
                 }
                 let url = backend.baseUrl + "/models";
                 const response = await fetch(url, { headers });
                 if (!response.ok) throw new Error("Failed to load models");
                 const result = await response.json();
-                const select = document.getElementById("hps-chatgpt-model-selector");
                 const currentSelection = backend.defaultModel || select.value;
                 select.innerHTML = "";
                 // Filter models: include if model id starts with "gpt-" or matches /^o[0-9]/; exclude ones with date patterns like -202[09]-
@@ -185,6 +202,8 @@
                 });
             } catch (e) {
                 console.log("Failed to load model list:", e);
+                // Leave the select empty if model loading fails
+                select.innerHTML = "";
             }
         },
 

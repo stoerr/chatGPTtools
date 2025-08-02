@@ -82,11 +82,30 @@ The tool extracts the main content from web pages (avoiding navigation, ads, etc
 - `autoselect`: Regex pattern to auto-select backend based on current URL
 
 **Backend Selection:**
-- The first backend in the array is selected by default
-- If a backend has an `autoselect` regex pattern, it will be automatically selected when the current page URL matches that pattern
-- Users can manually switch between backends using the dropdown selector (if multiple backends are configured)
 
-**Security**: The configuration link uses URL hash parameters that are immediately removed from browser history after reading to protect sensitive API keys.
+The bookmarklet features a prominent backend dropdown selector that appears before the model selection. This allows you to:
+
+- **Switch between configured backends**: Choose from OpenAI, Anthropic, local LLM servers, or any other configured AI service
+- **Automatic model loading**: When you select a backend, the model dropdown is automatically populated with:
+  - Models specified in the backend's `models` array (if configured)
+  - Models fetched from the backend's `/models` API endpoint (if no models array is provided)
+  - An empty dropdown if model loading fails (e.g., due to authentication issues)
+- **Smart filtering**: Models are filtered to show only relevant AI models (excludes audio, transcription, and dated models)
+- **Auto-selection**: Backends can be automatically selected based on the current page URL using the `autoselect` regex pattern
+
+**Model Selection:**
+
+The model dropdown appears after the backend selector and shows:
+- All available models for the selected backend
+- Models are sorted alphabetically for easy browsing
+- If a backend has no models configured and the API call fails, the dropdown will be empty
+
+**UI Layout:**
+
+The backend and model selectors are prominently displayed in the dialog with clear labels:
+```
+Backend: [OpenAI ▼]  Model: [gpt-4 ▼]
+```
 
 ## Implementation remarks
 

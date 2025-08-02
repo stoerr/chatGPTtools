@@ -325,6 +325,43 @@
     display: none !important;
 }
 
+/* Styling for backend and model selectors */
+.hps-chatgpt-selectors {
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    margin: 5px 0 !important;
+}
+
+.hps-chatgpt-selectors label {
+    font-size: 12px !important;
+    font-weight: bold !important;
+    margin: 0 !important;
+}
+
+.hps-chatgpt-backend-selector, #hps-chatgpt-model-selector {
+    padding: 2px 4px !important;
+    font-size: 12px !important;
+    border: 1px solid #ccc !important;
+    border-radius: 3px !important;
+    background-color: white !important;
+    color: #333 !important;
+}
+
+.hps-chatgpt-backend-selector-hidden {
+    display: none !important;
+}
+
+/* Hide the backend label when backend selector is hidden */
+.hps-chatgpt-backend-selector-hidden + label[for="hpsChatGPTBackendSelector"] {
+    display: none !important;
+}
+
+/* When backend selector is hidden, hide the backend label too */
+.hps-chatgpt-selectors:has(.hps-chatgpt-backend-selector-hidden) label[for="hpsChatGPTBackendSelector"] {
+    display: none !important;
+}
+
 @media (max-width: 480px) {
     .hps-chatgpt-config-content {
         width: 95vw !important;

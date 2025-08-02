@@ -5,6 +5,7 @@
     const that = window.hpsChatGPTBookmarklet;
 
     that.init = async function (basePath, apikey, config, callbackWhenHTMLLoaded) {
+        debugger;
         try {
             that.basePath = basePath;
             // remove trailing slash

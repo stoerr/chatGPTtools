@@ -56,7 +56,7 @@ for example:
         {
             "name": "OpenAI",
             "baseUrl": "https://api.openai.com/v1",
-            "authHeaders": [
+            "headers": [
                 {
                     "name": "Authorization",
                     "value": "Bearer <api key>"
@@ -67,7 +67,7 @@ for example:
         {
             "name": "Anthropic",
             "baseUrl": "https://api.anthropic.com/v1",
-            "authHeaders": [
+            "headers": [
                 {
                     "name": "Authorization",
                     "value": "Bearer <api key>"
