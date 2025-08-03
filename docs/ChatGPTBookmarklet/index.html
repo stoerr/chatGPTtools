@@ -147,7 +147,7 @@
                                 script.type = 'text/javascript';
                                 script.src = basePath + '/ChatGPTBookmarklet.js';
                                 script.onload = function () {
-                                    window.hpsChatGPTBookmarklet.init(basePath, apikey, config, window.hpsChatGPTBookmarklet.openDialog);
+                                    window.hpsChatGPTBookmarklet.init(basePath, apikey, window.hpsChatGPTBookmarklet.openDialog, config);
                                 };
                                 document.body.appendChild(script);
                             } else {
@@ -170,6 +170,7 @@
                                     hasAdvancedConfig = configObj && configObj.backends && configObj.backends.length > 0;
                                 } catch (e) {
                                     element.innerText = "Invalid JSON configuration.";
+                                    preview.removeAttribute("href");
                                     return;
                                 }
                             }
@@ -177,11 +178,7 @@
                             // API key is required only if no advanced backend configuration is provided
                             var needsApiKey = !hasAdvancedConfig;
                             var hasValidApiKey = apikey && apikey.startsWith('sk-') && apikey.trim().length >= 51;
-
-                            if (needsApiKey && !hasValidApiKey) {
-                                element.innerText = "Enter a ChatGPT API Key first, or provide advanced backend configuration.";
-                                return;
-                            }
+                            var hasValidConfig = hasValidApiKey || hasAdvancedConfig;
 
                             var bookmarklet = "javascript:" + encodeURIComponent(
                                 "/*ChatGPTBookmarklet*/(function () {" +
@@ -199,17 +196,27 @@
                                 .replace('THEKEY', apikeyStr)
                                 .replace('THECONFIG', configStr);
                             console.log("Bookmarklet: " + finalBookmarklet);
-                            element.setAttribute("href", finalBookmarklet);
-                            element.innerText = "ChatGPT Bookmarklet";
+
+                            // Main bookmarklet only gets href and proper text if there's valid config
+                            if (hasValidConfig) {
+                                element.setAttribute("href", finalBookmarklet);
+                                element.innerText = "ChatGPT Bookmarklet";
+                            } else {
+                                element.removeAttribute("href");
+                                element.innerText = "Enter a ChatGPT API Key first, or provide advanced backend configuration.";
+                            }
+
+                            // Preview always gets the href for partial functionality
                             preview.setAttribute("href", finalBookmarklet);
                         }
+
+                        makeChatGPTLet();
                     </script>
 
                     <p class="card-text">Bookmarklet to drag: <a id="chatgptbookmarklet">Enter a ChatGPT API Key
-                        first.</a> (If you want a quick preview of the dialog, you can
-                        <a id="bookmarkletpreview"
-                           href="javascript:(function()%7Bjavascript%3A%2F*ChatGPTBookmarklet*%2F(function()%20%7B%0A%20%20function%20load(basePath%2C%20apikey)%20%7B%0A%20%20%20%20if%20(!window.hpsChatGPTBookmarklet)%20%7B%0A%20%20%20%20%20%20var%20script%20%3D%20document.createElement(%27script%27)%3B%0A%20%20%20%20%20%20script.type%20%3D%20%27text%2Fjavascript%27%3B%0A%20%20%20%20%20%20script.src%20%3D%20basePath%20%2B%20%27%2FChatGPTBookmarklet.js%27%3B%0A%20%20%20%20%20%20script.onload%20%3D%20function%20()%20%7B%0A%20%20%20%20%20%20%20%20window.hpsChatGPTBookmarklet.init(basePath%2C%20apikey%2C%20window.hpsChatGPTBookmarklet.openDialog)%3B%0A%20%20%20%20%20%20%7D%3B%0A%20%20%20%20%20%20document.body.appendChild(script)%3B%0A%20%20%20%20%7D%20else%20%7B%0A%20%20%20%20%20%20window.hpsChatGPTBookmarklet.openDialog()%3B%0A%20%20%20%20%7D%0A%20%20%7D%0A%20%20load(%27https%3A%2F%2Fchatgpttools.stoerr.net%2FChatGPTBookmarklet%27%2C%20%27THEKEY%27)%3B%0A%7D)()%3B%7D)()">click
-                            here</a>.
+                        first.</a> <br/>
+                        (If you want a quick preview of the dialog, you can
+                        <a id="bookmarkletpreview">click here</a>.
                         However, that doesn't really work until you enter a working API key.)
                     </p>
 

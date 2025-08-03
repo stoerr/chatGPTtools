@@ -4,7 +4,7 @@
 
     const that = window.hpsChatGPTBookmarklet;
 
-    that.init = async function (basePath, apikey, config, callbackWhenHTMLLoaded) {
+    that.init = async function (basePath, apikey, callbackWhenHTMLLoaded, config) {
         debugger;
         try {
             that.basePath = basePath;
