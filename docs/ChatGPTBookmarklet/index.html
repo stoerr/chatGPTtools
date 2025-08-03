@@ -104,115 +104,6 @@
                         </div>
                     </div>
 
-                    <script>
-                        const baseurl = (location.protocol + '//' + location.host + location.pathname.replace("/index.html", ""));
-
-                        // Handle hash parameters on page load
-                        window.addEventListener('load', function () {
-                            if (window.location.hash) {
-                                try {
-                                    const params = new URLSearchParams(window.location.hash.slice(1));
-                                    const apikey = params.get('apikey');
-                                    const config = params.get('config');
-
-                                    if (apikey) {
-                                        document.getElementById('chatgptapikey').value = apikey;
-                                    }
-                                    if (config) {
-                                        // Pretty print the JSON configuration for better readability
-                                        const configObj = JSON.parse(decodeURIComponent(config));
-                                        document.getElementById('chatgptconfig').value = JSON.stringify(configObj, null, 2);
-
-                                        // Expand the advanced configuration section since we have config data
-                                        const advancedConfigCollapse = document.getElementById('advancedConfig');
-                                        const advancedConfigButton = document.querySelector('[data-bs-target="#advancedConfig"]');
-                                        advancedConfigCollapse.classList.add('show');
-                                        advancedConfigButton.setAttribute('aria-expanded', 'true');
-                                    }
-
-                                    // Generate bookmarklet with pre-filled data
-                                    makeChatGPTLet();
-
-                                    // Immediately clean the URL from browser history
-                                    history.replaceState({}, document.title, window.location.pathname);
-                                } catch (e) {
-                                    console.error('Error parsing hash parameters:', e);
-                                }
-                            }
-                        });
-
-                        function load(basePath, apikey, config) {
-                            if (!window.hpsChatGPTBookmarklet) {
-                                var script = document.createElement('script');
-                                script.type = 'text/javascript';
-                                script.src = basePath + '/ChatGPTBookmarklet.js';
-                                script.onload = function () {
-                                    window.hpsChatGPTBookmarklet.init(basePath, apikey, window.hpsChatGPTBookmarklet.openDialog, config);
-                                };
-                                document.body.appendChild(script);
-                            } else {
-                                window.hpsChatGPTBookmarklet.openDialog();
-                            }
-                        }
-
-                        function makeChatGPTLet() {
-                            var apikey = document.getElementById("chatgptapikey").value;
-                            var config = document.getElementById("chatgptconfig").value;
-                            var element = document.getElementById("chatgptbookmarklet");
-                            var preview = document.getElementById("bookmarkletpreview");
-
-                            // Validate config JSON if provided
-                            var configObj = null;
-                            var hasAdvancedConfig = false;
-                            if (config.trim()) {
-                                try {
-                                    configObj = JSON.parse(config);
-                                    hasAdvancedConfig = configObj && configObj.backends && configObj.backends.length > 0;
-                                } catch (e) {
-                                    element.innerText = "Invalid JSON configuration.";
-                                    preview.removeAttribute("href");
-                                    return;
-                                }
-                            }
-
-                            // API key is required only if no advanced backend configuration is provided
-                            var needsApiKey = !hasAdvancedConfig;
-                            var hasValidApiKey = apikey && apikey.startsWith('sk-') && apikey.trim().length >= 51;
-                            var hasValidConfig = hasValidApiKey || hasAdvancedConfig;
-
-                            var bookmarklet = "javascript:" + encodeURIComponent(
-                                "/*ChatGPTBookmarklet*/(function () {" +
-                                load.toString() +
-                                "\nload('THEURL', 'THEKEY', THECONFIG);" +
-                                "})()"
-                            )
-                            var url = baseurl;
-                            // Compact JSON for bookmarklet (no pretty printing)
-                            var configStr = configObj ? JSON.stringify(configObj) : 'null';
-                            // Use API key if provided, otherwise use empty string for advanced configs
-                            var apikeyStr = hasValidApiKey ? apikey.trim() : '';
-                            var finalBookmarklet = bookmarklet
-                                .replace("THEURL", encodeURIComponent(url))
-                                .replace('THEKEY', apikeyStr)
-                                .replace('THECONFIG', configStr);
-                            console.log("Bookmarklet: " + finalBookmarklet);
-
-                            // Main bookmarklet only gets href and proper text if there's valid config
-                            if (hasValidConfig) {
-                                element.setAttribute("href", finalBookmarklet);
-                                element.innerText = "ChatGPT Bookmarklet";
-                            } else {
-                                element.removeAttribute("href");
-                                element.innerText = "Enter a ChatGPT API Key first, or provide advanced backend configuration.";
-                            }
-
-                            // Preview always gets the href for partial functionality
-                            preview.setAttribute("href", finalBookmarklet);
-                        }
-
-                        makeChatGPTLet();
-                    </script>
-
                     <p class="card-text">Bookmarklet to drag: <a id="chatgptbookmarklet">Enter a ChatGPT API Key
                         first.</a> <br/>
                         (If you want a quick preview of the dialog, you can
@@ -244,5 +135,116 @@
 <script src="//cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
         crossorigin="anonymous"></script>
+
+<script>
+    const baseurl = (location.protocol + '//' + location.host + location.pathname.replace("/index.html", ""));
+
+    // Handle hash parameters on page load
+    window.addEventListener('load', function () {
+        if (window.location.hash) {
+            try {
+                const params = new URLSearchParams(window.location.hash.slice(1));
+                const apikey = params.get('apikey');
+                const config = params.get('config');
+
+                if (apikey) {
+                    document.getElementById('chatgptapikey').value = apikey;
+                }
+                if (config) {
+                    // Pretty print the JSON configuration for better readability
+                    const configObj = JSON.parse(decodeURIComponent(config));
+                    document.getElementById('chatgptconfig').value = JSON.stringify(configObj, null, 2);
+
+                    // Expand the advanced configuration section since we have config data
+                    const advancedConfigCollapse = document.getElementById('advancedConfig');
+                    const advancedConfigButton = document.querySelector('[data-bs-target="#advancedConfig"]');
+                    advancedConfigCollapse.classList.add('show');
+                    advancedConfigButton.setAttribute('aria-expanded', 'true');
+                }
+
+                // Generate bookmarklet with pre-filled data
+                makeChatGPTLet();
+
+                // Immediately clean the URL from browser history
+                history.replaceState({}, document.title, window.location.pathname);
+            } catch (e) {
+                console.error('Error parsing hash parameters:', e);
+            }
+        }
+    });
+
+    function load(basePath, apikey, config) {
+        if (!window.hpsChatGPTBookmarklet) {
+            var script = document.createElement('script');
+            script.type = 'text/javascript';
+            script.src = basePath + '/ChatGPTBookmarklet.js';
+            script.onload = function () {
+                window.hpsChatGPTBookmarklet.init(basePath, apikey, window.hpsChatGPTBookmarklet.openDialog, config);
+            };
+            document.body.appendChild(script);
+        } else {
+            window.hpsChatGPTBookmarklet.openDialog();
+        }
+    }
+
+    function makeChatGPTLet() {
+        var apikey = document.getElementById("chatgptapikey").value;
+        var config = document.getElementById("chatgptconfig").value;
+        var element = document.getElementById("chatgptbookmarklet");
+        var preview = document.getElementById("bookmarkletpreview");
+        debugger;
+
+        // Validate config JSON if provided
+        var configObj = null;
+        var hasAdvancedConfig = false;
+        if (config.trim()) {
+            try {
+                configObj = JSON.parse(config);
+                hasAdvancedConfig = configObj && configObj.backends && configObj.backends.length > 0;
+            } catch (e) {
+                element.innerText = "Invalid JSON configuration.";
+                preview.removeAttribute("href");
+                return;
+            }
+        }
+
+        // API key is required only if no advanced backend configuration is provided
+        var needsApiKey = !hasAdvancedConfig;
+        var hasValidApiKey = apikey && apikey.startsWith('sk-') && apikey.trim().length >= 51;
+        var hasValidConfig = hasValidApiKey || hasAdvancedConfig;
+
+        var bookmarklet = "javascript:" + encodeURIComponent(
+            "/*ChatGPTBookmarklet*/(function () {" +
+            load.toString() +
+            "\nload('THEURL', 'THEKEY', THECONFIG);" +
+            "})()"
+        )
+        var url = baseurl;
+        // Compact JSON for bookmarklet (no pretty printing)
+        var configStr = configObj ? JSON.stringify(configObj) : 'null';
+        // Use API key if provided, otherwise use empty string for advanced configs
+        var apikeyStr = hasValidApiKey ? apikey.trim() : '';
+        var finalBookmarklet = bookmarklet
+            .replace("THEURL", encodeURIComponent(url))
+            .replace('THEKEY', apikeyStr)
+            .replace('THECONFIG', configStr);
+        console.log("Bookmarklet: " + finalBookmarklet);
+
+        // Main bookmarklet only gets href and proper text if there's valid config
+        if (hasValidConfig) {
+            element.setAttribute("href", finalBookmarklet);
+            element.innerText = "ChatGPT Bookmarklet";
+        } else {
+            element.removeAttribute("href");
+            element.innerText = "Enter a ChatGPT API Key first, or provide advanced backend configuration.";
+        }
+
+        // Preview always gets the href for partial functionality
+        preview.setAttribute("href", finalBookmarklet);
+    }
+
+    makeChatGPTLet();
+</script>
+
 </body>
 </html>
