@@ -29,7 +29,7 @@ function submitToGPT(messages, resultcallback, errorcallback, additionalProperti
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                model: "gpt-4o-mini",
+                model: "gpt-5-mini",
                 user: 'chatgpt-fabian',
                 messages: messages,
             }),
