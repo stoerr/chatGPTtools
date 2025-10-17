@@ -85,6 +85,8 @@
                        title="The maximum number of tokens to generate in the chat completion.">
                 <input type="number" id="n" placeholder="n" value=""
                        title="How many chat completion choices to generate for each input message.">
+                <input type="number" id="seed" placeholder="seed" value=""
+                       title="The seed used in the generation, to fix the model behavior temporarily.">
                 <input type="checkbox" id="jsonoutput"
                        title="Check this box to require JSON output. But you'll also need to tell the model to create JSON output, too."
                        value="jsonoutput">&nbsp;
@@ -242,6 +244,7 @@
                 if (settings.temperature) $('#temperature').val(settings.temperature);
                 if (settings.max_tokens) $('#max_tokens').val(settings.max_tokens);
                 if (settings.n) $('#n').val(settings.n);
+                if (settings.seed) $('#seed').val(settings.seed);
                 if (settings.jsonoutput) $('#jsonoutput').prop('checked', settings.jsonoutput);
             }
         } catch (e) {
@@ -261,6 +264,7 @@
                 temperature: $('#temperature').val(),
                 max_tokens: $('#max_tokens').val(),
                 n: $('#n').val(),
+                seed: $('#seed').val(),
                 jsonoutput: $('#jsonoutput').is(':checked')
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
@@ -522,6 +526,10 @@
             var n = $('#n').val();
             if (n) {
                 request.n = Number(n);
+            }
+            var seed = $('#seed').val();
+            if (seed) {
+                request.seed = Number(seed);
             }
             var jsonoutput = $('#jsonoutput').is(':checked');
             if (jsonoutput) {
