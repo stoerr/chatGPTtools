@@ -316,8 +316,8 @@
                         if (!aHasDate && bHasDate) return -1;
                         return a.localeCompare(b);
                     });
-                    if (models.includes('gpt-5')) { // default model
-                        models.unshift('gpt-5');
+                    if (models.includes('gpt-5.1')) { // default model
+                        models.unshift('gpt-5.1');
                     }
                     return models
                 }

@@ -180,7 +180,7 @@ function undo() {
 const fixupText = async () => {
     const text = textarea.value;
     const requestBody = {
-        model: "gpt-5-mini",
+        model: "gpt-5.1-mini",
         messages: [{
             "role": "system",
             "content": "Your are a professional dictation assistant and your task is to fix up the retrieved text into a cohesive well formatted text, correcting dictation errors like spelled-out punctuation, repeated words, grammar errors and other inconsistencies, and inserting line breaks to create paragraphs. The corrections must not distort the intended meaning. If there are dictation correction instructions in the text (e.g. 'Correction: remove last sentence'), they should be executed on the text."
