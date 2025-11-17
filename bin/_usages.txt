@@ -409,11 +409,11 @@ Usage: chatgpttranscription [-m model] [-l language] [-p prompt] [-r response_fo
   <audio_file> The audio file to transcribe.
 
 
-# claude
+# claudegpt
 
-claude - Submit a prompt to Claude conversation and print the response to stdout. The prompt can be given on the command line or read from stdin.
+claudegpt - Submit a prompt to Claude conversation and print the response to stdout. The prompt can be given on the command line or read from stdin.
 
-Usage: claude [options] [prompt]
+Usage: claudegpt [options] [prompt]
 
 Options:
   -               Reads prompt from stdin; if a prompt is given on the command line it is appended
@@ -429,8 +429,8 @@ Options:
   -u suffix       Suffix the prompt with a string. Use this or -sf, not both.
   -uf suffixfile  Suffix the prompt with the contents of a file
   -ua             Record audio from the microphone until a key is pressed (using chatgptdictate) and use the result as prompt suffix
-  -m modelname    Use a specific model (default: claude-3-haiku-20240307)
-  -mh             Use the model with - the time of updating this script - highest intelligence (claude-3-5-sonnet-20240620). 
+  -m modelname    Use a specific model (default: claudegpt-3-haiku-20240307)
+  -mh             Use the model with - the time of updating this script - highest intelligence (claudegpt-3-5-sonnet-20240620).
   -t number       Set max tokens for response (default: 4096)
   -v              verbose output : prints the sent and received json message to stderr and gives info about connection retries
   -w column       Word wrap the response to a specified column width using fmt.
