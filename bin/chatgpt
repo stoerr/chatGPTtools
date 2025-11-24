@@ -12,7 +12,7 @@ const path = require('path');
 const {execSync, spawnSync} = require('child_process');
 const readline = require('readline');
 
-let model = process.env.OPENAI_API_DEFAULTMODEL || 'gpt-4.1-nano';
+let model = process.env.OPENAI_API_DEFAULTMODEL || 'gpt-5-nano';
 const programname = path.basename(process.argv[1]);
 const homeDir = process.env.HOME;
 
