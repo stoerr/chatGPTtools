@@ -4,6 +4,29 @@ const termsarea = document.getElementById('dictation-termsarea');
 const dictateButton = document.getElementById('dictation-dictate');
 const helpButton = document.getElementById('dictation-help');
 
+// Logging functionality
+const logContent = document.getElementById('logContent');
+const logPanel = document.getElementById('logPanel');
+const logToggleIcon = document.getElementById('logToggleIcon');
+
+function logMessage(message, type = 'info') {
+    const timestamp = new Date().toLocaleTimeString();
+    const logEntry = document.createElement('div');
+    const color = type === 'error' ? 'red' : type === 'warn' ? 'orange' : type === 'success' ? 'green' : 'black';
+    logEntry.innerHTML = `<span style="color: gray;">[${timestamp}]</span> <span style="color: ${color};">${message}</span>`;
+    logContent.appendChild(logEntry);
+    logContent.scrollTop = logContent.scrollHeight;
+    console.log(`[${timestamp}] ${message}`);
+}
+
+// Toggle log icon when panel is shown/hidden
+$('#logPanel').on('shown.bs.collapse', function () {
+    logToggleIcon.textContent = '▼';
+});
+$('#logPanel').on('hidden.bs.collapse', function () {
+    logToggleIcon.textContent = '▶';
+});
+
 // Recorder setup
 let recorder;
 let audioStream;
@@ -34,14 +57,21 @@ const getOpenAIKey = () => {
 const startRecording = async (event, e1, e2) => {
     if (!isRecording && !isStoppingRecording && !isStartingRecording) try {
         isStartingRecording = true;
+        logMessage('Starting recording...', 'info');
         console.log('Recording...');
         audioStream = await navigator.mediaDevices.getUserMedia({audio: true});
+        logMessage('Microphone access granted', 'success');
         const audioContext = new AudioContext();
         const input = audioContext.createMediaStreamSource(audioStream);
         recorder = new Recorder(input, {numChannels: 1});
         recorder.record();
         timeoutCall = setTimeout(stopRecording, 300000); // Stop recording after 5 minutes
         isRecording = true;
+        logMessage('Recording started successfully', 'success');
+    } catch (error) {
+        logMessage(`Error starting recording: ${error.message}`, 'error');
+        console.error('Error starting recording:', error);
+        alert(`Error starting recording: ${error.message}`);
     } finally {
         isStartingRecording = false;
     }
@@ -50,25 +80,32 @@ const startRecording = async (event, e1, e2) => {
 // Stop recording and handle audio
 const stopRecording = async (event, e1, e2) => {
     if (isStartingRecording) {
+        logMessage('Double click detected, waiting...', 'warn');
         alert('You probably did a double click. Please use "push to talk" - press and hold the button to record.');
         setTimeout(stopRecording, 500);
         return;
     }
     if (!isRecording || isStoppingRecording) return;
     isStoppingRecording = true;
+    logMessage('Stopping recording...', 'info');
     console.log('Stopping recording');
     dictateButton.disabled = true;
     recorder.stop();
     clearTimeout(timeoutCall);
     audioStream.getTracks().forEach(track => track.stop());
+    logMessage('Recording stopped, processing audio...', 'info');
     recorder.exportWAV(async (blob) => {
 
         try {
+            logMessage(`Audio blob size: ${blob.size} bytes`, 'info');
             const formData = new FormData();
             formData.append('file', blob);
             formData.append('model', 'whisper-1');
             let value = document.getElementById('dictation-language').value;
-            if (value) formData.append('language', value);
+            if (value) {
+                formData.append('language', value);
+                logMessage(`Language set to: ${value}`, 'info');
+            }
             // Create a prompt from the existing text to guide the transcription
             let cursorPosition = document.activeElement === textarea ? textarea.selectionStart : lastPosition;
             let textAreaValue = textarea.value || '';
@@ -83,6 +120,7 @@ const stopRecording = async (event, e1, e2) => {
             if (textBefore) promptText = textBefore;
             if (promptText) formData.append('prompt', promptText);
 
+            logMessage('Sending audio to OpenAI Whisper API...', 'info');
             const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
                 method: 'POST',
                 headers: {
@@ -92,12 +130,15 @@ const stopRecording = async (event, e1, e2) => {
             });
             const data = await response.json();
             if (response.ok) {
+                logMessage(`Transcription received: "${data.text}"`, 'success');
                 lastTexts.push(textarea.value);
                 insertResult(data);
             } else {
+                logMessage(`API Error: ${JSON.stringify(data.error)}`, 'error');
                 throw new Error(data.error);
             }
         } catch (error) {
+            logMessage(`Error: ${error.message}`, 'error');
             alert(`Error: ${error.message}`);
             console.error(error);
         } finally {
@@ -144,8 +185,22 @@ window.addEventListener('keyup', function (e) {
 
 // Event listeners
 const attachEventListeners = () => {
+    // Mouse events for desktop
     dictateButton.addEventListener('mousedown', startRecording);
     dictateButton.addEventListener('mouseup', stopRecording);
+    
+    // Touch events for mobile devices
+    dictateButton.addEventListener('touchstart', (e) => {
+        e.preventDefault(); // Prevent mouse events from firing
+        logMessage('Touch start detected', 'info');
+        startRecording(e);
+    });
+    dictateButton.addEventListener('touchend', (e) => {
+        e.preventDefault(); // Prevent mouse events from firing
+        logMessage('Touch end detected', 'info');
+        stopRecording(e);
+    });
+    
     fixupButton.addEventListener('click', fixupText);
     undoButton.addEventListener('click', undo);
 
@@ -174,11 +229,13 @@ const undoButton = document.getElementById('dictation-undo');
 function undo() {
     if (lastTexts.length > 0) {
         textarea.value = lastTexts.pop();
+        logMessage('Undo performed', 'info');
     }
 }
 
 const fixupText = async () => {
     const text = textarea.value;
+    logMessage('Starting text fixup...', 'info');
     const requestBody = {
         model: "gpt-5.1-mini",
         messages: [{
@@ -199,6 +256,7 @@ const fixupText = async () => {
     fixupButton.disabled = true;
 
     try {
+        logMessage('Sending text to OpenAI for fixup...', 'info');
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -209,12 +267,15 @@ const fixupText = async () => {
         });
         const data = await response.json();
         if (response.ok && data.choices[0].finish_reason === "stop" && data.choices[0].message.content) {
+            logMessage('Text fixup completed successfully', 'success');
             lastTexts.push(textarea.value);
             textarea.value = data.choices[0].message.content.trim();
         } else {
+            logMessage(`API Error or unexpected response: ${JSON.stringify(data)}`, 'error');
             throw new Error(`API Error or unexpected response: ${JSON.stringify(data)}`);
         }
     } catch (error) {
+        logMessage(`Fixup error: ${error.message}`, 'error');
         alert(`Error: ${error.message}`);
         console.error(error);
     } finally {
@@ -223,3 +284,7 @@ const fixupText = async () => {
 };
 
 attachEventListeners();
+
+// Log initialization
+logMessage('Dictation app initialized', 'success');
+logMessage('User agent: ' + navigator.userAgent, 'info');
