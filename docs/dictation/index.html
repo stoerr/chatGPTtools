@@ -34,6 +34,19 @@
             <button id="dictation-help" class="btn btn-secondary">Help</button>
         </div>
     </div>
+    <!-- Collapsible Log Panel -->
+    <div class="card mt-2" style="border-radius: 20px;">
+        <div class="card-header" style="cursor: pointer; background-color: #e9ecef;" data-toggle="collapse" data-target="#logPanel">
+            <h6 class="mb-0">
+                <span id="logToggleIcon">▶</span> Log
+            </h6>
+        </div>
+        <div id="logPanel" class="collapse">
+            <div class="card-body" style="max-height: 200px; overflow-y: auto; background-color: #f8f9fa; font-family: monospace; font-size: 0.85em;">
+                <div id="logContent"></div>
+            </div>
+        </div>
+    </div>
 </div>
 <!-- Help Modal -->
 <div class="modal fade" id="helpModal" tabindex="-1" role="dialog" aria-labelledby="helpModalLabel" aria-hidden="true">
