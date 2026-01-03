@@ -220,11 +220,13 @@ function resizeTextarea() {
     // On mobile devices (viewport width <= 768px), use smaller proportions to ensure the dialog fits on screen
     const isMobile = window.innerWidth <= 768;
     if (isMobile) {
-        // Use dynamic but smaller proportions on mobile - use 60% of available space
-        textarea.style.height = `${areasheight * 0.54}px`;
-        termsarea.style.height = `${areasheight * 0.06}px`;
+        // Use dynamic sizing on mobile with 60% of available space total (54% main + 6% terms)
+        const mobileMainRatio = 0.54;
+        const mobileTermsRatio = 0.06;
+        textarea.style.height = `${areasheight * mobileMainRatio}px`;
+        termsarea.style.height = `${areasheight * mobileTermsRatio}px`;
     } else {
-        // Use dynamic heights on desktop
+        // Use dynamic heights on desktop with 100% of available space
         textarea.style.height = `${areasheight * 9 / 10}px`;
         termsarea.style.height = `${areasheight / 10}px`;
     }
