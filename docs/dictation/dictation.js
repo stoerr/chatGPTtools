@@ -216,8 +216,18 @@ function resizeTextarea() {
     const viewportHeight = window.innerHeight;
     const offset = headerHeight + footerHeight + document.querySelector('.card-footer').offsetHeight; // Correct offset calculation
     const areasheight = viewportHeight - offset;
-    textarea.style.height = `${areasheight * 9 / 10}px`;
-    termsarea.style.height = `${areasheight / 10}px`;
+    
+    // On mobile devices (viewport width <= 768px), use smaller heights to ensure the dialog fits on screen
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+        // Use fixed smaller heights on mobile
+        textarea.style.height = '150px';
+        termsarea.style.height = '30px';
+    } else {
+        // Use dynamic heights on desktop
+        textarea.style.height = `${areasheight * 9 / 10}px`;
+        termsarea.style.height = `${areasheight / 10}px`;
+    }
 }
 
 window.addEventListener('resize', resizeTextarea);
