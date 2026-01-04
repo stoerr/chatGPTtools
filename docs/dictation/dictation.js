@@ -214,17 +214,17 @@ function resizeTextarea() {
     const headerHeight = document.querySelector('.card-title').offsetHeight;
     const footerHeight = document.querySelector('.card-footer').offsetHeight;
     const viewportHeight = window.innerHeight;
-    const offset = headerHeight + footerHeight + document.querySelector('.card-footer').offsetHeight; // Correct offset calculation
+    const logPanelHeight = document.querySelector('.card.mt-2')?.offsetHeight || 40;
+    const additionalSpacing = 30; // Account for paddings, margins, borders, and spacing between elements
+    const offset = headerHeight + footerHeight + logPanelHeight + additionalSpacing;
     const areasheight = viewportHeight - offset;
     
-    // On mobile devices (viewport width <= 768px), use smaller proportions to ensure the dialog fits on screen
+    // On mobile devices (viewport width <= 768px), maximize textarea while ensuring buttons are visible
     const isMobile = window.innerWidth <= 768;
     if (isMobile) {
-        // Use dynamic sizing on mobile with 60% of available space total (54% main + 6% terms)
-        const mobileMainRatio = 0.54;
-        const mobileTermsRatio = 0.06;
-        textarea.style.height = `${areasheight * mobileMainRatio}px`;
-        termsarea.style.height = `${areasheight * mobileTermsRatio}px`;
+        // Use most of available space on mobile - 90% main + 10% terms
+        textarea.style.height = `${areasheight * 9 / 10}px`;
+        termsarea.style.height = `${areasheight / 10}px`;
     } else {
         // Use dynamic heights on desktop with 100% of available space
         textarea.style.height = `${areasheight * 9 / 10}px`;
