@@ -134,7 +134,7 @@
                     'Authorization': `Bearer ${apiKey}`,
                 },
                 body: JSON.stringify({
-                    model: 'gpt-5.1-mini',
+                    model: 'gpt-5-mini',
                     messages: messages,
                 }),
             };
