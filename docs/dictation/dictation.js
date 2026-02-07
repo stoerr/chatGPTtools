@@ -3,6 +3,7 @@ const textarea = document.getElementById('dictation-textarea');
 const termsarea = document.getElementById('dictation-termsarea');
 const dictateButton = document.getElementById('dictation-dictate');
 const helpButton = document.getElementById('dictation-help');
+const clearButton = document.getElementById('dictation-clear');
 
 // Logging functionality
 const logContent = document.getElementById('logContent');
@@ -207,6 +208,24 @@ const attachEventListeners = () => {
     document.getElementById('dictation-help').addEventListener('click', function () {
         $('#helpModal').modal('show');
     });
+
+    // Clear button handler: reset fields and language select
+    if (clearButton) {
+        clearButton.addEventListener('click', function () {
+            textarea.value = '';
+            termsarea.value = '';
+            const langSelect = document.getElementById('dictation-language');
+            if (langSelect) langSelect.value = '';
+            // Remove stored relevant terms from localStorage as user cleared them
+            try {
+                localStorage.removeItem(storage_relevant_terms);
+            } catch (e) {
+                console.warn('Could not remove storage item', e);
+            }
+            lastTexts = [];
+            logMessage('Cleared all inputs and reset language', 'info');
+        });
+    }
 };
 
 // Resize textarea to fill screen space

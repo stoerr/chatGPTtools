@@ -8,41 +8,78 @@
           content="A dictation app based on the OpenAI Whisper AI. It improves the quality by submitting the already written text to the AI as context.">
     <link href="//stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
     <link rel="icon" href="img/dictationfavicon128.ico" type="image/x-icon">
+    <style>
+        /* Make the language dropdown only as wide as its contents */
+        #dictation-language {
+            width: auto !important;
+            display: inline-block;
+            white-space: nowrap;
+            padding-left: .5rem;
+            padding-right: .5rem;
+            flex: 0 0 auto; /* don't stretch inside flex container */
+        }
+
+        /* Allow footer buttons to wrap on small screens (phones/tablets) */
+        .card-footer.d-flex {
+            flex-wrap: wrap;
+            gap: 0.5rem; /* space between buttons */
+            align-items: center;
+        }
+
+        /* Ensure each button/select has a small bottom margin when wrapped */
+        .card-footer.d-flex .btn,
+        .card-footer.d-flex select {
+            margin-bottom: 0.25rem;
+        }
+
+        /* On small devices center the buttons and use tighter spacing */
+        @media (max-width: 576px) {
+            .card-footer.d-flex {
+                justify-content: center;
+            }
+            /* Reduce select padding a bit on very small screens */
+            #dictation-language {
+                padding-left: .35rem;
+                padding-right: .35rem;
+            }
+        }
+    </style>
 </head>
 <body>
 <div class="container mt-0">
     <div class="card" style="border-radius: 20px; background: linear-gradient(#f0f0f0, #dcdcdc);">
         <div class="card-body">
             <h5 class="card-title text-center">
-                <img src="img/dicationtransparent.png" style="width: 1.5em; height: 1.5em;">
+                <img src="img/dicationtransparent.png" style="width: 1.5em; height: 1.5em;" alt="Dictation logo">
                 &nbsp; Dictation &nbsp;
-                <img src="img/dicationtransparent.png" style="width: 1.5em; height: 1.5em;">
+                <img src="img/dicationtransparent.png" style="width: 1.5em; height: 1.5em;" alt="Dictation logo">
             </h5>
-            <textarea id="dictation-textarea" class="form-control" rows="10"></textarea>
+            <textarea id="dictation-textarea" class="form-control" rows="10" title="Main dictation text area - transcribed text will be inserted here"></textarea>
             <textarea id="dictation-termsarea" class="form-control mt-2" rows="1"
-                      placeholder="Optionally, enter relevant terms here to improve spelling..."></textarea>
+                      placeholder="Optionally, enter relevant terms here to improve spelling..." title="Optional relevant terms to help transcription and spelling"></textarea>
         </div>
         <div class="card-footer text-muted d-flex justify-content-around" style="border-radius: 0 0 20px 20px;">
-            <select id="dictation-language" class="btn btn-light mr-2">
-                <option value="">(Select language)</option>
+            <select id="dictation-language" class="btn btn-light mr-2" title="Select language for transcription (optional)">
+                <option value="">(language)</option>
                 <option value="en">English</option>
                 <option value="de">Deutsch</option>
             </select>
-            <button id="dictation-dictate" class="btn btn-primary">Dictate</button>
-            <button id="dictation-undo" class="btn btn-info mr-2">Undo</button>
-            <button id="dictation-fixup" class="btn btn-info mr-2">Fixup</button>
-            <button id="dictation-help" class="btn btn-secondary">Help</button>
+            <button id="dictation-dictate" class="btn btn-primary" title="Press and hold to start dictation">Dictate</button>
+            <button id="dictation-undo" class="btn btn-info mr-2" title="Undo last transcription insertion">Undo</button>
+            <button id="dictation-fixup" class="btn btn-info mr-2" title="Fix grammar, spelling and formatting using the AI">Fixup</button>
+            <button id="dictation-clear" class="btn btn-warning mr-2" title="Clear all input fields and reset language">Clear</button>
+            <button id="dictation-help" class="btn btn-secondary" title="Show help and usage information">Help</button>
         </div>
     </div>
     <!-- Collapsible Log Panel -->
     <div class="card mt-2" style="border-radius: 20px;">
-        <div class="card-header" style="cursor: pointer; background-color: #e9ecef;" data-toggle="collapse" data-target="#logPanel">
+        <div class="card-header" style="cursor: pointer; background-color: #e9ecef;" data-toggle="collapse" data-target="#logPanel" title="Toggle log panel">
             <h6 class="mb-0">
-                <span id="logToggleIcon">▶</span> Log
+                <span id="logToggleIcon" title="Log toggle">▶</span> Log
             </h6>
         </div>
         <div id="logPanel" class="collapse">
-            <div class="card-body" style="max-height: 200px; overflow-y: auto; background-color: #f8f9fa; font-family: monospace; font-size: 0.85em;">
+            <div class="card-body" style="max-height: 200px; overflow-y: auto; background-color: #f8f9fa; font-family: monospace; font-size: 0.85em;" title="Application log output">
                 <div id="logContent"></div>
             </div>
         </div>
@@ -54,7 +91,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="helpModalLabel">Help</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" title="Close help dialog">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -73,7 +110,7 @@
                     If there is already text in the text area this application will provide it to the AI as context.
                     This improves the quality of the transcription because the AI can guess better which word you meant
                     if there are several words that sound alike, and also because the AI knows the beginning of the
-                    sentence if the cursor is in mid sentence.
+                    sentence if the cursor is in mid-sentence.
                 </p>
                 <p>
                     This application is meant for a browser on a desktop computer, and is based on the
@@ -83,11 +120,11 @@
                 </p>
                 <p>
                     Part of the <a href="https://chatgpttools.stoerr.net/">ChatGPT Toolsuite</a>
-                    (<a href="https://github.com/stoerr/chatGPTtools/blob/develop/docs/dictation">source on Github</a>).
+                    (<a href="https://github.com/stoerr/chatGPTtools/blob/develop/docs/dictation">source on GitHub</a>).
                 </p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" title="Close help dialog">Close</button>
             </div>
         </div>
     </div>
