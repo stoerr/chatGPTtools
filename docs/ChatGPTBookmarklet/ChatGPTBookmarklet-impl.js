@@ -55,6 +55,9 @@
                 this.predefinedPromptSelect.addEventListener('change', this.selectPrompt.bind(this));
                 this.questionField.addEventListener('change', this.resetPredefinedPrompt.bind(this));
 
+                // Setup the search button behavior (moved from inline script)
+                this.setupSearchButton();
+
                 setTimeout(this.sidebyside.bind(this), 0);
 
                 // Remove obsolete config dialog references
@@ -63,6 +66,39 @@
 
                 this.initialized = true;
             }
+        },
+
+        /** Show/hide the "Search" button if the model gpt-4o-search-preview is available and set it when clicked */
+        setupSearchButton: function () {
+            var btn = document.getElementById('hps-chatgpt-search-button');
+            var sel = document.getElementById('hps-chatgpt-model-selector');
+            if (!btn || !sel) return;
+
+            function updateVisibility() {
+                var exists = Array.prototype.slice.call(sel.options).some(function (o) {
+                    return o.value === 'gpt-4o-search-preview';
+                });
+                btn.style.display = exists ? '' : 'none';
+            }
+
+            // Initial check
+            updateVisibility();
+
+            // Observe dynamic changes to the select options (in case models are populated later)
+            try {
+                var mo = new MutationObserver(updateVisibility);
+                mo.observe(sel, { childList: true, subtree: true });
+            } catch (e) { /* ignore if MutationObserver not available */ }
+
+            btn.addEventListener('click', function () {
+                var exists = Array.prototype.slice.call(sel.options).some(function (o) { return o.value === 'gpt-4o-search-preview'; });
+                if (!exists) return;
+                sel.value = 'gpt-4o-search-preview';
+                // dispatch change event so any listeners react
+                var ev;
+                try { ev = new Event('change', { bubbles: true }); } catch (e) { ev = document.createEvent('HTMLEvents'); ev.initEvent('change', true, false); }
+                sel.dispatchEvent(ev);
+            });
         },
 
         loadConfig: function () {

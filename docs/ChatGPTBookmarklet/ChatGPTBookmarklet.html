@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <title>ChatGPT Bookmarklet</title>
     <link rel="stylesheet" type="text/css" href="ChatGPTBookmarklet.css">
     <script type="text/javascript" src="ChatGPTBookmarklet-lib.js"></script>
     <script type="text/javascript" src="ChatGPTBookmarklet-data.js"></script>
@@ -30,8 +31,9 @@
             </div>
         </div>
         <div class="hps-chatgpt-content">
+            <label for="hpsChatGPTQuestion" class="hidden">Question</label>
             <textarea id="hpsChatGPTQuestion" class="hps-chatgpt-question" placeholder="Ask a question"
-                      rows="5"></textarea>
+                      rows="5" aria-label="Question"></textarea>
             <div class="hps-chatgpt-controls">
                 <button id="hpsChatGPTSubmit" onclick="window.hpsChatGPTBookmarklet.submitQuestion()"
                         title="Submits the question to ChatGPT; pressing Enter also submits.">Submit
@@ -44,6 +46,7 @@
                 <span title="Send a picture of the web page to the AI.">
                     <input type="checkbox" id="hpsChatGPTIncludeScreenshot" class="hps-chatgpt-include-screenshot"/>
                     <label for="hpsChatGPTIncludeScreenshot">screenshot</label>
+                    <label for="hpsChatGPTPredefinedPrompt" class="hidden">Predefined prompts</label>
                     <select id="hpsChatGPTPredefinedPrompt">
                         <option value="">Prompt examples</option>
                     </select>
@@ -53,11 +56,12 @@
                     <select id="hpsChatGPTBackendSelector" class="hps-chatgpt-backend-selector"></select>
                     <label for="hps-chatgpt-model-selector">Model:</label>
                     <select id="hps-chatgpt-model-selector">
-                        <option value="gpt-5.2" selected>gpt-5.2</option>
+                        <option value="gpt-5.4" selected>gpt-5.4</option>
                     </select>
+                    <button id="hps-chatgpt-search-button" style="display:none; margin-left:6px;" title="Use gpt-4o-search-preview that can do internet searches.">Search</button>
                 </div>
                 <span id="clipped" class="hidden"
-                      title="The content had too many words - we replaced the middle with ... to avoid hitting ChatGPT limits.">(clipped)</span></label>
+                      title="The content had too many words - we replaced the middle with ... to avoid hitting ChatGPT limits.">(clipped)</span>
             </div>
             <div class="hps-chatgpt-response" id="hpsChatGPTResponse">
                 <div class="hps-chatgpt-answer" id="hpsChatGPTAnswer">
@@ -93,7 +97,7 @@
         </div>
     </div>
     <div id="hpsChatGPTScreenshotOverlay" onclick="window.hpsChatGPTBookmarklet.hideScreenshotOverlay()" class="hidden">
-        <img id="hpsChatGPTOverlayImage" alt="Screenshot that will be transmitted to ChatGPT"/>
+        <img id="hpsChatGPTOverlayImage" src="about:blank" alt="Screenshot that will be transmitted to ChatGPT"/>
     </div>
 </div>
 </body>

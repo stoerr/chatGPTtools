@@ -191,6 +191,20 @@
     margin-left: 10px !important;
 }
 
+/* Make the search button small and match the model select control */
+#hps-chatgpt-search-button {
+    display: inline-block !important;
+    margin-left: 6px !important;
+    padding: 2px 6px !important;
+    font-size: 12px !important;
+    line-height: 1 !important;
+    height: 24px !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    vertical-align: middle !important;
+    border-radius: 3px !important;
+}
+
 #hpsChatGPTBackendSelector {
     width: 110px !important;
     margin-right: 10px !important;
