@@ -30,6 +30,7 @@ Input Options:
   -ffe            End for -ff sequence (essentially a noop)
   -fp filename    Includes the content of the given [f]ile as codeblock into the [p]rompt, together with the filename. Can be given multiple times.
   -i imagefile    Includes the given image file as [i]mage, together with the filename. Can be given multiple times.
+  -ii imagefiles  Like -i, but for multiple [ii]mage files - all further arguments are treated as image filenames until there is a switch.
   -iu imageurl    Includes the given [i]mage [u]rl as image, together with the url. Can be given multiple times.
   -id detaillevel Sets the image [d]etail level. Can be 'low', 'high', or 'auto'. Default is 'auto'.
   -a audiofile    Includes the given audio file as [a]udio. Can be given multiple times.
@@ -279,6 +280,11 @@ function parseArguments(arguments, cwd) {
             } else if (arg === '-i' && arguments[i + 1]) {
                 imageFiles.push(arguments[i + 1]);
                 i++;
+            } else if (arg === '-ii') {
+                while (arguments[i + 1] && !arguments[i + 1].startsWith('-')) {
+                    imageFiles.push(arguments[i + 1]);
+                    i++;
+                }
             } else if (arg === '-iu' && arguments[i + 1]) {
                 imageUrls.push(arguments[i + 1]);
                 i++;
