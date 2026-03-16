@@ -14,8 +14,8 @@ show_usage() {
     exit 1
 }
 
-# TODO: perhaps recode if larger than 25MB, in the extreme case with
-# ffmpeg -i audio.mp3 -vn -map_metadata -1 -ac 1 -c:a libopus -b:a 12k -application voip audio.ogg
+# If the file exceeds 26200000 bytes: first downmix stereo to mono, then recode if still too large.
+# In the extreme case: ffmpeg -i audio.mp3 -vn -map_metadata -1 -ac 1 -c:a libopus -b:a 12k -application voip audio.ogg
 
 # Initialize default values
 model="whisper-1"
@@ -64,21 +64,36 @@ if [ ! -f "$audio_file" ]; then
     exit 1
 fi
 
-# recode file if it is larger than 25MB. If it's still too large, you'll need to split it up.
-if [ $(wc -c < "$audio_file") -gt 25000000 ]; then
+# downmix to mono if larger than 26200000 and file is stereo, recode if still too large
+if [ $(wc -c < "$audio_file") -gt 26200000 ]; then
   #tmpdir is $TMPDIR or /tmp
   tmpdir=$TMPDIR
   [ -z "$tmpdir" ] && tmpdir=/tmp
-  tmpfile=$(mktemp -u $tmpdir/tmp.XXXXXXXXXX).mp3
-  trap 'rm -f $tmpfile' EXIT
-  # if lame is in the path, use it to resample and reduce the bitrate
-  if command -v lame &> /dev/null; then
-    lame -h -a -S -t --resample 12 --abr 16 -m m "$audio_file" "$tmpfile"
-  else
-    ffmpeg -i "$audio_file" -vn -map_metadata -1 -ac 1 -c:a libopus -b:a 12k -application voip "$tmpfile"
+  trap 'rm -f "$tmpfile" "$tmpfile2"' EXIT
+
+  # check number of audio channels
+  channels=$(ffprobe -v error -select_streams a:0 -show_entries stream=channels -of csv=p=0 "$audio_file" 2>/dev/null)
+  if [ "$channels" -gt 1 ] 2>/dev/null; then
+    tmpfile=$(mktemp -u "$tmpdir/tmp.XXXXXXXXXX").mp3
+    echo "Downmixing stereo to mono..."
+    ffmpeg -i "$audio_file" -vn -map_metadata -1 -ac 1 -c:a libmp3lame "$tmpfile"
+    audio_file=$tmpfile
+    ls -l "$audio_file"
   fi
-  audio_file=$tmpfile
-  ls -l "$audio_file"
+
+  # recode if still too large
+  if [ $(wc -c < "$audio_file") -gt 26200000 ]; then
+    tmpfile2=$(mktemp -u "$tmpdir/tmp.XXXXXXXXXX").mp3
+    echo "Recoding to reduce file size..."
+    # if lame is in the path, use it to resample and reduce the bitrate
+    if command -v lame &> /dev/null; then
+      lame -h -a -S -t --resample 12 --abr 16 -m m "$audio_file" "$tmpfile2"
+    else
+      ffmpeg -i "$audio_file" -vn -map_metadata -1 -ac 1 -c:a libopus -b:a 12k -application voip "$tmpfile2"
+    fi
+    audio_file=$tmpfile2
+    ls -l "$audio_file"
+  fi
 fi
 
 # Read the OpenAI API key

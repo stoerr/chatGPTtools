@@ -1,26 +1,171 @@
 #!/bin/bash
 
-set -evx
+# Lists models available at the configured API endpoint.
+# Supports profile/config file options compatible with the chatgpt script.
 
-url=https://api.openai.com/v1/models
-if [[ -n "$OPENAI_API_BASE" ]]; then
-  url="$OPENAI_API_BASE/models"
-fi
+set -e
 
-# read OPENAI_API_KEY from file $HOME/.openai-api-key.txt if it's not already set
-if [[ -z "$OPENAI_API_KEY" ]]; then
-  if [[ -f $HOME/.openai-api-key.txt ]]; then
-    OPENAI_API_KEY=$(cat $HOME/.openai-api-key.txt)
+PROFILES_DIR="$HOME/.chatgpt.js/profiles"
+DEFAULT_URL="https://api.openai.com/v1/models"
+
+verbose=false
+api_url=""
+declare -a extra_headers=()
+
+usage() {
+  cat <<EOF
+Usage: $(basename "$0") [options]
+
+Options:
+  -v            Verbose output (raw JSON, also prints unknown config file options)
+  -api url      Use this URL instead of the default models endpoint.
+                If the URL ends with /chat/completions it is rewritten to /models.
+  -rh key=value Add a request header (can be given multiple times)
+  -ocf cfgfile  Read options from a config file
+  -op prof,...  Read options from named profile(s) in $PROFILES_DIR/
+EOF
+}
+
+# Transform a chat completions URL to a models URL
+transform_url() {
+  local u="$1"
+  if [[ "$u" == */chat/completions ]]; then
+    echo "${u%/chat/completions}/models"
   else
-    echo "Please set the OPENAI_API_KEY environment variable or create a file $HOME/.openai-api-key.txt with the API key"
+    echo "$u"
+  fi
+}
+
+# Parse a config file; sets api_url and appends to extra_headers.
+# Skips comment lines (#), -m lines, and ignores unknown options
+# (prints them if verbose).
+parse_config_file() {
+  local file="$1"
+  if [[ ! -f "$file" ]]; then
+    echo "Error: config file not found: $file" >&2
     exit 1
   fi
-fi
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    # skip comments and blank lines
+    [[ "$line" =~ ^[[:space:]]*# ]] && continue
+    [[ -z "${line// }" ]] && continue
+    # tokenize respecting quoted strings
+    eval "local tokens=($line)" 2>/dev/null || tokens=($line)
+    local opt="${tokens[0]}"
+    local arg="${tokens[1]}"
+    case "$opt" in
+      -api)
+        api_url=$(transform_url "$arg")
+        ;;
+      -rh)
+        extra_headers+=("$arg")
+        ;;
+      -m)
+        : # ignore model option
+        ;;
+      "")
+        : # ignore blank token
+        ;;
+      *)
+        if $verbose; then
+          echo "Info: ignoring unknown option in config file '$file': $opt" >&2
+        fi
+        ;;
+    esac
+  done < "$file"
+}
 
-if [[ "$1" == "-v" || "$1" == "--verbose" ]]; then
-  curl -s $url -H "Authorization: Bearer $OPENAI_API_KEY" | less
+# --- Parse command-line arguments ---
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -v|--verbose)
+      verbose=true
+      shift
+      ;;
+    -api)
+      [[ -z "${2-}" ]] && { echo "Error: -api requires a URL argument" >&2; usage >&2; exit 1; }
+      api_url=$(transform_url "$2")
+      shift 2
+      ;;
+    -rh)
+      [[ -z "${2-}" ]] && { echo "Error: -rh requires a key=value argument" >&2; usage >&2; exit 1; }
+      extra_headers+=("$2")
+      shift 2
+      ;;
+    -ocf)
+      [[ -z "${2-}" ]] && { echo "Error: -ocf requires a filename argument" >&2; usage >&2; exit 1; }
+      parse_config_file "$2"
+      shift 2
+      ;;
+    -op)
+      [[ -z "${2-}" ]] && { echo "Error: -op requires a profile name argument" >&2; usage >&2; exit 1; }
+      IFS=',' read -ra profiles <<< "$2"
+      for prof in "${profiles[@]}"; do
+        prof_file="$PROFILES_DIR/$prof"
+        if [[ ! -f "$prof_file" ]]; then
+          echo "Error: profile not found: $prof_file" >&2
+          exit 1
+        fi
+        parse_config_file "$prof_file"
+      done
+      shift 2
+      ;;
+    -*)
+      echo "Error: unknown option: $1" >&2
+      usage >&2
+      exit 1
+      ;;
+    *)
+      echo "Error: unexpected argument: $1" >&2
+      usage >&2
+      exit 1
+      ;;
+  esac
+done
+
+# --- Determine final URL ---
+# OPENAI_API_BASE env var overrides everything (append /models)
+if [[ -n "$OPENAI_API_BASE" ]]; then
+  url="$OPENAI_API_BASE/models"
+elif [[ -n "$api_url" ]]; then
+  url="$api_url"
 else
-  curl -s $url -H "Authorization: Bearer $OPENAI_API_KEY" | jq '.data[] | del(.permission)' | jq .id | sort | less
+  url="$DEFAULT_URL"
 fi
 
-# curl -s https://api.openai.com/v1/models/gpt-4o-mini -H "Authorization: Bearer $OPENAI_API_KEY"
+# --- Determine API key (only if no Authorization header was provided) ---
+has_auth_header=false
+for h in "${extra_headers[@]}"; do
+  if [[ "$h" == Authorization* || "$h" == authorization* ]]; then
+    has_auth_header=true
+    break
+  fi
+done
+
+if ! $has_auth_header; then
+  if [[ -z "$OPENAI_API_KEY" ]]; then
+    if [[ -f "$HOME/.openai-api-key.txt" ]]; then
+      OPENAI_API_KEY=$(cat "$HOME/.openai-api-key.txt")
+    else
+      echo "Error: no Authorization header set and OPENAI_API_KEY is not set." >&2
+      echo "Set OPENAI_API_KEY, create $HOME/.openai-api-key.txt, or use -rh 'Authorization=Bearer <key>'" >&2
+      exit 1
+    fi
+  fi
+  extra_headers+=("Authorization=Bearer $OPENAI_API_KEY")
+fi
+
+# --- Build curl header arguments (convert key=value to HTTP header format) ---
+declare -a curl_headers=()
+for h in "${extra_headers[@]}"; do
+  # Replace the first '=' with ': ' to form a proper HTTP header
+  curl_headers+=("-H" "${h%%=*}: ${h#*=}")
+done
+
+# --- Execute ---
+if $verbose; then
+  curl -s "$url" "${curl_headers[@]}" | jq . | less
+else
+  curl -s "$url" "${curl_headers[@]}" | jq '.data[] | del(.permission)' | jq .id | sort | less
+fi
+

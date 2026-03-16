@@ -2,17 +2,18 @@
 # script for using https://platform.openai.com/docs/guides/text-to-speech
 
 # Default values
-model="tts-1"
+model="gpt-4o-mini-tts"
 voice="shimmer"
 format="mp3"
 speed="1"
 output_file=""
 text_file=""
 input_text=""
+instructions=""
 
 # Function to display usage
 usage() {
-  echo "Usage: $(basename $0) [-m model] [-v voice] [-r format] [-s speed] [-o output_file] [-f text_file] [input_text]"
+  echo "Usage: $(basename $0) [-m model] [-v voice] [-r format] [-s speed] [-i instructions] [-o output_file] [-f text_file] [input_text]"
   echo
   echo "Generates audio from input text using OpenAI's TTS models."
   echo
@@ -24,21 +25,23 @@ usage() {
   echo "  -v voice             Voice to use for the generated audio. Default is '$voice'. Supported voices are alloy, echo, fable, onyx, nova, and shimmer."
   echo "  -r format            Audio format of the response. Default is '$format'. Supported are mp3, opus, aac, flac, wav, pcm."
   echo "  -s speed             Speed of the generated audio, from 0.25 to 4.0. Default is 1."
+  echo "  -i instructions      Optional instructions or system prompt to include with the request (model-specific)."
   echo "  -o output_file       Output file to write the audio to. If not provided, audio will be played using afplay."
   echo "  -f text_file         Read input text from a file instead of stdin or command argument."
   echo
   echo "If no output file is specified with -o, the generated speech will be played immediately using the 'afplay' command."
-  echo "The script requires an OpenAI API key, which it will attempt to read from the OPENAI_API_KEY environment variable or the file \$HOME/.openai-api-key.txt."
+  echo "The script requires an OpenAI API key, which it will attempt to read from the OPENAI_API_KEY environment variable or the file $HOME/.openai-api-key.txt."
   exit 1
 }
 
 # Parse options
-while getopts "m:v:r:s:o:f:h?" opt; do
+while getopts "m:v:r:s:o:f:i:h?" opt; do
   case "$opt" in
     m) model="$OPTARG" ;;
     v) voice="$OPTARG" ;;
     r) format="$OPTARG" ;;
     s) speed="$OPTARG" ;;
+    i) instructions="$OPTARG" ;;
     o) output_file="$OPTARG" ;;
     f) text_file="$OPTARG" ;;
     h|\?) usage ;;
@@ -71,7 +74,8 @@ json_payload=$(jq -n \
                   --arg input "$input_text" \
                   --arg voice "$voice" \
                   --argjson speed "$speed" \
-                  '{model: $model, input: $input, voice: $voice, speed: $speed}')
+                  --arg instructions "$instructions" \
+                  '({model: $model, input: $input, voice: $voice, speed: $speed} as $base | if $instructions == "" then $base else $base + {instructions: $instructions} end)')
 
 # Check for API Key
 if [ -z "$OPENAI_API_KEY" ]; then

@@ -191,7 +191,7 @@ function parseArguments(arguments, cwd) {
 
         if (inOptions) {
             if (arg === '--help' || arg === '-h' || arg === '-?') {
-                console.log(helpMessage);
+                process.stdout.write(helpMessage + '\n');
                 process.exit(0);
             } else if (arg === '-m' && arguments[i + 1]) {
                 model = arguments[i + 1];
