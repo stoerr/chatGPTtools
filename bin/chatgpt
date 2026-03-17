@@ -96,6 +96,7 @@ Tooling options:
                   to stdout when called with parameter --openaitoolsconfig.
   -tt             [T]hink [t]ool - add a pseudo tool the AI can write thoughts to, e.g. for some chain of thought prompting
                   when you want JSON output that doesn't have room for discussion. Outputs the thoughts to stderr.
+  -tw             [T]ool [w]eb search - add a web search tool that submits a query to gpt-4o-search-preview and returns the result.
 
 Help Options:
   -h, --help, -?  Show this [h]elp message
@@ -156,6 +157,7 @@ let audioFiles = [];
 let audioUrls = [];
 let audioFormat = undefined;
 let thinkTool = false;
+let webSearchTool = false;
 let noThoughts = false;
 
 const headers = {
@@ -423,6 +425,8 @@ function parseArguments(arguments, cwd) {
                 i++;
             } else if (arg === '-tt') {
                 thinkTool = true;
+            } else if (arg === '-tw') {
+                webSearchTool = true;
             } else if (arg === '-nt') {
                 noThoughts = true;
             } else if (arg === '-api' && arguments[i + 1]) {
@@ -742,6 +746,27 @@ if (thinkTool) { // Kudos to https://www.anthropic.com/engineering/claude-think-
     });
 }
 
+if (webSearchTool) {
+    tools.push({
+        function: {
+            'name': 'web_search',
+            'description': 'Search the web for current information. Use this tool when you need up-to-date information, facts, news, or anything that might not be in your training data. Returns a summary of web search results.',
+            parameters: {
+                type: 'object',
+                properties: {
+                    query: {
+                        type: 'string',
+                        description: 'The search query to submit to the web search engine.'
+                    }
+                },
+                required: ['query']
+            }
+        },
+        internal: true,
+        webSearch: true
+    });
+}
+
 // if there are several entries in tools with the same name then complain about that and exit
 const toolNames = tools.map(tool => tool.function.name);
 const uniqueToolNames = new Set(toolNames);
@@ -1030,6 +1055,55 @@ function onContent(assistantMessage) {
     maybeContinueConversation();
 }
 
+/** Performs a web search by calling gpt-4o-search-preview synchronously and returns the response text. */
+function performWebSearch(query) {
+    const searchModel = 'gpt-4o-search-preview';
+    const searchApiUrl = 'https://api.openai.com/v1/chat/completions';
+    const searchHeaders = {
+        'Content-Type': 'application/json',
+        'Authorization': headers['Authorization']
+    };
+    const searchBody = JSON.stringify({
+        model: searchModel,
+        messages: [{role: 'user', content: query}]
+    });
+    const result = spawnSync('node', ['-e', `
+const https = require('https');
+const url = new URL(${JSON.stringify(searchApiUrl)});
+const body = ${JSON.stringify(searchBody)};
+const options = {
+    hostname: url.hostname,
+    path: url.pathname,
+    method: 'POST',
+    headers: ${JSON.stringify(searchHeaders)}
+};
+const req = https.request(options, (res) => {
+    let data = '';
+    res.on('data', chunk => data += chunk);
+    res.on('end', () => process.stdout.write(data));
+});
+req.on('error', e => { process.stderr.write(e.message); process.exit(1); });
+req.write(body);
+req.end();
+`], {encoding: 'utf8', timeout: 60000});
+    if (result.error) {
+        console.error('Error: Web search failed with error', result.error);
+        return 'Web search failed: ' + result.error.message;
+    }
+    if (result.status !== 0) {
+        console.error('Error: Web search process exited with status', result.status, result.stderr);
+        return 'Web search failed with status ' + result.status + ': ' + result.stderr;
+    }
+    try {
+        const responseData = JSON.parse(result.stdout);
+        if (verbose) console.error('Web search response:', JSON.stringify(responseData, null, 2));
+        return responseData.choices[0].message.content;
+    } catch (e) {
+        console.error('Error: Could not parse web search response', result.stdout);
+        return 'Web search failed: could not parse response';
+    }
+}
+
 /** Called when an assistant message comes in. */
 function onMessage(assistantMessage) {
     const toolCalls = assistantMessage["tool_calls"];
@@ -1045,8 +1119,13 @@ function onMessage(assistantMessage) {
             if (tool.function.name === 'think') {
                 messages.push({role: 'tool', content: '', tool_call_id: toolCall.id});
                 console.error('AI has thought: ' + JSON.parse(toolCall.function.arguments).thought + '\n');
+            } else if (tool.function.name === 'web_search') {
+                const query = JSON.parse(toolCall.function.arguments).query;
+                console.error('Searching the web for: ' + query);
+                const searchResult = performWebSearch(query);
+                messages.push({role: 'tool', content: searchResult, tool_call_id: toolCall.id});
             } else {
-                console.error('Error: Internal tool call not supported: ' + toolCall.function.name);
+                console.error('Error: Internal tool call not supported: ' + tool.function.name);
                 process.exit(7);
             }
         } else {
