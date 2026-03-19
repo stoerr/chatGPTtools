@@ -754,12 +754,12 @@ if (webSearchTool) {
             parameters: {
                 type: 'object',
                 properties: {
-                    query: {
+                    prompt: {
                         type: 'string',
-                        description: 'The search query to submit to the web search engine.'
+                        description: 'A prompt for the search agent. Has to contain information about what to search and can specify what should be returned from the results.'
                     }
                 },
-                required: ['query']
+                required: ['prompt']
             }
         },
         internal: true,
@@ -1056,7 +1056,7 @@ function onContent(assistantMessage) {
 }
 
 /** Performs a web search by calling gpt-4o-search-preview synchronously and returns the response text. */
-function performWebSearch(query) {
+function performWebSearch(prompt) {
     const searchModel = 'gpt-4o-search-preview';
     const searchApiUrl = 'https://api.openai.com/v1/chat/completions';
     const searchHeaders = {
@@ -1065,7 +1065,7 @@ function performWebSearch(query) {
     };
     const searchBody = JSON.stringify({
         model: searchModel,
-        messages: [{role: 'user', content: query}]
+        messages: [{role: 'user', content: prompt}]
     });
     const result = spawnSync('node', ['-e', `
 const https = require('https');
@@ -1120,9 +1120,9 @@ function onMessage(assistantMessage) {
                 messages.push({role: 'tool', content: '', tool_call_id: toolCall.id});
                 console.error('AI has thought: ' + JSON.parse(toolCall.function.arguments).thought + '\n');
             } else if (tool.function.name === 'web_search') {
-                const query = JSON.parse(toolCall.function.arguments).query;
-                console.error('Searching the web for: ' + query);
-                const searchResult = performWebSearch(query);
+                const prompt = JSON.parse(toolCall.function.arguments).prompt;
+                console.error('Searching the web for: ' + prompt);
+                const searchResult = performWebSearch(prompt);
                 messages.push({role: 'tool', content: searchResult, tool_call_id: toolCall.id});
             } else {
                 console.error('Error: Internal tool call not supported: ' + tool.function.name);
