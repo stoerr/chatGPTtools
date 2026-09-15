@@ -64,7 +64,12 @@
                 <option value="en">English</option>
                 <option value="de">Deutsch</option>
             </select>
-            <button id="dictation-dictate" class="btn btn-primary" title="Press and hold to start dictation">Dictate</button>
+            <!-- Push to Talk: press-and-hold for a single snippet -->
+            <button id="dictation-dictate" class="btn btn-primary mr-2" title="Press and hold to start dictation">Push to Talk</button>
+            <!-- Stop button: shown only while recording; opens a confirmation dialog -->
+            <button id="dictation-stop" class="btn btn-danger mr-2" title="Stop recording" style="display: none;">
+                <span id="stopIcon">⏹</span> Stop <span id="stopTimer"></span>
+            </button>
             <button id="dictation-undo" class="btn btn-info mr-2" title="Undo last transcription insertion">Undo</button>
             <button id="dictation-fixup" class="btn btn-info mr-2" title="Fix grammar, spelling and formatting using the AI">Fixup</button>
             <button id="dictation-clear" class="btn btn-warning mr-2" title="Clear all input fields and reset language">Clear</button>
@@ -85,6 +90,26 @@
         </div>
     </div>
 </div>
+<!-- Stop Confirmation Modal (shown when recording is active) -->
+<div class="modal fade" id="stopModal" tabindex="-1" role="dialog" aria-labelledby="stopModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="stopModalLabel">Stop Recording?</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" title="Close dialog">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to stop recording and transcribe?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" title="Cancel stop">Cancel</button>
+                <button type="button" class="btn btn-danger" id="stopModalConfirm" title="Confirm stop recording">Stop</button>
+            </div>
+        </div>
+    </div>
+</div>
 <!-- Help Modal -->
 <div class="modal fade" id="helpModal" tabindex="-1" role="dialog" aria-labelledby="helpModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -97,10 +122,12 @@
             </div>
             <div class="modal-body">
                 <p>
-                    Press and hold the Dictate button to start dictation. Release to stop and transcribe.
-                    After a few seconds processing the transcribed text will be inserted into the text area at the
-                    cursor position.
-                    Optionally, select the language for improved transcription accuracy.
+                    <strong>Push to Talk:</strong> Press and hold the "Push to Talk" button to record. Release to stop and transcribe.
+                    After a few seconds the transcribed text will be inserted into the text area at the cursor position.
+                </p>
+                <p>
+                    <strong>Dictate:</strong> Click the "Dictate" button to start continuous dictation. The red "Stop" button appears.
+                    Click it to open a confirmation dialog and stop recording, or let it run for up to 2 minutes (auto-stops to prevent unintended recordings).
                 </p>
                 <p>
                     The Fixup button will attempt to correct any transcription errors, correct grammar and spelling

@@ -2,6 +2,8 @@
 const textarea = document.getElementById('dictation-textarea');
 const termsarea = document.getElementById('dictation-termsarea');
 const dictateButton = document.getElementById('dictation-dictate');
+const stopButton = document.getElementById('dictation-stop');
+const stopModalConfirm = document.getElementById('stopModalConfirm');
 const helpButton = document.getElementById('dictation-help');
 const clearButton = document.getElementById('dictation-clear');
 
@@ -54,6 +56,8 @@ const getOpenAIKey = () => {
 
 };
 
+const maxRecordingMs = 2 * 60 * 1000; // 2 minutes
+
 // Start recording
 const startRecording = async (event, e1, e2) => {
     if (!isRecording && !isStoppingRecording && !isStartingRecording) try {
@@ -66,7 +70,14 @@ const startRecording = async (event, e1, e2) => {
         const input = audioContext.createMediaStreamSource(audioStream);
         recorder = new Recorder(input, {numChannels: 1});
         recorder.record();
-        timeoutCall = setTimeout(stopRecording, 300000); // Stop recording after 5 minutes
+        // 2-minute auto-stop
+        timeoutCall = setTimeout(() => {
+            logMessage('Auto-stopping recording after 2 minutes', 'warn');
+            stopRecording();
+        }, maxRecordingMs);
+        // Show stop button
+        stopButton.style.display = '';
+        stopButton.disabled = false;
         isRecording = true;
         logMessage('Recording started successfully', 'success');
     } catch (error) {
@@ -94,6 +105,8 @@ const stopRecording = async (event, e1, e2) => {
     recorder.stop();
     clearTimeout(timeoutCall);
     audioStream.getTracks().forEach(track => track.stop());
+    // Hide stop button
+    stopButton.style.display = 'none';
     logMessage('Recording stopped, processing audio...', 'info');
     recorder.exportWAV(async (blob) => {
 
@@ -186,10 +199,12 @@ window.addEventListener('keyup', function (e) {
 
 // Event listeners
 const attachEventListeners = () => {
-    // Mouse events for desktop
+    // Push to Talk: press and hold to start recording
     dictateButton.addEventListener('mousedown', startRecording);
-    dictateButton.addEventListener('mouseup', stopRecording);
-    
+    dictateButton.addEventListener('mouseup', () => {
+        stopRecording();
+    });
+
     // Touch events for mobile devices
     dictateButton.addEventListener('touchstart', (e) => {
         e.preventDefault(); // Prevent mouse events from firing
@@ -199,9 +214,26 @@ const attachEventListeners = () => {
     dictateButton.addEventListener('touchend', (e) => {
         e.preventDefault(); // Prevent mouse events from firing
         logMessage('Touch end detected', 'info');
-        stopRecording(e);
+        stopRecording();
     });
-    
+
+    // Stop button: show confirmation dialog
+    stopButton.addEventListener('click', () => {
+        if (isRecording && !isStoppingRecording) {
+            logMessage('Stop button clicked, showing confirmation...', 'info');
+            $('#stopModal').modal('show');
+        }
+    });
+
+    // Confirm stop from modal
+    if (stopModalConfirm) {
+        stopModalConfirm.addEventListener('click', () => {
+            logMessage('Stop confirmed by user', 'info');
+            $('#stopModal').modal('hide');
+            stopRecording();
+        });
+    }
+
     fixupButton.addEventListener('click', fixupText);
     undoButton.addEventListener('click', undo);
 
@@ -237,7 +269,7 @@ function resizeTextarea() {
     const additionalSpacing = 30; // Account for paddings, margins, borders, and spacing between elements
     const offset = headerHeight + footerHeight + logPanelHeight + additionalSpacing;
     const areasheight = viewportHeight - offset;
-    
+
     // On mobile devices (viewport width <= 768px), maximize textarea while ensuring buttons are visible
     const isMobile = window.innerWidth <= 768;
     if (isMobile) {
