@@ -12,6 +12,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 <body>
+<!-- A hidden text control keeps the snapshot eligible for browser form-state restoration. -->
+<input type="text" id="hps-chatgpt-chat-state" name="hps-chatgpt-chat-state" hidden autocomplete="on">
 <div class="container-xxl"
      style="border-radius: 20px; background: linear-gradient(#f0f0f0, #dcdcdc); padding-top: 1em; padding-bottom: 1.5em;">
     <div class="container-xxl messages" id="top">
@@ -185,6 +187,10 @@
 
 <script>
     const STORAGE_KEY = 'net.stoerr.chatgpt.tools.multiplemessagechat';
+    const CHAT_STATE_SELECTOR = '#hps-chatgpt-chat-state';
+    let chatStateReady = false;
+    let pendingModel = null;
+    let modelLoadVersion = 0;
 
     const models = {
         'openai':
@@ -194,8 +200,8 @@
     }
 
     $(document).ready(function () {
+        loadPrompts();
         loadSettings();
-        reset();
 
         $('#initialprompt').change(function () {
             reset($('#initialprompt').val());
@@ -206,7 +212,6 @@
                 $('#row-1 textarea').attr('rows', 10);
             }
         });
-        loadPrompts();
         // if the user changes the system prompt in row-1 textarea, the initialprompt select should be set to the default value
         $('#row-1 textarea').change(function () {
             $('#initialprompt').val('');
@@ -223,53 +228,129 @@
         });
         $('#otherApiUrl, #otherAuthHeader, #otherAuthValue').on('input', saveSettings);
         $('#modelSelector').on('change', saveSettings);
-        $('#historysize, #temperature, #max_tokens, #n').on('input', saveSettings);
+        $('#historysize, #temperature, #max_tokens, #n, #seed').on('input', saveSettings);
         $('#jsonoutput').on('change', saveSettings);
 
-        setModels();
-        toggleOtherApiSettings();
+        // Save edits immediately; browser shutdown callbacks are not guaranteed to run.
+        $(document).on('input change', '.message, .type, #json, #tools, #response_format, #initialprompt', saveChat);
+        window.addEventListener('pagehide', saveChat);
+        document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'hidden') saveChat();
+        });
+
+        // Form-state restoration may happen after DOM ready or pageshow.
+        // Wait until the browser has finished that task before reading or overwriting the snapshot.
+        if (document.readyState === 'complete') {
+            setTimeout(initializeChat, 0);
+        } else {
+            window.addEventListener('pageshow', function (event) {
+                if (!event.persisted) setTimeout(initializeChat, 0);
+            }, {once: true});
+        }
     });
+
+    function initializeChat() {
+        if (chatStateReady) return;
+        if (!restoreChat()) reset();
+        chatStateReady = true;
+        toggleOtherApiSettings();
+        setModels(pendingModel);
+        saveChat();
+    }
+
+    function applySettings(settings) {
+        for (const field of ['apiSelector', 'otherApiUrl', 'otherAuthHeader', 'otherAuthValue',
+            'historysize', 'temperature', 'max_tokens', 'n', 'seed']) {
+            if (Object.prototype.hasOwnProperty.call(settings, field)) $('#' + field).val(settings[field]);
+        }
+        pendingModel = settings.modelSelector || null;
+        $('#jsonoutput').prop('checked', Boolean(settings.jsonoutput));
+    }
 
     function loadSettings() {
         try {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
-                const settings = JSON.parse(saved);
-                if (settings.apiSelector) $('#apiSelector').val(settings.apiSelector);
-                if (settings.modelSelector) $('#modelSelector').val(settings.modelSelector);
-                if (settings.otherApiUrl) $('#otherApiUrl').val(settings.otherApiUrl);
-                if (settings.otherAuthHeader) $('#otherAuthHeader').val(settings.otherAuthHeader);
-                if (settings.otherAuthValue) $('#otherAuthValue').val(settings.otherAuthValue);
-                if (settings.historysize) $('#historysize').val(settings.historysize);
-                if (settings.temperature) $('#temperature').val(settings.temperature);
-                if (settings.max_tokens) $('#max_tokens').val(settings.max_tokens);
-                if (settings.n) $('#n').val(settings.n);
-                if (settings.seed) $('#seed').val(settings.seed);
-                if (settings.jsonoutput) $('#jsonoutput').prop('checked', settings.jsonoutput);
-            }
+            applySettings(JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'));
         } catch (e) {
             console.error('Error loading settings:', e);
         }
     }
 
+    function readSettings() {
+        return {
+            apiSelector: $('#apiSelector').val(),
+            modelSelector: $('#modelSelector').val() || pendingModel,
+            otherApiUrl: $('#otherApiUrl').val(),
+            otherAuthHeader: $('#otherAuthHeader').val(),
+            otherAuthValue: $('#otherAuthValue').val(),
+            historysize: $('#historysize').val(),
+            temperature: $('#temperature').val(),
+            max_tokens: $('#max_tokens').val(),
+            n: $('#n').val(),
+            seed: $('#seed').val(),
+            jsonoutput: $('#jsonoutput').is(':checked')
+        };
+    }
+
     function saveSettings() {
+        if (!chatStateReady) return;
+        saveChat();
         try {
-            const settings = {
-                apiSelector: $('#apiSelector').val(),
-                modelSelector: $('#modelSelector').val(),
-                otherApiUrl: $('#otherApiUrl').val(),
-                otherAuthHeader: $('#otherAuthHeader').val(),
-                otherAuthValue: $('#otherAuthValue').val(),
-                historysize: $('#historysize').val(),
-                temperature: $('#temperature').val(),
-                max_tokens: $('#max_tokens').val(),
-                n: $('#n').val(),
-                seed: $('#seed').val(),
-                jsonoutput: $('#jsonoutput').is(':checked')
-            };
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+            // Keep the existing shared defaults for newly opened tabs.
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(readSettings()));
         } catch (e) {
             console.error('Error saving settings:', e);
+        }
+    }
+
+    function saveChat() {
+        if (!chatStateReady) return;
+        try {
+            const rows = [];
+            $('.messagefields').each(function (index, row) {
+                rows.push({role: $(row).find('.type').val(), text: $(row).find('.message').val()});
+            });
+            const fields = {};
+            for (const field of ['json', 'tools', 'response_format', 'initialprompt']) {
+                fields[field] = $('#' + field).val();
+            }
+            const field = document.querySelector(CHAT_STATE_SELECTOR);
+            field.value = JSON.stringify({version: 1, settings: readSettings(), fields, rows});
+            // Notify browser form-state tracking after programmatic changes, too.
+            field.dispatchEvent(new Event('input', {bubbles: true}));
+        } catch (e) {
+            console.error('Error saving chat:', e);
+        }
+    }
+
+    function restoreChat() {
+        try {
+            const saved = $(CHAT_STATE_SELECTOR).val();
+            if (!saved) return false;
+            const state = JSON.parse(saved);
+            const roles = ['system', 'user', 'assistant', 'toolscalls', 'tool'];
+            if (state.version !== 1 || !state.settings || typeof state.settings !== 'object' ||
+                !Array.isArray(state.rows) || !state.rows.length ||
+                !state.rows.every(row => row && roles.includes(row.role) && typeof row.text === 'string')) {
+                return false;
+            }
+            applySettings(state.settings);
+            for (const field of ['json', 'tools', 'response_format', 'initialprompt']) {
+                $('#' + field).val(state.fields?.[field] || '');
+            }
+            // Original-variant layout: row-1 is the anchor holding the first saved row
+            // (which came from row-1), the remaining rows are re-created as message fields.
+            $('.messagefields').not('#row-1').remove();
+            const [first, ...remaining] = state.rows;
+            $('#row-1 .type').val(first.role);
+            $('#row-1 .message').val(first.text);
+            for (const row of remaining) addRow(row.role, row.text);
+            fixRowChaining();
+            // Reconstruct the exact row list without enforcing the history limit or adding rows.
+            adjustTextAreas(false);
+            return true;
+        } catch (e) {
+            console.error('Error restoring chat:', e);
+            return false;
         }
     }
 
@@ -328,12 +409,11 @@
         return null;
     }
 
-    async function setModels() {
+    async function setModels(preferredModel) {
+        const loadVersion = ++modelLoadVersion;
         const apiSelector = $('#apiSelector').val();
         const modelSelector = $('#modelSelector');
-        const currentModel = modelSelector.val();
-
-        modelSelector.empty();
+        const currentModel = preferredModel || modelSelector.val();
 
         let modelList = null;
 
@@ -342,7 +422,7 @@
             if (apiUrl) {
                 modelList = await fetchModelsFromApi(apiUrl);
             }
-        } else if (models[apiSelector]) {
+        } else if (models[apiSelector] || apiSelector === 'LMStudio') {
             // Try to fetch from API first, fall back to static list
             let apiUrl;
             if (apiSelector === 'LMStudio') {
@@ -361,6 +441,11 @@
             }
         }
 
+        if (loadVersion !== modelLoadVersion) return;
+        modelSelector.empty();
+        if (preferredModel && (!modelList || !modelList.includes(preferredModel))) {
+            modelList = [preferredModel, ...(modelList || [])];
+        }
         if (modelList && modelList.length > 0) {
             modelList.forEach(model => {
                 modelSelector.append(new Option(model, model));
@@ -372,6 +457,7 @@
             }
         }
 
+        pendingModel = modelSelector.val();
         saveSettings();
     }
 
@@ -423,6 +509,7 @@
         row.find('.message').val(messageText);
         row.appendTo('div.messages');
         fixRowChaining();
+        saveChat();
     }
 
     function fixRowChaining() {
@@ -454,6 +541,9 @@
         resetAndSetSystemMessage(message ||
             '');
         addRow('user', '');
+        // A manual reset means "start over": the fresh (baseline) state must be what a
+        // browser restart restores, not the previous conversation.
+        if (chatStateReady) saveChat();
         adjustTextAreas();
     }
 
@@ -648,8 +738,9 @@
 
     /** Sets the textarea row attributes so that the text just fits in there, without additional newlines.
      * For the last message, we leave rows at 10. */
-    function adjustTextAreas() {
-        adjustRowNumber();
+    function adjustTextAreas(applyHistoryLimit = true) {
+        if (applyHistoryLimit) adjustRowNumber();
+        fixRowChaining();
         adjustFonts();
         $('.message').each(function (index, element) {
             element.rows = 1;
@@ -663,6 +754,7 @@
         // set focus to last textarea
         $('.message').last().focus();
         scrollIfNecessary();
+        saveChat();
     }
 
     function adjustFonts() {
@@ -833,6 +925,7 @@
             }
         }
         $('#json').val(JSON.stringify(request, null, 2));
+        saveChat();
     }
 
 
