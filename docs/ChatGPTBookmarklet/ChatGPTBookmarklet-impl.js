@@ -330,7 +330,7 @@
             try {
                 this.answerfield.innerHTML = 'Contacting ChatGPT for summary...<br/><br/>' + this.helptext;
                 const summary = await this.getSummary();
-                this.answerfield.innerText = summary;
+                this.setAnswer(summary);
                 this.saveToHistory();
                 this.stopDictation(); // dialog changes size -> button moves.
             } catch (e) {
@@ -366,7 +366,7 @@
                 this.answerfield.innerText = 'Thinking...';
                 try {
                     const answer = await this.getAnswer(question, includePageContent);
-                    this.answerfield.innerText = answer;
+                    this.setAnswer(answer);
                     this.saveToHistory();
                     this.stopDictation(); // dialog changes size -> button moves.
                 } catch (e) {
@@ -593,14 +593,14 @@
             let state = {
                 // save the question and the answer
                 question: this.questionField.value,
-                answer: this.answerfield.innerText,
+                answer: this.lastAnswer || this.answerfield.innerText,
             };
             this.history.push(state);
         },
 
         restore: function (state) {
             this.questionField.value = state.question;
-            this.answerfield.innerText = state.answer;
+            this.setAnswer(state.answer);
         },
 
         historyBack: function () {

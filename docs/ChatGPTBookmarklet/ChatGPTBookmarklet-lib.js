@@ -17,6 +17,194 @@
         return result;
     }
 
+    /** Escapes text so it is safe to insert into HTML. */
+    function escapeHtml(text) {
+        return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    /**
+     * Turns inline markdown (bold, italic, strikethrough, inline code, links) into HTML.
+     * The input is escaped first so it can only ever produce safe HTML from the markdown syntax itself.
+     * Links are extracted into placeholders so that URL characters (like underscores) cannot be mangled
+     * by the later bold/italic processing.
+     */
+    function renderInline(text) {
+        text = escapeHtml(text);
+        const links = [];
+        // links [text](url) - extract first so URLs aren't mangled by later inline rules
+        text = text.replace(/\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g,
+            function (match, label, url) {
+                // only allow safe URL schemes
+                if (!/^(https?:|mailto:|#|\/)/.test(url)) {
+                    return match;
+                }
+                const placeholder = '\u0000LINK' + links.length + '\u0000';
+                links.push('<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + label + '</a>');
+                return placeholder;
+            });
+        // inline code `code` - protect from bold/italic markup inside
+        text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+        // bold **text** and __text__
+        text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+            .replace(/__([^_]+)__/g, '<strong>$1</strong>');
+        // italic *text* and _text_ (not bold, no surrounding letters)
+        text = text.replace(/(^|[^*])\*([^*\s][^*]*)\*/g, '$1<em>$2</em>')
+            .replace(/(^|[^_])_([^_\s][^_]*)_/g, '$1<em>$2</em>');
+        // strikethrough ~~text~~
+        text = text.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+        // restore the extracted links
+        text = text.replace(/\u0000LINK(\d+)\u0000/g, function (match, index) {
+            return links[parseInt(index, 10)];
+        });
+        return text;
+    }
+
+    /**
+     * Converts a ChatGPT markdown answer into HTML for display. Content is escaped so only the
+     * markdown syntax can produce tags (which are fixed and safe). Supports headings, lists,
+     * blockquotes, fenced code blocks, inline code, bold/italic, links, horizontal rules and paragraphs.
+     */
+    function markdownToHtml(markdown) {
+        const lines = markdown.replace(/\r\n/g, '\n').split('\n');
+        const html = [];
+        let i = 0;
+        let inCodeBlock = false;
+        let codeLang = '';
+        let codeLines = [];
+        const openLists = []; // stack of open list tags, e.g. ['<ul>', '<ol>']
+
+        function closeCodeBlock() {
+            if (inCodeBlock) {
+                html.push('<pre><code>' + escapeHtml(codeLines.join('\n')) + '</code></pre>');
+                codeLines = [];
+                inCodeBlock = false;
+            }
+        }
+
+        function closeLists() {
+            while (openLists.length > 0) {
+                html.push(openLists.pop().replace('<', '</'));
+            }
+        }
+
+        /** Closes all open lists and opens a new list of the given tag. */
+        function switchToLists(tag) {
+            if (openLists.length === 1 && openLists[0] === tag) {
+                return;
+            }
+            closeLists();
+            html.push(tag);
+            openLists.push(tag);
+        }
+
+        function flushParagraph(lines) {
+            if (lines.length > 0) {
+                html.push('<p>' + lines.map(renderInline).join('<br>') + '</p>');
+                lines.length = 0;
+            }
+        }
+
+        let paragraphLines = [];
+
+        while (i < lines.length) {
+            let line = lines[i];
+
+            if (inCodeBlock) {
+                if (/^```/.test(line)) {
+                    closeCodeBlock();
+                    codeLang = '';
+                } else {
+                    codeLines.push(line);
+                }
+                i++;
+                continue;
+            }
+
+            if (/^```/.test(line)) {
+                const m = line.match(/^```\s*(\S*)/);
+                codeLang = m ? m[1] : '';
+                closeLists();
+                flushParagraph(paragraphLines);
+                inCodeBlock = true;
+                i++;
+                continue;
+            }
+
+            // horizontal rule
+            if (/^(\s*)(-{3,}|\*{3,}|_{3,})\s*$/.test(line)) {
+                closeLists();
+                flushParagraph(paragraphLines);
+                html.push('<hr>');
+                i++;
+                continue;
+            }
+
+            const heading = line.match(/^(#{1,6})\s+(.*)$/);
+            if (heading) {
+                closeLists();
+                flushParagraph(paragraphLines);
+                const level = heading[1].length;
+                html.push('<h' + level + '>' + renderInline(heading[2]) + '</h' + level + '>');
+                i++;
+                continue;
+            }
+
+            // blockquote
+            if (/^>/.test(line)) {
+                closeLists();
+                flushParagraph(paragraphLines);
+                let quote = [];
+                while (i < lines.length && /^>/.test(lines[i])) {
+                    quote.push(lines[i].replace(/^>\s?/, ''));
+                    i++;
+                }
+                html.push('<blockquote>' + quote.map(renderInline).join('<br>') + '</blockquote>');
+                continue;
+            }
+
+            // bullet list
+            const bullet = line.match(/^\s*[-*+]\s+(.*)$/);
+            if (bullet && !/^```/.test(line)) {
+                flushParagraph(paragraphLines);
+                switchToLists('<ul>');
+                html.push('<li>' + renderInline(bullet[1]) + '</li>');
+                i++;
+                continue;
+            }
+
+            // numbered list
+            const numbered = line.match(/^\s*(\d+)\.\s+(.*)$/);
+            if (numbered) {
+                flushParagraph(paragraphLines);
+                switchToLists('<ol>');
+                html.push('<li>' + renderInline(numbered[2]) + '</li>');
+                i++;
+                continue;
+            }
+
+            // close lists on blank line or non-list content
+            if (/^\s*$/.test(line)) {
+                closeLists();
+                flushParagraph(paragraphLines);
+                i++;
+                continue;
+            }
+
+            // plain paragraph line - also close open lists if we hit non-list content directly
+            if (openLists.length > 0 && !/^\s*[-*+]\s/.test(line) && !/^\s*\d+\.\s/.test(line)) {
+                closeLists();
+            }
+            paragraphLines.push(line);
+            i++;
+        }
+
+        closeCodeBlock();
+        closeLists();
+        flushParagraph(paragraphLines);
+        return html.join('\n');
+    }
+
     var hpsChatGPTBookmarklet = {
 
         /**
@@ -127,6 +315,17 @@
             };
 
             return sendRequest();
+        },
+
+        /**
+         * Renders the given markdown text and displays it in the answer field. Links are made to open
+         * in a new tab. Use this instead of setting answerfield.innerText to get proper markdown display.
+         * The raw markdown is kept in this.lastAnswer so history can restore it without losing formatting.
+         * @param {string} text - The markdown answer or plain text from ChatGPT.
+         */
+        setAnswer: function (text) {
+            this.lastAnswer = text;
+            this.answerfield.innerHTML = markdownToHtml(text);
         },
 
         /** Start recording */
