@@ -45,15 +45,14 @@
         }
         .markdown-edit {
             margin-bottom: 0.4em;
-        }
-        /* Extra-small, right-aligned edit button in the first column of a message row. */
-        .btn-xs {
+            /* Extra-small button: black text on white background, right-aligned in the row's first column. */
+            float: right;
             padding: 0.1rem 0.3rem;
             font-size: 0.7rem;
             line-height: 1.2;
-        }
-        .markdown-edit {
-            float: right;
+            color: #000;
+            background-color: #fff;
+            border: 1px solid #ccc;
         }
     </style>
 </head>
@@ -90,8 +89,7 @@
                 <a href="#actionrow">
                     <i class="fa fa-long-arrow-down" style="color: white"></i>
                 </a>
-                <button type="button" class="btn btn-xs btn-secondary markdown-edit"
-                        title="Shows the raw markdown textarea and back to the rendered view.">Edit</button>
+                <button type="button" class="btn markdown-edit" title="Shows the raw markdown textarea and back to the rendered view.">Edit</button>
             </div>
             <div class="col-sm-11">
                 <div class="markdown-render" style="display: none;"></div>
