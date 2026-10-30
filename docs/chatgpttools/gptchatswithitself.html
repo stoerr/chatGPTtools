@@ -251,7 +251,7 @@
             <div class="col-12">
                 <form class="form-inline">
                     <div class="d-flex flex-wrap align-items-center justify-content-start buttonrow">
-                        <div class="d-flex align-items-center me-2">
+                        <div class="d-flex flex-wrap align-items-center me-2">
                             <button type="button" class="btn me-2" id="start" data-detext="Starten">Start</button>
                             <button type="button" class="btn me-2" id="continue" data-detext="Weiter">Continue</button>
                             <button type="button" class="btn me-2" id="stop" disabled data-detext="Stopp">Stop
@@ -472,7 +472,6 @@
             }
             let newchat = $('<div class="col-12 chat ' + chatclass + '"><div class="card msg mb-3"><div class="card-body">' + content + '</div></div></div>');
             $('#chats').append(newchat);
-            $('html, body').animate({scrollTop: $(document).height()}, 1000);
             turn++;
             chatTurn(sysmsgkey === 'sysmsg1' ? 'sysmsg2' : 'sysmsg1', chatclass === 'chat1' ? 'chat2' : 'chat1');
         }, onError);
