@@ -82,6 +82,49 @@
         body {
             background-color: var(--background-color);
             color: var(--font-color);
+            padding-right: 4rem;
+        }
+
+        .message-nav {
+            position: fixed;
+            z-index: 1030;
+            top: 50%;
+            right: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.4rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            background: var(--background-color);
+            box-shadow: 0 0.15rem 0.5rem rgb(0 0 0 / 20%);
+            transform: translateY(-50%);
+        }
+
+        .message-nav-handle {
+            width: 1.5rem;
+            height: 0.3rem;
+            margin-bottom: 0.1rem;
+            border-radius: 1rem;
+            background: var(--border-color);
+        }
+
+        .message-nav .btn {
+            width: 2.5rem;
+            height: 2.5rem;
+            padding: 0;
+        }
+
+        @media (max-width: 576px) {
+            body {
+                padding-right: 2.25rem;
+            }
+
+            .message-nav {
+                transform: translateY(-50%) scaleX(0.5);
+                transform-origin: right center;
+            }
         }
 
         .card {
@@ -359,6 +402,17 @@
     </div>
 </div>
 </div>
+<nav class="message-nav" aria-label="Message navigation">
+    <span class="message-nav-handle" aria-hidden="true"></span>
+    <button type="button" class="btn" id="message-nav-start" aria-label="Go to start of session"
+            title="Go to start of session"><i class="fa fa-angle-double-up" aria-hidden="true"></i></button>
+    <button type="button" class="btn" id="message-nav-up" aria-label="Go to previous message"
+            title="Go to previous message"><i class="fa fa-arrow-up" aria-hidden="true"></i></button>
+    <button type="button" class="btn" id="message-nav-down" aria-label="Go to next message"
+            title="Go to next message"><i class="fa fa-arrow-down" aria-hidden="true"></i></button>
+    <button type="button" class="btn" id="message-nav-end" aria-label="Go to last message"
+            title="Go to last message"><i class="fa fa-angle-double-down" aria-hidden="true"></i></button>
+</nav>
 <script src="//cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
         crossorigin="anonymous"></script>
@@ -436,6 +490,7 @@
 
     $('#start').click(function () {
         $('#chats').html('');
+        updateMessageNavigation();
         turn = 0;
         maxtokens = parseInt($('#tokens').val());
         setRunning(true);
@@ -477,6 +532,43 @@
 
     var turn = 0;
     var maxtokens = 0;
+
+    function updateMessageNavigation() {
+        var hasMessages = $('#chats .chat').length > 0;
+        $('#message-nav-up, #message-nav-down, #message-nav-end').prop('disabled', !hasMessages);
+    }
+
+    function scrollToMessage(index) {
+        const messages = $('#chats .chat').toArray();
+        if (messages.length) {
+            messages[Math.max(0, Math.min(index, messages.length - 1))]
+                .scrollIntoView({behavior: 'smooth', block: 'start'});
+        }
+    }
+
+    $('#message-nav-start').click(function () {
+        $('#chats')[0].scrollIntoView({behavior: 'smooth', block: 'start'});
+    });
+    $('#message-nav-up').click(function () {
+        const messages = $('#chats .chat').toArray();
+        const top = window.scrollY;
+        const current = messages.reduce((closest, message, index) =>
+            Math.abs(message.getBoundingClientRect().top + top) <
+            Math.abs(messages[closest].getBoundingClientRect().top + top) ? index : closest, 0);
+        scrollToMessage(current - 1);
+    });
+    $('#message-nav-down').click(function () {
+        const messages = $('#chats .chat').toArray();
+        const top = window.scrollY;
+        const current = messages.reduce((closest, message, index) =>
+            Math.abs(message.getBoundingClientRect().top + top) <
+            Math.abs(messages[closest].getBoundingClientRect().top + top) ? index : closest, 0);
+        scrollToMessage(current + 1);
+    });
+    $('#message-nav-end').click(function () {
+        scrollToMessage($('#chats .chat').length - 1);
+    });
+    updateMessageNavigation();
 
     function onError(jqXHR, textStatus, errorThrown) {
         setRunning(false);
@@ -525,6 +617,7 @@
                 converter.makeHtml(content) + '</div></div></div>');
             newchat.find('.msg').attr('markdown', content);
             $('#chats').append(newchat);
+            updateMessageNavigation();
             console.log(chatclass, messages , newchat)
             turn++;
             chatTurn(sysmsgkey === 'sysmsg1' ? 'sysmsg2' : 'sysmsg1', chatclass === 'chat1' ? 'chat2' : 'chat1');
