@@ -1,5 +1,9 @@
 # Development Guide for ChatGPT Tools
 
+## Communication Style
+- **Brevity**: Minimize output length while preserving all information. Only the model needs to understand the reply. Use symbols/shorthand/leetspeak if shorter; omit redundant words and endings.
+- **No framing**: Reply directly with the answer/information only. No conversational framing — no intro, no summary, no restating the question.
+
 ## Build & Test Commands
 - **Build**: `make all` - Generates usages, personal HTML files, README.md, and templates
 - **Run tests**: `cd test/chatgpt && ./it_test.bats` - Run integration tests
