@@ -16,7 +16,7 @@
         }
 
         .buttonrow .form-control {
-            width: 5em;
+            width: auto;
         }
 
         .buttonrow .form-select {
@@ -392,6 +392,24 @@
 <script>
 
     var converter = new showdown.Converter({tables: true});
+    function sizeNumberInput(input) {
+        const style = window.getComputedStyle(input);
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        context.font = style.font;
+        const textWidth = context.measureText(input.value || input.placeholder || '0').width;
+        const horizontalSpace = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) +
+            parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth) +
+            parseFloat(style.fontSize) * 1.75;
+        input.style.width = Math.ceil(textWidth + horizontalSpace) + 'px';
+    }
+
+    $('.buttonrow input[type="number"]').each(function () {
+        sizeNumberInput(this);
+    }).on('input change', function () {
+        sizeNumberInput(this);
+    });
+
     // it the navigator language is de or starts with de_, call useDeText to use translations.
     if (navigator.language === 'de' || navigator.language.startsWith('de_')) {
         useDeText();

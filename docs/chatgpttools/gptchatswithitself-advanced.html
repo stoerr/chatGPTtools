@@ -16,7 +16,7 @@
         }
 
         .buttonrow .form-control {
-            width: 5em;
+            width: auto;
         }
 
         .buttonrow .form-select {
@@ -319,6 +319,13 @@
                             <input type="number" class="form-control" id="tokens" value="500">
                         </div>
                         <div class="input-group me-2">
+                            <label class="input-group-text" for="model" data-detext="Modell:">Model:</label>
+                            <select class="form-select" id="model" style="width: auto;">
+                                <option value="gpt-6.1-sol" selected>gpt-6.1-sol</option>
+                            </select>
+                        </div>
+                        <span id="modelStatus" role="status" aria-live="polite"></span>
+                        <div class="input-group me-2">
                             <label class="input-group-text" for="examples" data-detext="Beispiel:">Example:</label>
                             <select class="form-select" id="examples">
                                 <option value="0" selected>--</option>
@@ -426,6 +433,85 @@
 <script>
 
     var converter = new showdown.Converter({tables: true});
+    var modelsLoaded = false;
+    var modelsLoading = false;
+
+    function sizeModelSelect() {
+        const select = $('#model')[0];
+        const style = window.getComputedStyle(select);
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        context.font = style.font;
+        const textWidth = context.measureText(select.options[select.selectedIndex].text).width;
+        const horizontalSpace = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) +
+            parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth) + 24;
+        select.style.width = Math.ceil(textWidth + horizontalSpace) + 'px';
+    }
+
+    function sizeNumberInput(input) {
+        const style = window.getComputedStyle(input);
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        context.font = style.font;
+        const textWidth = context.measureText(input.value || input.placeholder || '0').width;
+        const horizontalSpace = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) +
+            parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth) +
+            parseFloat(style.fontSize) * 1.75;
+        input.style.width = Math.ceil(textWidth + horizontalSpace) + 'px';
+    }
+
+    $('.buttonrow input[type="number"]').each(function () {
+        sizeNumberInput(this);
+    }).on('input change', function () {
+        sizeNumberInput(this);
+    });
+
+    function loadModels() {
+        if (modelsLoaded || modelsLoading) return;
+
+        var apiKey = localStorage.getItem('openai_api_key');
+        if (!apiKey) {
+            apiKey = prompt("Please enter your API key, which you can create in your profile at https://platform.openai.com/");
+            if (!apiKey) {
+                $('#modelStatus').text('API key required to load models.');
+                return;
+            }
+            localStorage.setItem('openai_api_key', apiKey);
+        }
+
+        modelsLoading = true;
+        $.ajax({
+            url: 'https://api.openai.com/v1/models',
+            type: 'GET',
+            dataType: 'json',
+            headers: {
+                'Authorization': 'Bearer ' + apiKey,
+            },
+            success: function (data) {
+                const currentModel = $('#model').val();
+                const modelIds = data.data.map(model => model.id).sort((a, b) => a.localeCompare(b));
+                if (!modelIds.includes('gpt-6.1-sol')) modelIds.unshift('gpt-6.1-sol');
+                $('#model').empty();
+                modelIds.forEach(modelId => {
+                    $('#model').append($('<option>').val(modelId).text(modelId));
+                });
+                $('#model').val(modelIds.includes(currentModel) ? currentModel : 'gpt-6.1-sol');
+                sizeModelSelect();
+                modelsLoaded = true;
+                modelsLoading = false;
+                $('#modelStatus').text('');
+            },
+            error: function (jqXHR) {
+                modelsLoading = false;
+                $('#modelStatus').text('Could not load models: ' + (jqXHR.responseJSON?.error?.message || jqXHR.statusText));
+            }
+        });
+    }
+
+    $('#model').on('focus', loadModels);
+    $('#model').on('change', sizeModelSelect);
+    sizeModelSelect();
+    if (localStorage.getItem('openai_api_key')) loadModels();
 
     // it the navigator language is de or starts with de_, call useDeText to use translations.
     if (navigator.language === 'de' || navigator.language.startsWith('de_')) {
@@ -642,7 +728,15 @@
 
         var retries = 0;
         var emptyContentRetries = 0;
-        var temperature = parseFloat($('#temperature').val());
+        var temperature = $('#temperature').val();
+        var requestData = {
+            model: $('#model').val(),
+            max_completion_tokens: maxtokens,
+            messages: messages,
+        };
+        if (temperature !== '') {
+            requestData.temperature = parseFloat(temperature);
+        }
 
         function maybeRetryOnError(jqXHR, textStatus, errorThrown) {
             if (jqXHR.status === 429 && retries < 5) {
@@ -671,12 +765,7 @@
                     'Content-Type': 'application/json',
                 },
                 timeout: 60000,
-                data: JSON.stringify({
-                    model: "gpt-6.1-sol",
-                    max_completion_tokens: maxtokens,
-                    temperature: temperature,
-                    messages: messages,
-                }),
+                data: JSON.stringify(requestData),
                 beforeSend: (xhr) => {
                     xhronstart = xhr;
                 },
