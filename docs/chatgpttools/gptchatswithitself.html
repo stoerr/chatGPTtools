@@ -386,7 +386,12 @@
         src="//code.jquery.com/jquery-3.6.4.min.js"
         integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8="
         crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"
+        integrity="sha384-GP2+CwBlakZSDJUr+E4JvbxpM75i1i8+RKkieQxzuyDZLG+5105E1OfHIjzcXyWH"
+        crossorigin="anonymous"></script>
 <script>
+
+    var converter = new showdown.Converter({tables: true});
     // it the navigator language is de or starts with de_, call useDeText to use translations.
     if (navigator.language === 'de' || navigator.language.startsWith('de_')) {
         useDeText();
@@ -562,7 +567,9 @@
             if (data.choices[0].finish_reason === 'length') {
                 content = content + "...\n\n";
             }
-            let newchat = $('<div class="col-12 chat ' + chatclass + '"><div class="card msg mb-3"><div class="card-body">' + content + '</div></div></div>');
+            let newchat = $('<div class="col-12 chat ' + chatclass + '"><div class="card msg mb-3"><div class="card-body">' +
+                converter.makeHtml(content) + '</div></div></div>');
+            newchat.find('.msg').attr('markdown', content);
             $('#chats').append(newchat);
             updateMessageNavigation();
             turn++;
@@ -654,6 +661,27 @@
                     });
         }
     }
+
+    function editMessageListener(event) {
+        var msg = $(event.target).closest('.msg');
+        var text = msg.attr('markdown');
+        var textarea = $('<textarea class="form-control" rows="10"></textarea>').val(text);
+        msg.find('.card-body').replaceWith(textarea);
+        textarea.focus();
+        textarea.on('blur', function () {
+            var newtext = textarea.val();
+            if (newtext) {
+                var newbody = $('<div class="card-body"></div>').text(newtext);
+                textarea.replaceWith(newbody);
+                newbody.html(converter.makeHtml(newtext));
+                msg.attr('markdown', newtext);
+            } else {
+                msg.remove();
+            }
+        });
+    }
+
+    $("#chats").on('click', '.msg', editMessageListener);
 
 </script>
 </body>

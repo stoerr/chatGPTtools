@@ -16,6 +16,7 @@
             white-space: normal;
             word-wrap: break-word;
             overflow-wrap: break-word;
+            cursor: text;
         }
         .markdown-render pre {
             background: #f6f8fa;
@@ -93,7 +94,7 @@
             </div>
             <div class="col-sm-11">
                 <div class="markdown-render" style="display: none;"></div>
-                <textarea class="form-control message" rows="3"></textarea>
+                <textarea class="form-control message" rows="10"></textarea>
             </div>
         </div>
     </div>
@@ -1131,6 +1132,11 @@
             while (that.scrollHeight > that.clientHeight) {
                 that.rows++;
             }
+            const row = $(that).closest('.messagefields');
+            if ($(row).data('markdownEditing') === true) {
+                $(row).data('markdownEditing', false);
+                applyRowDisplay(row);
+            }
         }, 100);
     }
 
@@ -1315,5 +1321,10 @@
 
 </script>
 
+<script>
+    $(document).on('click', '.messagefields .markdown-render', function () {
+        $(this).closest('.messagefields').find('.markdown-edit').trigger('click');
+    });
+</script>
 </body>
 </html>

@@ -425,7 +425,7 @@
         crossorigin="anonymous"></script>
 <script>
 
-    var converter = new showdown.Converter();
+    var converter = new showdown.Converter({tables: true});
 
     // it the navigator language is de or starts with de_, call useDeText to use translations.
     if (navigator.language === 'de' || navigator.language.startsWith('de_')) {
@@ -715,13 +715,13 @@
         var el = $(event.target);
         var msg = el.closest('.msg');
         var text = msg.attr('markdown');
-        var textarea = $('<textarea class="form-control">' + text + '</textarea>');
+        var textarea = $('<textarea class="form-control" rows="10"></textarea>').val(text);
         msg.find('.card-body').replaceWith(textarea);
         textarea.focus();
         textarea.on('blur', function () {
             var newtext = textarea.val();
             if (newtext) {
-                var newbody = $('<div class="card-body">' + newtext + '</div>');
+                var newbody = $('<div class="card-body"></div>').text(newtext);
                 textarea.replaceWith(newbody);
                 msg.find('.card-body').html(converter.makeHtml(newtext));
                 msg.attr('markdown', newtext);
