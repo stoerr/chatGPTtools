@@ -641,6 +641,7 @@
         }
 
         var retries = 0;
+        var emptyContentRetries = 0;
         var temperature = parseFloat($('#temperature').val());
 
         function maybeRetryOnError(jqXHR, textStatus, errorThrown) {
@@ -679,8 +680,14 @@
                 beforeSend: (xhr) => {
                     xhronstart = xhr;
                 },
-                success: function () {
-                    if (xhq === xhronstart) resultcallback.apply(this, arguments);
+                success: function (data) {
+                    if (xhq !== xhronstart) return;
+                    if (data.choices[0].message.content === '' && emptyContentRetries < 3) {
+                        emptyContentRetries++;
+                        performCall();
+                        return;
+                    }
+                    resultcallback.apply(this, arguments);
                 },
                 error: maybeRetryOnError
             });
