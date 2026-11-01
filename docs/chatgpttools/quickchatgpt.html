@@ -187,7 +187,9 @@
         // use pushstate to add a history entry with the question and answers
         window.history.pushState({
             question: $question.val(),
-            answers: $answers.html()
+            answers: $answers.html(),
+            rawanswer: $answers.data("rawanswer"),
+            htmlanswer: $answers.data("htmlanswer")
         }, '', window.location.href);
     }
 
@@ -208,8 +210,8 @@
         if (event.state) {
             $question.val(event.state.question);
             $answers.html(event.state.answers);
-            $answers.data("rawanswer");
-            $answers.data("htmlanswer");
+            $answers.data("rawanswer", event.state.rawanswer);
+            $answers.data("htmlanswer", event.state.htmlanswer);
         }
     };
 
