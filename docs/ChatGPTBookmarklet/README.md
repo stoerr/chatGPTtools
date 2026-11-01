@@ -58,8 +58,8 @@ The tool extracts the main content from web pages (avoiding navigation, ads, etc
       "name": "OpenAI", 
       "baseUrl": "https://api.openai.com/v1",
       "headers": [{"name": "Authorization", "value": "Bearer sk-..."}],
-      "models": ["gpt-4", "gpt-3.5-turbo"],
-      "defaultModel": "gpt-4"
+      "models": ["gpt-5", "gpt-4", "gpt-3.5-turbo"],
+      "defaultModel": "gpt-5"
     },
     {
       "name": "Anthropic",
