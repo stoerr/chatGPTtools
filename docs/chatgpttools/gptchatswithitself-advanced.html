@@ -727,7 +727,6 @@
         }
 
         var retries = 0;
-        var emptyContentRetries = 0;
         var temperature = $('#temperature').val();
         var requestData = {
             model: $('#model').val(),
@@ -771,12 +770,6 @@
                 },
                 success: function (data) {
                     if (xhq !== xhronstart) return;
-                    var content = data.choices[0].message.content;
-                    if ((content === '' || content === null || content === undefined) && emptyContentRetries < 3) {
-                        emptyContentRetries++;
-                        performCall();
-                        return;
-                    }
                     resultcallback.apply(this, arguments);
                 },
                 error: maybeRetryOnError

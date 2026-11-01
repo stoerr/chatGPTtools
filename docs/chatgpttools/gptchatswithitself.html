@@ -612,7 +612,6 @@
         }
 
         var retries = 0;
-        var emptyContentRetries = 0;
 
         function maybeRetryOnError(jqXHR, textStatus, errorThrown) {
             if (jqXHR.status === 429 && retries < 5) {
@@ -651,12 +650,6 @@
                 },
                 success: function (data) {
                     if (xhq !== xhronstart) return;
-                    var content = data.choices[0].message.content;
-                    if ((content === '' || content === null || content === undefined) && emptyContentRetries < 3) {
-                        emptyContentRetries++;
-                        performCall();
-                        return;
-                    }
                     resultcallback.apply(this, arguments);
                 },
                 error: maybeRetryOnError
