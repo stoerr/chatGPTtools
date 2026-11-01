@@ -390,8 +390,13 @@
         integrity="sha384-GP2+CwBlakZSDJUr+E4JvbxpM75i1i8+RKkieQxzuyDZLG+5105E1OfHIjzcXyWH"
         crossorigin="anonymous"></script>
 <script>
+    var converter = new showdown.Converter({
+        tables: true, // GFM tables - GPT models frequently produce them
+        tasklists: true, // - [ ] / - [x] checklists - common GPT output
+        emoji: true, // :smile: emoji shortcodes
+        simplifiedAutoLink: true // make bare URLs clickable (GPT often omits < >)
+    });
 
-    var converter = new showdown.Converter({tables: true});
     function sizeNumberInput(input) {
         const style = window.getComputedStyle(input);
         const canvas = document.createElement('canvas');

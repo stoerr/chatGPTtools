@@ -443,7 +443,12 @@
         crossorigin="anonymous"></script>
 <script>
 
-    var converter = new showdown.Converter({tables: true});
+    var converter = new showdown.Converter({
+        tables: true, // GFM tables - GPT models frequently produce them
+        tasklists: true, // - [ ] / - [x] checklists - common GPT output
+        emoji: true, // :smile: emoji shortcodes
+        simplifiedAutoLink: true // make bare URLs clickable (GPT often omits < >)
+    });
     var modelsLoaded = false;
     var modelsLoading = false;
 
