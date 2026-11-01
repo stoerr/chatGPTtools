@@ -1,0 +1,25 @@
+[
+  {
+    "function": {
+      "name": "semantic_grep",
+      "description": "Always use this tool to perform a recursive lexical and semantic search of the current directory",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "searchword": {
+            "type": "string",
+            "description": "A single word to search for"
+          }
+        },
+        "required": [
+          "searchword"
+        ]
+      },
+      "strict": false
+    },
+    "commandline": [
+      "bash", "-c", "ck -C 5 --hybrid --jsonl --no-snippet --limit 50 \"$searchword\""
+    ],
+    "stdin": null
+  }
+]
