@@ -626,30 +626,25 @@
         };
     }
 
-    /** Rebuild the given URL with the #hash placed before any query string: path#hash?query. */
-    function buildHistoryUrl(url, hash) {
-        var base = url.split('#')[0];
-        var query = '';
-        var qi = base.indexOf('?');
-        if (qi >= 0) {
-            query = base.slice(qi);
-            base = base.slice(0, qi);
-        }
-        return base + (hash ? '#' + hash : '') + query;
+    var pageQuery = location.search; // query string (?...) of the page, kept across history entries
+
+    /** Rebuild the URL with the given #hash placed before the query string: path#hash?query. */
+    function buildHistoryUrl(hash) {
+        return location.pathname + (hash ? '#' + hash : '') + pageQuery;
     }
 
     /** Build a URL for a fresh history entry: the page URL plus a distinct random #run hash.
      * The hash is random (not sequential) so that different browser windows loading the same page
      * cannot collide on the same history entry URL. */
     function freshHistoryUrl() {
-        return buildHistoryUrl(location.href, 'run' + Math.random().toString(36).slice(2, 10));
+        return buildHistoryUrl('run' + Math.random().toString(36).slice(2, 10));
     }
 
     /** Save the current conversation onto the current history entry so that Back/Forward can restore it.
-     * The entry keeps its (random) hash, placed before any query string. */
+     * The entry keeps its (random) hash, placed before the query string. */
     function saveCurrentHistoryState() {
         window.history.replaceState(currentChatState(), '',
-            buildHistoryUrl(location.href, location.hash.slice(1)));
+            buildHistoryUrl(String(location.hash.slice(1)).split('?')[0]));
     }
 
     /** Open a fresh same-document history entry (empty chat, current system messages) for a new run.
