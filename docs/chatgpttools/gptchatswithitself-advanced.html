@@ -771,7 +771,8 @@
                 },
                 success: function (data) {
                     if (xhq !== xhronstart) return;
-                    if (data.choices[0].message.content === '' && emptyContentRetries < 3) {
+                    var content = data.choices[0].message.content;
+                    if ((content === '' || content === null || content === undefined) && emptyContentRetries < 3) {
                         emptyContentRetries++;
                         performCall();
                         return;
