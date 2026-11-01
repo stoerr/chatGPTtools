@@ -437,7 +437,10 @@
 
     async function fetchModelsFromApi(apiUrl) {
         try {
-            const modelsUrl = new URL('../models', apiUrl).href;
+            // Anthropic's native models endpoint, not derived from the OpenAI-compat chat URL.
+            const modelsUrl = (apiUrl.startsWith('https://api.anthropic.com')
+                ? 'https://api.anthropic.com/v1/models'
+                : new URL('../models', apiUrl).href);
             const apiSelector = $('#apiSelector').val();
 
             let headers = {};
@@ -451,9 +454,12 @@
                 const storageKey = apiSelector + '_api_key';
                 const apiKey = localStorage.getItem(storageKey);
                 if (apiKey) {
-                    headers['Authorization'] = 'Bearer ' + apiKey;
                     if (apiSelector === 'anthropic') {
+                        headers['x-api-key'] = apiKey;
                         headers['anthropic-dangerous-direct-browser-access'] = 'true';
+                        headers['anthropic-version'] = '2023-06-01';
+                    } else {
+                        headers['Authorization'] = 'Bearer ' + apiKey;
                     }
                 }
             }
