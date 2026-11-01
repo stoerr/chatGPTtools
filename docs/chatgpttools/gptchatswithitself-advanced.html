@@ -575,6 +575,7 @@
     });
 
     $('#start').click(function () {
+        openNewHistoryEntry();
         $('#chats').html('');
         updateMessageNavigation();
         turn = 0;
@@ -615,6 +616,55 @@
         $('#stop').prop('disabled', !isrunning);
         $('#helptext').hide();
     }
+
+    /** Snapshot the currently shown conversation (chats + system messages). */
+    function currentChatState() {
+        return {
+            chats: $('#chats').html(),
+            sysmsg1: $('#sysmsg1').val(),
+            sysmsg2: $('#sysmsg2').val()
+        };
+    }
+
+    /** Build a URL for a fresh history entry: the page URL plus a distinct random #run hash.
+     * The hash is random (not sequential) so that different browser windows loading the same page
+     * cannot collide on the same history entry URL. */
+    function freshHistoryUrl() {
+        return location.href.split('#')[0] + '#run' + Math.random().toString(36).slice(2, 10);
+    }
+
+    /** Save the current conversation onto the current history entry so that Back/Forward can restore it.
+     * Uses location.href so the entry keeps the (random) hash it already carries. */
+    function saveCurrentHistoryState() {
+        window.history.replaceState(currentChatState(), '', location.href);
+    }
+
+    /** Open a fresh same-document history entry (empty chat, current system messages) for a new run.
+     * Every run gets its own pushState entry with its own random hash, so pressing Back always
+     * restores the previous run within the same document instead of falling back to a page-load
+     * entry (which would reload and wipe the chat). */
+    function openNewHistoryEntry() {
+        saveCurrentHistoryState(); // store the just-finished conversation on the entry we are leaving
+        var fresh = currentChatState();
+        fresh.chats = ''; // the new run starts with an empty chat but keeps the system messages
+        window.history.pushState(fresh, '', freshHistoryUrl());
+    }
+
+    // restore a previous conversation when the browser Back/Forward button is pressed
+    window.onpopstate = function (event) {
+        setRunning(false);
+        if (xhq) {
+            xhq.abort();
+            xhq = null;
+        }
+        var state = event.state;
+        $('#chats').html(state && state.chats ? state.chats : '');
+        if (state) {
+            if (state.sysmsg1 !== undefined) $('#sysmsg1').val(state.sysmsg1);
+            if (state.sysmsg2 !== undefined) $('#sysmsg2').val(state.sysmsg2);
+        }
+        updateMessageNavigation();
+    };
 
     var turn = 0;
     var maxtokens = 0;
@@ -704,6 +754,7 @@
             newchat.find('.msg').attr('markdown', content);
             $('#chats').append(newchat);
             updateMessageNavigation();
+            saveCurrentHistoryState(); // keep the current history entry in sync with the live conversation
             console.log(chatclass, messages , newchat)
             turn++;
             chatTurn(sysmsgkey === 'sysmsg1' ? 'sysmsg2' : 'sysmsg1', chatclass === 'chat1' ? 'chat2' : 'chat1');
