@@ -617,45 +617,99 @@
         $('#helptext').hide();
     }
 
-    /** Snapshot the currently shown conversation (chats + system messages). */
+    /** Snapshot the currently shown conversation (chats + system messages).
+     * pageQuery holds the URL query string so it travels inside the encoded hash as well. */
     function currentChatState() {
         return {
             chats: $('#chats').html(),
             sysmsg1: $('#sysmsg1').val(),
-            sysmsg2: $('#sysmsg2').val()
+            sysmsg2: $('#sysmsg2').val(),
+            pageQuery: location.search
         };
     }
 
-    var pageQuery = location.search; // query string (?...) of the page, kept across history entries
+    var pageQuery = location.search; // query string (?...) of the page, kept inside the hash
 
-    /** Rebuild the URL with the given #hash placed before the query string: path#hash?query. */
-    function buildHistoryUrl(hash) {
-        return location.pathname + (hash ? '#' + hash : '') + pageQuery;
+    /** Rebuild the URL: path#encodedHash. The query string travels inside the encoded hash, so it is
+     * preserved even when the page is transferred/shared as a bare link with only a hash. */
+    function buildHistoryUrl(encodedHash) {
+        return location.pathname + (encodedHash ? '#' + encodedHash : '');
     }
 
-    /** Build a URL for a fresh history entry: the page URL plus a distinct random #run hash.
-     * The hash is random (not sequential) so that different browser windows loading the same page
-     * cannot collide on the same history entry URL. */
-    function freshHistoryUrl() {
-        return buildHistoryUrl('run' + Math.random().toString(36).slice(2, 10));
+    // --- Encoding the full conversation into the URL hash.
+    // The whole conversation (chats HTML + system messages) is deflate-compressed, base64url-encoded
+    // and put in the URL hash, so the URL can be transferred/shared and restores the conversation on
+    // load -- no local/session storage. base64url keeps the hash free of '?', '#' and '/' so it cannot
+    // collide with the query string. Falls back to plain base64url for browsers lacking CompressionStream.
+    function b64urlEncode(bytes) {
+        var s = '';
+        for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+        return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+    function b64urlDecode(str) {
+        str = str.replace(/-/g, '+').replace(/_/g, '/');
+        while (str.length % 4) str += '=';
+        var bin = atob(str);
+        var out = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+        return out;
+    }
+    var enc = new TextEncoder();
+    var dec = new TextDecoder();
+    function compressBytes(bytes) {
+        var s = new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate-raw'));
+        return new Response(s).arrayBuffer();
+    }
+    function decompressBytes(bytes) {
+        var s = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+        return new Response(s).arrayBuffer();
+    }
+    function encodeState(state) {
+        if (typeof CompressionStream !== 'undefined') {
+            return compressBytes(enc.encode(JSON.stringify(state))).then(function (buf) {
+                return b64urlEncode(new Uint8Array(buf));
+            });
+        }
+        return Promise.resolve(b64urlEncode(enc.encode(JSON.stringify(state))));
+    }
+    function decodeState(encoded) {
+        try {
+            var bytes = b64urlDecode(encoded);
+            if (typeof DecompressionStream !== 'undefined') {
+                return decompressBytes(bytes).then(function (buf) {
+                    return JSON.parse(dec.decode(new Uint8Array(buf)));
+                });
+            }
+            return Promise.resolve(JSON.parse(dec.decode(bytes)));
+        } catch (e) {
+            return Promise.resolve(null);
+        }
+    }
+    function stateUrl(state) {
+        return encodeState(state).then(function (encoded) {
+            return buildHistoryUrl(encoded);
+        });
     }
 
     /** Save the current conversation onto the current history entry so that Back/Forward can restore it.
-     * The entry keeps its (random) hash, placed before the query string. */
+     * The entry's URL hash is updated (asynchronously) to the compressed snapshot. */
     function saveCurrentHistoryState() {
-        window.history.replaceState(currentChatState(), '',
-            buildHistoryUrl(String(location.hash.slice(1)).split('?')[0]));
+        var state = currentChatState();
+        stateUrl(state).then(function (url) {
+            window.history.replaceState(state, '', url);
+        });
     }
 
     /** Open a fresh same-document history entry (empty chat, current system messages) for a new run.
-     * Every run gets its own pushState entry with its own random hash, so pressing Back always
-     * restores the previous run within the same document instead of falling back to a page-load
-     * entry (which would reload and wipe the chat). */
+     * Every run gets its own pushState entry whose hash holds that run's conversation, so pressing
+     * Back always restores the previous run within the same document instead of reloading the page. */
     function openNewHistoryEntry() {
         saveCurrentHistoryState(); // store the just-finished conversation on the entry we are leaving
         var fresh = currentChatState();
         fresh.chats = ''; // the new run starts with an empty chat but keeps the system messages
-        window.history.pushState(fresh, '', freshHistoryUrl());
+        stateUrl(fresh).then(function (url) {
+            window.history.pushState(fresh, '', url);
+        });
     }
 
     // restore a previous conversation when the browser Back/Forward button is pressed
@@ -713,6 +767,20 @@
         scrollToMessage($('#chats .chat').length - 1);
     });
     updateMessageNavigation();
+
+    // restore a conversation encoded in the URL hash when the page is opened from a transferred link
+    (function restoreFromHash() {
+        var h = String(location.hash.slice(1)).split('?')[0];
+        if (!h) return;
+        decodeState(h).then(function (state) {
+            if (!state) return;
+            $('#helptext').hide(); // the reconstructed conversation replaces the intro
+            $('#chats').html(state.chats || '');
+            if (state.sysmsg1 !== undefined) $('#sysmsg1').val(state.sysmsg1);
+            if (state.sysmsg2 !== undefined) $('#sysmsg2').val(state.sysmsg2);
+            updateMessageNavigation();
+        });
+    })();
 
     function onError(jqXHR, textStatus, errorThrown) {
         setRunning(false);
