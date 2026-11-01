@@ -131,6 +131,14 @@
                        title="If set, we keep only that many messages to prevent overflowing the API.">
                 <input type="number" id="temperature" placeholder="Temperature" value=""
                        title="What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.">
+                <select id="thinking" title="Constrains effort on reasoning for reasoning models. 'not specified' omits the parameter, 'off' disables reasoning (none).">
+                    <option value="" selected>thinking: not specified</option>
+                    <option value="off">thinking: off</option>
+                    <option value="low">thinking: low</option>
+                    <option value="med">thinking: med</option>
+                    <option value="high">thinking: high</option>
+                    <option value="max">thinking: max</option>
+                </select>
                 <input type="number" id="max_tokens" placeholder="max_tokens" value=""
                        title="The maximum number of tokens to generate in the chat completion.">
                 <input type="number" id="n" placeholder="n" value=""
@@ -279,7 +287,7 @@
         });
         $('#otherApiUrl, #otherAuthHeader, #otherAuthValue').on('input', saveSettings);
         $('#modelSelector').on('change', saveSettings);
-        $('#historysize, #temperature, #max_tokens, #n, #seed').on('input', saveSettings);
+        $('#historysize, #temperature, #max_tokens, #n, #seed, #thinking').on('input', saveSettings);
         $('#jsonoutput').on('change', saveSettings);
         $('#markdownrender').on('change', function () {
             saveSettings();
@@ -324,7 +332,7 @@
 
     function applySettings(settings) {
         for (const field of ['apiSelector', 'otherApiUrl', 'otherAuthHeader', 'otherAuthValue',
-            'historysize', 'temperature', 'max_tokens', 'n', 'seed']) {
+            'historysize', 'temperature', 'max_tokens', 'n', 'seed', 'thinking']) {
             if (Object.prototype.hasOwnProperty.call(settings, field)) $('#' + field).val(settings[field]);
         }
         pendingModel = settings.modelSelector || null;
@@ -353,6 +361,7 @@
             max_tokens: $('#max_tokens').val(),
             n: $('#n').val(),
             seed: $('#seed').val(),
+            thinking: $('#thinking').val(),
             jsonoutput: $('#jsonoutput').is(':checked'),
             markdownrender: $('#markdownrender').is(':checked')
         };
@@ -687,6 +696,10 @@
             var seed = $('#seed').val();
             if (seed) {
                 request.seed = Number(seed);
+            }
+            var thinking = $('#thinking').val();
+            if (thinking) {
+                request.reasoning_effort = {off: 'none', low: 'low', med: 'medium', high: 'high', max: 'max'}[thinking];
             }
             var jsonoutput = $('#jsonoutput').is(':checked');
             if (jsonoutput) {
@@ -1157,6 +1170,10 @@
                 if (request["max_tokens"]) {
                     $('#max_tokens').val(request["max_tokens"]);
                 }
+                if (request.reasoning_effort) {
+                    var reverseThinking = {none: 'off', low: 'low', medium: 'med', high: 'high', max: 'max'};
+                    $('#thinking').val(reverseThinking[request.reasoning_effort] || request.reasoning_effort);
+                }
                 if (request.tools) {
                     $('#tools').val(JSON.stringify(request.tools, null, 2));
                 }
@@ -1214,6 +1231,10 @@
 
         if ($('#max_tokens').val()) {
             request.max_tokens = Number($('#max_tokens').val());
+        }
+        var thinking = $('#thinking').val();
+        if (thinking) {
+            request.reasoning_effort = {off: 'none', low: 'low', med: 'medium', high: 'high', max: 'max'}[thinking];
         }
         if ($('#tools').val()) {
             try {
