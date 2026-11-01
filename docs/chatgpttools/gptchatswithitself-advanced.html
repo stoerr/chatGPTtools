@@ -316,7 +316,7 @@
                         </div>
                         <div class="input-group me-2">
                             <span class="input-group-text" data-detext="Max. Tokens:">Max. Tokens:</span>
-                            <input type="number" class="form-control" id="tokens" value="500">
+                            <input type="number" class="form-control" id="tokens" value="10000">
                         </div>
                         <div class="input-group me-2">
                             <label class="input-group-text" for="model" data-detext="Modell:">Model:</label>
@@ -343,6 +343,17 @@
                         <div class="input-group">
                             <span class="input-group-text" data-detext="Temperature:">Temperature:</span>
                             <input type="number" class="form-control" id="temperature" value="">
+                        </div>
+                        <div class="input-group me-2">
+                            <label class="input-group-text" for="thinking" data-detext="Denken:">Thinking:</label>
+                            <select class="form-select" id="thinking" style="width: auto;">
+                                <option value="" selected>not specified</option>
+                                <option value="off">off</option>
+                                <option value="low">low</option>
+                                <option value="med">med</option>
+                                <option value="high">high</option>
+                                <option value="max">max</option>
+                            </select>
                         </div>
                         <div class="input-group">
                             <div class="form-check-inline">
@@ -862,6 +873,10 @@
         };
         if (temperature !== '') {
             requestData.temperature = parseFloat(temperature);
+        }
+        var thinking = $('#thinking').val();
+        if (thinking) {
+            requestData.reasoning_effort = {off: 'none', low: 'low', med: 'medium', high: 'high', max: 'max'}[thinking];
         }
 
         function maybeRetryOnError(jqXHR, textStatus, errorThrown) {
