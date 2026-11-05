@@ -90,7 +90,6 @@
                 <a href="#actionrow">
                     <i class="fa fa-long-arrow-down" style="color: white"></i>
                 </a>
-                <button type="button" class="btn markdown-edit" title="Shows the raw markdown textarea and back to the rendered view.">Edit</button>
             </div>
             <div class="col-sm-11">
                 <div class="markdown-render" style="display: none;"></div>
@@ -251,6 +250,14 @@
     let pendingModel = null;
     let modelLoadVersion = 0;
 
+    /*
+    Model	API ID	Context / max output	Price per MTok (in / out)
+Claude Fable 5.1	claude-fable-5-1	1M / 128K	$10 / $50
+Claude Opus 5.5	claude-opus-5-5	1M / 128K	$4 / $20
+Claude Sonnet 5.5	claude-sonnet-5-5	1M / 128K	$2 / $10
+Claude Haiku 5.5	claude-haiku-5-5	1M / 128K	from $0.10 / $0.50
+     */
+
     const models = {
         'openai':
             ['gpt-4.1-nano', 'gpt-4.1-mini', 'gpt-4.1', 'gpt-4o-mini', 'gpt-4o', 'gpt-4.5-preview', 'o1-mini', 'o1', 'o3-mini', 'gpt-5-search-api', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo', 'computer-use-preview'],
@@ -292,15 +299,6 @@
         $('#markdownrender').on('change', function () {
             saveSettings();
             applyAllRows();
-        });
-        // The "Edit" button toggles between the rendered markdown view and the raw textarea for a row.
-        $('.messages').on('click', '.markdown-edit', function () {
-            const row = $(this).closest('.messagefields');
-            $(row).data('markdownEditing', $(row).data('markdownEditing') !== true);
-            applyRowDisplay($(row));
-            if ($(row).data('markdownEditing')) {
-                $(row).find('.message').focus();
-            }
         });
 
         // Save edits immediately; browser shutdown callbacks are not guaranteed to run.
@@ -590,6 +588,7 @@
         }
         row.find('.message').val(messageText);
         row.appendTo('div.messages');
+        applyRowDisplay(row);
         fixRowChaining();
         saveChat();
     }
@@ -1014,6 +1013,12 @@
         return $('#markdownrender').is(':checked');
     }
 
+    /** True when a row is an assistant message that should auto-switch between the rendered markdown
+     * view (on blur) and the raw editable textarea (on focus), because rendering is enabled. */
+    function isAssistantAutoEdit(row) {
+        return $(row).find('.type').val() === 'assistant' && isMarkdownRenderEnabled();
+    }
+
     /**
      * Updates all message rows so assistant messages are displayed as rendered markdown when the
      * "render markdown" checkbox is enabled. Non-assistant rows always keep their editable textarea.
@@ -1025,32 +1030,27 @@
     }
 
     /**
-     * Shows a single row either as rendered markdown (assistant rows, when enabled), as the raw editable
-     * textarea (all other rows, or when the user activates per-row editing), depending on its state.
+     * Shows a single row as rendered markdown (assistant rows with content, when enabled), otherwise as
+     * the raw editable textarea (all other rows, blank assistant rows, or while the field has focus).
+     * There is no edit button: focus (clicking the rendered markdown) reveals the textarea, blur turns
+     * a filled assistant row back into rendered markdown.
      */
     function applyRowDisplay(row) {
         const isAssistant = $(row).find('.type').val() === 'assistant';
         const renderEnabled = isMarkdownRenderEnabled();
         const editing = $(row).data('markdownEditing') === true;
+        const hasContent = $(row).find('.message').val().trim() !== '';
         const messageField = $(row).find('.message');
         const renderDiv = $(row).find('.markdown-render');
-        const editButton = $(row).find('.markdown-edit');
 
-        if (isAssistant && renderEnabled) {
-            if (editing) {
-                renderDiv.hide();
-                messageField.show();
-                editButton.text('Done').show();
-            } else {
-                renderDiv.html(markdownToHtml(messageField.val()));
-                renderDiv.show();
-                messageField.hide();
-                editButton.text('Edit').show();
-            }
+        if (isAssistant && renderEnabled && !editing && hasContent) {
+            renderDiv.html(markdownToHtml(messageField.val()));
+            renderDiv.show();
+            messageField.hide();
         } else {
-            $(row).data('markdownEditing', false);
+            if (isAssistant && renderEnabled) $(row).data('markdownEditing', true);
+            else $(row).data('markdownEditing', false);
             renderDiv.hide();
-            editButton.hide();
             messageField.show();
         }
     }
@@ -1152,7 +1152,7 @@
                 that.rows++;
             }
             const row = $(that).closest('.messagefields');
-            if ($(row).data('markdownEditing') === true) {
+            if (isAssistantAutoEdit(row)) {
                 $(row).data('markdownEditing', false);
                 applyRowDisplay(row);
             }
@@ -1349,8 +1349,14 @@
 </script>
 
 <script>
+    // Clicking the rendered markdown of an assistant row switches it to the editable textarea and focuses it.
     $(document).on('click', '.messagefields .markdown-render', function () {
-        $(this).closest('.messagefields').find('.markdown-edit').trigger('click');
+        const row = $(this).closest('.messagefields');
+        if ($(row).find('.markdown-render').is(':visible')) {
+            $(row).data('markdownEditing', true);
+            applyRowDisplay($(row));
+            $(row).find('.message').focus();
+        }
     });
 </script>
 </body>
