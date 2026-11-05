@@ -105,6 +105,57 @@
             }
         }
 
+        /**
+         * Parses a pipe-separated table row into cells. Leading/trailing pipes are optional,
+         * and each cell is stripped of surrounding whitespace.
+         * @returns {Array<{text: string, align?: string}>}
+         */
+        function parseTableRow(line) {
+            let trimmed = line.trim();
+            if (trimmed.startsWith('|')) {
+                trimmed = trimmed.slice(1);
+            }
+            if (trimmed.endsWith('|') && trimmed.lastIndexOf('|') > 0) {
+                trimmed = trimmed.slice(0, -1);
+            }
+            return trimmed.split('|').map(cell => ({ text: cell.trim() }));
+        }
+
+        /** A table separator row consists of cells of dashes with optional colon alignment. */
+        function hasTableSeparator(line) {
+            if (line === undefined || !line.trim().startsWith('|')) {
+                return false;
+            }
+            for (const cell of parseTableRow(line)) {
+                if (!/^:?-{3,}:?$/.test(cell.text.replace(/\s+/g, ''))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /** Whether a line is a table data row (same shape as a header row). */
+        function isTableRow(line) {
+            return parseTableRow(line).length > 0;
+        }
+
+        /** For a separator row, return the alignment of each column. */
+        function separatorAlignments(line) {
+            return parseTableRow(line).map(cell => {
+                const c = cell.text.replace(/\s+/g, '');
+                if (/^:.*:$/.test(c)) {
+                    return 'center';
+                }
+                if (/^:/.test(c)) {
+                    return 'left';
+                }
+                if (/:$/.test(c)) {
+                    return 'right';
+                }
+                return '';
+            });
+        }
+
         let paragraphLines = [];
 
         while (i < lines.length) {
@@ -160,6 +211,33 @@
                     i++;
                 }
                 html.push('<blockquote>' + quote.map(renderInline).join('<br>') + '</blockquote>');
+                continue;
+            }
+
+            // markdown table: consecutive pipe-separated lines with a separator row
+            // of dashes/colons directly after the header row (all starting with |)
+            if (line.trim().startsWith('|') && hasTableSeparator(lines[i + 1])) {
+                closeLists();
+                flushParagraph(paragraphLines);
+                const tableRow = parseTableRow(line);
+                const alignments = separatorAlignments(lines[i + 1]);
+                const headerCells = tableRow.map((cell, idx) => {
+                    const align = alignments[idx] || '';
+                    return '<th' + (align ? ' style="text-align:' + align + ';"' : '') + '>' + renderInline(cell.text) + '</th>';
+                }).join('');
+                html.push('<table><thead><tr>' + headerCells + '</tr></thead><tbody>');
+                i++; // skip header row
+                i++; // skip separator row
+                while (i < lines.length && lines[i].trim().startsWith('|') && isTableRow(lines[i])) {
+                    const rowCells = parseTableRow(lines[i]);
+                    const bodyCells = rowCells.map((cell, idx) => {
+                        const align = alignments[idx] || '';
+                        return '<td' + (align ? ' style="text-align:' + align + ';"' : '') + '>' + renderInline(cell.text) + '</td>';
+                    }).join('');
+                    html.push('<tr>' + bodyCells + '</tr>');
+                    i++;
+                }
+                html.push('</tbody></table>');
                 continue;
             }
 
