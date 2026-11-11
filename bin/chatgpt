@@ -96,7 +96,7 @@ Tooling options:
                   to stdout when called with parameter --openaitoolsconfig.
   -tt             [T]hink [t]ool - add a pseudo tool the AI can write thoughts to, e.g. for some chain of thought prompting
                   when you want JSON output that doesn't have room for discussion. Outputs the thoughts to stderr.
-  -tw             [T]ool [w]eb search - add a web search tool that submits a query to gpt-4o-search-preview and returns the result.
+  -tw             [T]ool [w]eb search - add a web search tool that submits a query to gpt-5-search-api and returns the result.
 
 Help Options:
   -h, --help, -?  Show this [h]elp message
@@ -1055,9 +1055,9 @@ function onContent(assistantMessage) {
     maybeContinueConversation();
 }
 
-/** Performs a web search by calling gpt-4o-search-preview synchronously and returns the response text. */
+/** Performs a web search by calling gpt-5-search-api synchronously and returns the response text. */
 function performWebSearch(prompt) {
-    const searchModel = 'gpt-4o-search-preview';
+    const searchModel = 'gpt-5-search-api';
     const searchApiUrl = 'https://api.openai.com/v1/chat/completions';
     const searchHeaders = {
         'Content-Type': 'application/json',

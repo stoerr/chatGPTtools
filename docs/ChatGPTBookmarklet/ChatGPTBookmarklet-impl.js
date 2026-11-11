@@ -34,16 +34,6 @@
                 // set the focus on the textarea
                 this.questionField.focus();
 
-                // Some pages aggressively steal focus back to their own fields. Re-grab focus
-                // whenever the user clicks into the dialog (unless they're using another control).
-                this.dialog.addEventListener('mousedown', function (event) {
-                    const t = event.target;
-                    if (t && t !== that.questionField && !t.closest('input, textarea, select, button, a')) {
-                        that.questionField.focus();
-                        event.preventDefault();
-                    }
-                });
-
                 this.questionField.addEventListener('keydown', function (event) {
                     if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.metaKey) {
                         event.preventDefault();
@@ -83,7 +73,7 @@
             }
         },
 
-        /** Show/hide the "Search" button if the model gpt-4o-search-preview is available and set it when clicked */
+        /** Show/hide the "Search" button if the model gpt-5-search-api is available and set it when clicked */
         setupSearchButton: function () {
             var btn = document.getElementById('hps-chatgpt-search-button');
             var sel = document.getElementById('hps-chatgpt-model-selector');
@@ -91,7 +81,7 @@
 
             function updateVisibility() {
                 var exists = Array.prototype.slice.call(sel.options).some(function (o) {
-                    return o.value === 'gpt-4o-search-preview';
+                    return o.value === 'gpt-5-search-api';
                 });
                 btn.style.display = exists ? '' : 'none';
             }
@@ -106,9 +96,9 @@
             } catch (e) { /* ignore if MutationObserver not available */ }
 
             btn.addEventListener('click', function () {
-                var exists = Array.prototype.slice.call(sel.options).some(function (o) { return o.value === 'gpt-4o-search-preview'; });
+                var exists = Array.prototype.slice.call(sel.options).some(function (o) { return o.value === 'gpt-5-search-api'; });
                 if (!exists) return;
-                sel.value = 'gpt-4o-search-preview';
+                sel.value = 'gpt-5-search-api';
                 // dispatch change event so any listeners react
                 var ev;
                 try { ev = new Event('change', { bubbles: true }); } catch (e) { ev = document.createEvent('HTMLEvents'); ev.initEvent('change', true, false); }
