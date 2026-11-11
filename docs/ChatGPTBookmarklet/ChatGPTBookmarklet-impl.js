@@ -26,10 +26,23 @@
                 this.selectIncludeScreenshot = document.getElementById('hpsChatGPTIncludeScreenshot');
 
                 this.answerfield = document.getElementById('hpsChatGPTAnswer');
+                this.transcript = document.getElementById('hpsChatGPTTranscript');
+                this.conversationCheckbox = document.getElementById('hpsChatGPTConversation');
+                this.chatHistory = [];
                 this.questionField = document.getElementById('hpsChatGPTQuestion');
                 this.getIncludedText(); // sets clipped to true if text was clipped
                 // set the focus on the textarea
                 this.questionField.focus();
+
+                // Some pages aggressively steal focus back to their own fields. Re-grab focus
+                // whenever the user clicks into the dialog (unless they're using another control).
+                this.dialog.addEventListener('mousedown', function (event) {
+                    const t = event.target;
+                    if (t && t !== that.questionField && !t.closest('input, textarea, select, button, a')) {
+                        that.questionField.focus();
+                        event.preventDefault();
+                    }
+                });
 
                 this.questionField.addEventListener('keydown', function (event) {
                     if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.metaKey) {
@@ -54,6 +67,8 @@
                 this.initPredefinedPrompts();
                 this.predefinedPromptSelect.addEventListener('change', this.selectPrompt.bind(this));
                 this.questionField.addEventListener('change', this.resetPredefinedPrompt.bind(this));
+                this.conversationCheckbox.addEventListener('change', this.onConversationToggle.bind(this));
+                this.newChatButton = document.getElementById('hpsChatGPTNewChat');
 
                 // Setup the search button behavior (moved from inline script)
                 this.setupSearchButton();
@@ -327,6 +342,9 @@
             await this.init();
             await this.loadModelList();
             this.showDialog();
+            // The field can't be focused while the dialog is hidden (display:none), so grab focus
+            // now that it's visible. A small delay lets page scripts that steal focus settle first.
+            setTimeout(() => this.questionField.focus(), 0);
             try {
                 this.answerfield.innerHTML = 'Contacting ChatGPT for summary...<br/><br/>' + this.helptext;
                 const summary = await this.getSummary();
@@ -361,20 +379,40 @@
         submitQuestion: async function () {
             const question = this.questionField.value;
             const includePageContent = this.selectIncludePageContent.checked;
+            const chatMode = this.conversationCheckbox.checked;
 
-            if (question.trim() !== '') {
-                this.answerfield.innerText = 'Thinking...';
-                try {
-                    const answer = await this.getAnswer(question, includePageContent);
+            if (question.trim() === '') {
+                alert('Please enter a question before submitting.');
+                return;
+            }
+            if (this.chatBusy) {
+                return; // ignore double submissions while a request is in flight
+            }
+            this.chatBusy = true;
+            try {
+                if (chatMode) {
+                    this.showChatThinking(question);
+                } else {
+                    this.answerfield.innerText = 'Thinking...';
+                }
+                const answer = await this.getAnswer(question, includePageContent, chatMode);
+                if (chatMode) {
+                    this.appendChatAnswer(answer);
+                } else {
                     this.setAnswer(answer);
                     this.saveToHistory();
-                    this.stopDictation(); // dialog changes size -> button moves.
-                } catch (e) {
-                    console.log(e);
-                    this.answerfield.innerText = 'Error: ' + e;
                 }
-            } else {
-                alert('Please enter a question before submitting.');
+                this.stopDictation(); // dialog changes size -> button moves.
+            } catch (e) {
+                console.log(e);
+                if (chatMode) {
+                    this.appendChatAnswer('Error: ' + e);
+                } else {
+                    this.answerfield.innerText = 'Error: ' + e;
+                    this.saveToHistory();
+                }
+            } finally {
+                this.chatBusy = false;
             }
         },
 
@@ -441,10 +479,50 @@
             return this.promptOnText(instructions, content, selectedModel);
         },
 
-        getAnswer: async function (question, includePageContent) {
+        getAnswer: async function (question, includePageContent, chatMode) {
             const content = includePageContent ? this.getIncludedText().trim() : '';
             const selectedModel = document.getElementById('hps-chatgpt-model-selector').value;
+            if (chatMode) {
+                return this.promptOnTextChat(question, content, selectedModel);
+            }
             return this.promptOnText(question, content, selectedModel);
+        },
+
+        /**
+         * Sends a question in conversation mode: appends the current user message to the accumulated
+         * chatHistory and sends the whole history so the AI has context of earlier turns. The first
+         * turn uses the same load-the-text pattern as single-answer mode; later turns are plain user
+         * messages relying on the AI remembering the loaded page content.
+         */
+        promptOnTextChat: async function (prompt, text, model) {
+            const includeScreenshot = this.selectIncludeScreenshot.checked;
+            const screenshotUrl = includeScreenshot && this.screenshotImage.src ? this.screenshotImage.src : null;
+
+            if (this.chatHistory.length === 0 && text) {
+                // First turn with page content: seed the history with the load-the-text pattern.
+                const isde = this.lang === 'de';
+                const loadinstruction = isde ? 'Rufe bitte den Text ab, für den der Prompt ausgeführt werden wird, und gib genau diesen Text ohne weitere Kommentare aus.'
+                    : 'Please retrieve the text for which you are going to execute a prompt, and print exactly that text, without any additional comments.';
+                const promptinstruction = isde ? 'Die folgende Anweisung bezieht sich speziell auf den Text, der soeben abgerufen und angezeigt haben. Wenn ich von "dem Text" oder "der Seite" spreche, beziehe ich mich auf genau diesen Text. Bitte denke daran, wenn Du den folgenden Prompt ausführst:\n\nPROMPT:\n\n'
+                    : 'The following instruction is specifically about the text you\'ve just retrieved and displayed. Whenever I refer to "the text" or "the page", I\'m referencing this exact piece of content. Please keep this in mind while executing the following prompt:\n\nPROMPT:\n\n';
+                const promptmsg = [{"type": "text", "text": promptinstruction + prompt}];
+                if (screenshotUrl) {
+                    promptmsg.push({type: 'image_url', image_url: {url: screenshotUrl}});
+                }
+                this.chatHistory.push({role: 'user', content: loadinstruction});
+                this.chatHistory.push({role: 'assistant', content: text});
+                this.chatHistory.push({role: 'user', content: promptmsg});
+            } else {
+                const promptmsg = [{"type": "text", "text": prompt}];
+                if (screenshotUrl) {
+                    promptmsg.push({type: 'image_url', image_url: {url: screenshotUrl}});
+                }
+                this.chatHistory.push({role: 'user', content: promptmsg});
+            }
+            console.log('sent messages: ', this.chatHistory);
+            const answer = await this.sendChatGPTRequestWithClipping(this.chatHistory, this.setClipped.bind(this), model);
+            this.chatHistory.push({role: 'assistant', content: answer});
+            return answer;
         },
 
         promptOnText: async function (prompt, text, model) {
@@ -596,25 +674,126 @@
                 answer: this.lastAnswer || this.answerfield.innerText,
             };
             this.history.push(state);
+            this.historyIndex = this.history.length - 1; // stay at the latest turn
+            if (this.isChatMode()) {
+                this.renderChatTranscript();
+                this.scrollChatToEnd();
+            }
         },
 
-        restore: function (state) {
+        /** Whether conversation mode is currently active. */
+        isChatMode: function () {
+            return this.conversationCheckbox && this.conversationCheckbox.checked;
+        },
+
+        /** Restores the conversation/answer to the given history index (turn). */
+        restore: function (index) {
+            const state = this.history[index];
+            if (!state) {
+                return;
+            }
             this.questionField.value = state.question;
-            this.setAnswer(state.answer);
+            if (this.isChatMode()) {
+                this.renderChatTranscript(index);
+            } else {
+                this.setAnswer(state.answer);
+            }
         },
 
         historyBack: function () {
+            if (this.history.length === 0) {
+                return;
+            }
+            if (this.historyIndex < 0) {
+                this.historyIndex = this.history.length - 1;
+            }
             if (this.historyIndex > 0) {
-                this.restore(this.history[--this.historyIndex]);
-            } else if (this.historyIndex < 0) { // last state
-                this.restore(this.history[this.historyIndex = this.history.length - 1]);
+                this.restore(--this.historyIndex);
             }
         },
 
         historyForward: function () {
             if (this.historyIndex < this.history.length - 1) {
-                this.restore(this.history[++this.historyIndex]);
+                this.restore(++this.historyIndex);
             }
+        },
+
+        /** Handles toggling the conversation checkbox on/off. */
+        onConversationToggle: function () {
+            const on = this.conversationCheckbox.checked;
+            this.dialog.classList.toggle('hps-chatgpt-chatmode', on);
+            this.newChatButton.classList.toggle('hidden', !on);
+            this.chatHistory = [];
+            this.history = [];
+            this.historyIndex = -1;
+            if (on) {
+                this.renderChatTranscript();
+            } else {
+                this.transcript.innerHTML = '';
+            }
+        },
+
+        /** Renders the accumulated conversation turn by turn as a transcript up to the given index. */
+        renderChatTranscript: function (upToIndex) {
+            if (upToIndex === undefined) {
+                upToIndex = this.history.length - 1;
+            }
+            const html = [];
+            const limit = Math.min(upToIndex, this.history.length - 1);
+            for (let i = 0; i <= limit; i++) {
+                const turn = this.history[i];
+                html.push('<div class="hps-chatgpt-turn hps-chatgpt-turn-user">' +
+                    '<div class="hps-chatgpt-turn-label">You:</div>' +
+                    '<div class="hps-chatgpt-answer">' + this.markdownToHtml(turn.question) + '</div></div>');
+                html.push('<div class="hps-chatgpt-turn hps-chatgpt-turn-assistant">' +
+                    '<div class="hps-chatgpt-turn-label">AI:</div>' +
+                    '<div class="hps-chatgpt-answer">' + this.markdownToHtml(turn.answer) + '</div></div>');
+            }
+            this.transcript.innerHTML = html.join('\n');
+        },
+
+        /** Shows the user's question with a "Thinking..." placeholder while a chat answer is pending. */
+        showChatThinking: function (question) {
+            this.renderChatTranscript();
+            const pending = document.createElement('div');
+            pending.className = 'hps-chatgpt-turn hps-chatgpt-turn-pending';
+            pending.innerHTML = '<div class="hps-chatgpt-turn hps-chatgpt-turn-user">' +
+                '<div class="hps-chatgpt-turn-label">You:</div>' +
+                '<div class="hps-chatgpt-answer">' + this.markdownToHtml(question) + '</div></div>' +
+                '<div class="hps-chatgpt-turn hps-chatgpt-turn-assistant">' +
+                '<div class="hps-chatgpt-turn-label">AI:</div>' +
+                '<div class="hps-chatgpt-answer">Thinking...</div></div>';
+            this.transcript.appendChild(pending);
+            this.scrollChatToEnd();
+        },
+
+        /** Records the completed turn (question + answer) and re-renders the transcript. */
+        appendChatAnswer: function (answer) {
+            this.lastAnswer = answer;
+            const question = this.questionField.value;
+            this.history.push({question: question, answer: answer});
+            this.historyIndex = this.history.length - 1;
+            this.renderChatTranscript();
+            this.scrollChatToEnd();
+        },
+
+        /** Scrolls the transcript to the newest turn. */
+        scrollChatToEnd: function () {
+            if (this.transcript) {
+                this.transcript.scrollTop = this.transcript.scrollHeight;
+            }
+        },
+
+        /** Clears the conversation and starts a new chat. */
+        newChat: function () {
+            this.chatHistory = [];
+            this.history = [];
+            this.historyIndex = -1;
+            this.lastAnswer = '';
+            this.transcript.innerHTML = '';
+            this.answerfield.innerText = '';
+            this.questionField.value = '';
+            this.questionField.focus();
         },
 
         hideScreenshotOverlay() {

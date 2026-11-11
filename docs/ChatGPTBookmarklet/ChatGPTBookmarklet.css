@@ -429,6 +429,46 @@
     display: none !important;
 }
 
+/* --- Conversation / transcript view --- */
+.hps-chatgpt-transcript {
+    display: none !important;
+}
+
+/* When conversation checkbox is checked, show transcript and hide single answer */
+.hps-chatgpt-dialog.hps-chatgpt-chatmode .hps-chatgpt-transcript {
+    display: block !important;
+    overflow-y: auto !important;
+    max-height: calc(100vh - 300px) !important;
+}
+
+.hps-chatgpt-dialog.hps-chatgpt-chatmode .hps-chatgpt-answer {
+    display: none !important;
+}
+
+.hps-chatgpt-turn {
+    margin-bottom: 12px !important;
+    padding-bottom: 8px !important;
+    border-bottom: 1px solid #e5e5e5 !important;
+}
+
+.hps-chatgpt-turn-user .hps-chatgpt-turn-label,
+.hps-chatgpt-turn-assistant .hps-chatgpt-turn-label {
+    font-size: 12px !important;
+    font-weight: bold !important;
+    margin-bottom: 2px !important;
+    color: #4c8bf5 !important;
+}
+
+.hps-chatgpt-turn-user .hps-chatgpt-turn-label { color: #8a6d3b !important; }
+.hps-chatgpt-turn-assistant .hps-chatgpt-turn-label { color: #4c8bf5 !important; }
+
+/* Reuse markdown answer styles within transcript turns */
+.hps-chatgpt-turn .hps-chatgpt-answer {
+    display: block !important;
+    max-height: none !important;
+    overflow: visible !important;
+}
+
 /* Styling for backend and model selectors */
 .hps-chatgpt-selectors {
     display: flex !important;

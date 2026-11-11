@@ -285,6 +285,9 @@
 
     var hpsChatGPTBookmarklet = {
 
+        /** Converts ChatGPT markdown to HTML. Exposed so the impl can render transcript turns. */
+        markdownToHtml: markdownToHtml,
+
         /**
          * Sends a chat request to the OpenAI ChatGPT API and retrieves the response.
          *

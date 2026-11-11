@@ -43,6 +43,10 @@
                            checked="checked"/>
                     <label for="hpsChatGPTIncludePageContent">content</label>
                 </span>
+                <span title="Keep the conversation history so the AI has context of earlier questions and answers.">
+                    <input type="checkbox" id="hpsChatGPTConversation" class="hps-chatgpt-conversation"/>
+                    <label for="hpsChatGPTConversation">conversation</label>
+                </span>
                 <span title="Send a picture of the web page to the AI.">
                     <input type="checkbox" id="hpsChatGPTIncludeScreenshot" class="hps-chatgpt-include-screenshot"/>
                     <label for="hpsChatGPTIncludeScreenshot">screenshot</label>
@@ -67,10 +71,15 @@
                 <div class="hps-chatgpt-answer" id="hpsChatGPTAnswer">
                     One moment...
                 </div>
+                <div class="hps-chatgpt-transcript" id="hpsChatGPTTranscript">
+                </div>
             </div>
             <div class="hps-chatgpt-controls">
                 <button id="hpsChatGPTCopyToClipboard" onclick="window.hpsChatGPTBookmarklet.copyToClipboard()"
                         title="Copy to clipboard">&#x1F4CB;
+                </button>
+                <button id="hpsChatGPTNewChat" onclick="window.hpsChatGPTBookmarklet.newChat()"
+                        title="Start a new conversation (clears the history)" class="hidden">&#x27F3;
                 </button>
                 <button id="hpsChatGPTCloseBottom" onclick="window.hpsChatGPTBookmarklet.hideDialog()"
                         title="Hide the dialog">&#x2716;
