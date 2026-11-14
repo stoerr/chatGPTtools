@@ -173,6 +173,23 @@
         .form-control, .theme1 .form-select {
             border-color: var(--border-color);
         }
+
+        .msg table {
+            border-collapse: collapse;
+            border: 1px solid gray;
+            margin: 0.5rem 0;
+        }
+
+        .msg table th, .msg table td {
+            border: 1px solid gray;
+            padding: 0.25rem 0.5rem;
+            vertical-align: top;
+        }
+
+        .continue-separator {
+            border-top: 2px solid var(--secondary-color);
+            margin: 1.5rem 0;
+        }
     </style>
 </head>
 <body class="theme2">
@@ -364,6 +381,9 @@
 
             <div id="chats" class="mt-3">
             </div>
+            <div class="col-12 text-center mt-3">
+                <button type="button" class="btn" id="continue-bottom" data-detext="Weiter">Continue</button>
+            </div>
         </div>
     </div>
 </div>
@@ -479,12 +499,18 @@
         chatTurn('sysmsg1', 'chat1');
     });
 
-    $('#continue').click(function () {
+    function doContinue() {
         turn = 0;
         maxtokens = parseInt($('#tokens').val());
+        if ($('#chats .chat').length > 0) {
+            $('#chats').append('<hr class="continue-separator">');
+        }
         setRunning(true);
         chatTurn('sysmsg1', 'chat1');
-    });
+    }
+
+    $('#continue').click(doContinue);
+    $('#continue-bottom').click(doContinue);
 
     $('#themes').change(function () {
         $('body').removeClass().addClass($('#themes').val());
@@ -508,6 +534,7 @@
     function setRunning(isrunning) {
         $('#start').prop('disabled', isrunning);
         $('#continue').prop('disabled', isrunning);
+        $('#continue-bottom').prop('disabled', isrunning);
         $('#stop').prop('disabled', !isrunning);
         $('#helptext').hide();
     }
