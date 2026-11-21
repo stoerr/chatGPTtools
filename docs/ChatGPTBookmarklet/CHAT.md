@@ -59,14 +59,16 @@ In conversation mode, replace the single answer block with a **conversation tran
 ### 4. UI
 
 - Add a **"conversation" checkbox** in the controls row.
-  - Turning it on: initializes `chatHistory`, shows the transcript view, and adds a "New chat" reset button.
-  - Turning it off: clears the transcript back to the single-answer view; the last answer stays visible, chat history is dropped.
+  - Turning it on: enters conversation mode, shows the transcript view, and adds a labeled **"Clear"** reset button (which clears both the conversation and the input field).
+  - Turning it off: leaves conversation mode; the concatenated turns go back into the single-answer fields, and the chat state is preserved in a snapshot so it can be restored on return.
+- Turning on the checkbox (or submitting a turn) clears the question textarea, so the next question is a fresh follow-up turn.
 - Question textarea stays; Enter submits a new turn.
-- Add a **"New chat" / reset** button (visible only in conversation mode) to clear `chatHistory` and the transcript (and optionally re-trigger the summary load).
+- A labeled **"Clear"** button (visible only in conversation mode) clears `chatHistory`, the transcript, the answer field and the input field — a clean start.
 - Keep existing single-answer actions meaningful:
   - Copy copies the **latest** answer.
-  - Back/forward history still navigates the selectable Q/A pairs.
+  - Back/forward history still navigates the turns (single mode: Q/A pairs; chat mode: turns, and new turns append from the current position).
 - The screenshot checkbox applies to the current turn only (as today).
+- The dialog is capped at the screen height (`max-height: 90vh`); when content is long the answer / transcript scroll internally instead of growing the dialog past the viewport.
 
 ### 5. Clipping & limits
 
@@ -85,7 +87,27 @@ The existing back/forward buttons (`&#x23F3`, the history buttons in the bottom 
 - Each submitted turn (question + answer pair) is recorded as an entry in `this.history`.
 - **Back** moves to the previous turn and restores the transcript as it looked at that point (all turns up to and including that index).
 - **Forward** moves to a later turn again.
-- So you can freely step back and forth through the whole conversation and re-view any earlier point, then continue asking — new turns append from the current position.
+- So you can freely step back and forth through the whole conversation and re-view any earlier point, then continue asking — new turns append from the current position: submitting a follow-up while positioned at an earlier turn **truncates** the later turns (`truncateHistoryToCurrent()`) and appends the new turn there, and `chatHistory` is rebuilt to match. Older turns are shown faded with a "newer turns lie beyond the current position" separator so it's clear part of the conversation is hidden.
+- While an answer is pending (the in-flight turn is recorded in `history` with an empty answer), it survives a mid-request mode toggle and is filled in when the answer arrives.
+
+## Conversation <-> single-mode toggle
+
+Both modes share `this.history` (a list of `{question, answer}` turns). Toggling the **conversation** checkbox transitions without destroying state:
+
+**single → conversation (turn ON)** — `enterConversation()`
+- **First entry** (open dialog, no saved snapshot) with existing single-mode turns (incl. an open-dialog auto-summary): adopts them as the conversation — a question asked in single mode before toggling on becomes a **user** turn and its answer the assistant turn. If no turns exist yet, seeds turn 1 from the current fields (empty question is fine — handles the summary case).
+- **The input field is always cleared** on entry. The current single-mode prompt (whether the original or an edited/unsubmitted draft) is moved *into* the transcript as a turn rather than left lingering in the input field, so toggling back and forth yields a consistent result.
+- Seeds `this.chatHistory` via `seedChatHistoryFromSingle(turn1.question)` so the first chat submission has the load-the-text page context.
+
+**conversation → single (turn OFF)** — `exitConversation()`
+- Concatenates all **user** messages into the question field and all **assistant** messages (joined with blank lines) into the answer field via `setAnswer`.
+- Snapshots `this.savedHistory` (deep copy of the turns) and `this.savedSnapshot` (`{question, answer}` baseline of the just-concatenated values) so an untouched return can be detected and restored.
+
+**single → conversation again (turn ON, returning)** — `enterConversation()`
+- If the question/answer fields are **unchanged** since leaving (compared against `savedSnapshot` via `wasChanged()`): **restore** the old turns into the transcript and rebuild `chatHistory` from them (`rebuildChatHistoryFromTurns()`), so follow-ups carry full context; the input is cleared (nothing was modified).
+- If **changed** (user edited either field while off): start a **fresh** conversation whose **turn 1 is the current question/answer** — the edited question text becomes the first user message (and is included in `chatHistory`), and the input field is cleared. The edit is not lost; it becomes the first user message in the chat.
+
+`newChat()` clears `savedHistory`/`savedSnapshot` too, so a new chat never resurrects old state.
 
 ## Out of scope (v1)
 
@@ -96,8 +118,8 @@ The existing back/forward buttons (`&#x23F3`, the history buttons in the bottom 
 
 ## File impact
 
-- `ChatGPTBookmarklet-impl.js` — the main work: `chatHistory`, rework `promptOnText`/`getAnswer` to append, transcript rendering, conversation checkbox, "New chat" reset, turn-based history navigation, oldest-first clipping.
-- `ChatGPTBookmarklet.html` — conversation checkbox, transcript container, "New chat" button.
+- `ChatGPTBookmarklet-impl.js` — the main work: `chatHistory`, rework `promptOnText`/`getAnswer` to append, transcript rendering, conversation checkbox, "Clear" reset, turn-based history navigation, oldest-first clipping.
+- `ChatGPTBookmarklet.html` — conversation checkbox, transcript container, "Clear" button.
 - `ChatGPTBookmarklet.css` — bubble/row styling.
 - `ChatGPTBookmarklet-data.js` — update `helptext`.
 - `CHAT.md` — this doc (which doubles as the feature spec).

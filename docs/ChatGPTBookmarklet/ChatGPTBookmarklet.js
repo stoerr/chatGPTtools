@@ -4,8 +4,14 @@
 
     const that = window.hpsChatGPTBookmarklet;
 
+    /**
+     * Cache-busting tag. Bump this whenever any file under basePath (the html/css/js) changes,
+     * so browsers that aggressively cache these runtime-fetched resources pick up the new version
+     * instead of serving a stale copy (which made the "conversation" toggle appear to do nothing).
+     */
+    const CACHE_BUST = 'v20261121g';
+
     that.init = async function (basePath, apikey, callbackWhenHTMLLoaded, config) {
-        debugger;
         try {
             that.basePath = basePath;
             // remove trailing slash
@@ -14,7 +20,8 @@
             that.config = config;
 
             if (!that.dialog) {
-                const response = await fetch(this.basePath + '/ChatGPTBookmarklet.html');
+                const bust = (name) => '?v=' + CACHE_BUST;
+                const response = await fetch(this.basePath + '/ChatGPTBookmarklet.html' + bust());
 
                 if (response.ok) {
                     const html = await response.text();
@@ -23,12 +30,12 @@
 
                     let scriptLoadPromises = [];  // array to hold promises for script loading
                     root.querySelectorAll('head > link').forEach((element) => {
-                        element.href = that.basePath + '/' + element.getAttribute('href');
+                        element.href = that.basePath + '/' + element.getAttribute('href') + bust();
                         document.head.appendChild(element);
                     });
                     root.querySelectorAll('head > script').forEach((element) => {
                         const newElement = document.createElement('script');
-                        newElement.src = that.basePath + '/' + element.getAttribute('src');
+                        newElement.src = that.basePath + '/' + element.getAttribute('src') + bust();
                         newElement.type = element.type;
                         scriptLoadPromises.push(new Promise((resolve, reject) => {
                             newElement.onload = () => resolve();

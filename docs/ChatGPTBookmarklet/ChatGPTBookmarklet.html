@@ -78,9 +78,8 @@
                 <button id="hpsChatGPTCopyToClipboard" onclick="window.hpsChatGPTBookmarklet.copyToClipboard()"
                         title="Copy to clipboard">&#x1F4CB;
                 </button>
-                <button id="hpsChatGPTNewChat" onclick="window.hpsChatGPTBookmarklet.newChat()"
-                        title="Start a new conversation (clears the history)" class="hidden">&#x27F3;
-                </button>
+                <button id="hpsChatGPTClear" onclick="window.hpsChatGPTBookmarklet.newChat()"
+                        title="Clear the conversation and the input field" class="hidden">Clear</button>
                 <button id="hpsChatGPTCloseBottom" onclick="window.hpsChatGPTBookmarklet.hideDialog()"
                         title="Hide the dialog">&#x2716;
                 </button>
@@ -88,10 +87,10 @@
                         title="Show the help text">&#x1F4A1;
                 </button>
                 <button id="hpsChatGPTHistoryBack" onclick="window.hpsChatGPTBookmarklet.historyBack()"
-                        title="Backward in history">&lt;&#x23F3
+                        title="Back to previous turn">&lt;&#x23F3
                 </button>
                 <button id="hpsChatGPTHistoryForward" onclick="window.hpsChatGPTBookmarklet.historyForward()"
-                        title="Forward in history">&#x23F3&gt;
+                        title="Forward to next turn">&#x23F3&gt;
                 </button>
                 <button id="hpsChatGPTRecord"
                         title="Dictate the query - keep pressed while you are speaking.">&#x1F3A4;

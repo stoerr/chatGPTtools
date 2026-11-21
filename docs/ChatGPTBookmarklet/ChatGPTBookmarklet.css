@@ -441,7 +441,9 @@
     max-height: calc(100vh - 300px) !important;
 }
 
-.hps-chatgpt-dialog.hps-chatgpt-chatmode .hps-chatgpt-answer {
+/* In chat mode hide only the single answer block (a direct child of the response
+   container); the per-turn answers inside the transcript must stay visible. */
+.hps-chatgpt-dialog.hps-chatgpt-chatmode .hps-chatgpt-response > .hps-chatgpt-answer {
     display: none !important;
 }
 
@@ -467,6 +469,25 @@
     display: block !important;
     max-height: none !important;
     overflow: visible !important;
+}
+
+.hps-chatgpt-turn-separator {
+    text-align: center !important;
+    font-size: 12px !important;
+    color: #999 !important;
+    margin: 4px 0 12px 0 !important;
+    font-style: italic !important;
+}
+
+/* The labeled "Clear" control is text, not an icon — keep it readable but compact. */
+#hpsChatGPTClear {
+    font-size: 13px !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    padding: 2px 6px !important;
+    border: 1px solid #4c8bf5 !important;
+    border-radius: 4px !important;
+    vertical-align: middle !important;
 }
 
 /* Styling for backend and model selectors */
@@ -515,4 +536,52 @@
     #hpsChatGPTConfigTextarea {
         font-size: 12px !important;
     }
+}
+
+/* --- Keep the dialog within the viewport: the answer / transcript scroll instead --- */
+.hps-chatgpt-dialog {
+    max-height: 90vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+}
+
+.hps-chatgpt-header {
+    flex: 0 0 auto !important;
+}
+
+.hps-chatgpt-content {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+}
+
+/* Keep the question and controls fixed; let only the answer/transcript scroll. */
+#hpsChatGPTQuestion,
+.hps-chatgpt-controls,
+.hps-chatgpt-selectors {
+    flex: 0 0 auto !important;
+}
+
+.hps-chatgpt-response {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Remove the old fixed 100vh-based cap so the flex column decides the height.
+   The answer / transcript are content-sized; only the response container scrolls,
+   avoiding nested scrollbars. */
+.hps-chatgpt-answer {
+    max-height: none !important;
+    overflow: visible !important;
+}
+
+.hps-chatgpt-dialog.hps-chatgpt-chatmode .hps-chatgpt-transcript {
+    max-height: none !important;
+    overflow: visible !important;
 }
