@@ -119,6 +119,9 @@
                 <button type="button" class="btn btn-primary" onclick="addFields()"
                         title="Adds some empty input fields">Add Fields
                 </button>
+                <button type="button" class="btn btn-primary" id="hps-chatgpt-dictate" onclick="startDictation()"
+                        title="Dictate into the field that had the focus last, at the cursor position">Dictate
+                </button>
                 <br/>
                 <a href="#top">
                     <i class="fa fa-long-arrow-up" style="color: white"></i>
@@ -1344,6 +1347,81 @@ Claude Haiku 5.5	claude-haiku-5-5	1M / 128K	from $0.10 / $0.50
             }
             inflightCalls = [];
         }
+    }
+
+    /* ---- Speech-to-text dictation into the last-focused input field ---- */
+    let dictateTarget = null;      // the textarea/input that had focus before dictating
+    let dictateInsertPos = null;   // position where the next final text chunk is inserted
+    let dictateRecognition = null;
+
+    // Remember the last focused editable field so Dictate knows where to insert.
+    $(document).on('focusin', '.message, input[type="number"], input[type="text"], select', function () {
+        dictateTarget = this;
+    });
+
+    function startDictation() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert('Speech recognition is not supported by this browser.');
+            return;
+        }
+        if (dictateTarget && dictateTarget.isConnected && dictateTarget.setSelectionRange) {
+            dictateInsertPos = dictateTarget.selectionStart;
+        } else {
+            dictateInsertPos = dictateTarget && dictateTarget.value ? dictateTarget.value.length : 0;
+            dictateTarget = null;
+        }
+        const recognition = new SpeechRecognition();
+        dictateRecognition = recognition;
+        recognition.interimResults = true;
+        recognition.continuous = true;
+        recognition.lang = navigator.language || 'en-US';
+        recognition.onresult = function (event) {
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                if (event.results[i].isFinal) {
+                    insertDictatedText(event.results[i][0].transcript);
+                }
+            }
+        };
+        recognition.onerror = function () {
+            stopDictation();
+        };
+        recognition.onend = function () {
+            stopDictation();
+        };
+        recognition.start();
+        setDictateButton(true);
+    }
+
+    /** Inserts a final text chunk into the target at the tracked cursor position. */
+    function insertDictatedText(text) {
+        let target = dictateTarget;
+        if (!target || !target.isConnected) return; // field removed meanwhile
+        if (dictateInsertPos === null) {
+            dictateInsertPos = target.value ? target.value.length : 0;
+        }
+        target.value = target.value.slice(0, dictateInsertPos) + text + target.value.slice(dictateInsertPos);
+        dictateInsertPos += text.length;
+        try {
+            target.setSelectionRange(dictateInsertPos, dictateInsertPos);
+        } catch (e) { /* non-text fields */ }
+        target.focus();
+    }
+
+    function setDictateButton(dictating) {
+        const btn = document.getElementById('hps-chatgpt-dictate');
+        btn.innerHTML = dictating ? 'Stop' : 'Dictate';
+        btn.setAttribute('onclick', dictating ? 'stopDictation()' : 'startDictation()');
+        btn.title = dictating ? 'Stop dictation' : 'Dictate into the field that had the focus last, at the cursor position';
+    }
+
+    function stopDictation() {
+        if (dictateRecognition) {
+            dictateRecognition.stop();
+            dictateRecognition = null;
+        }
+        setDictateButton(false);
+        dictateInsertPos = null;
     }
 
 </script>
