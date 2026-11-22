@@ -7,6 +7,8 @@ const continuousGroup = document.getElementById('dictation-continuous-group');
 const helpButton = document.getElementById('dictation-help');
 const clearButton = document.getElementById('dictation-clear');
 const modeSelect = document.getElementById('dictation-mode');
+const readButton = document.getElementById('dictation-read');
+const rendered = document.getElementById('dictation-rendered');
 
 // Logging functionality
 const logContent = document.getElementById('logContent');
@@ -46,8 +48,7 @@ const updateContinuousButtonVisibility = () => {
         continuousGroup.style.display = 'none';
         // Ensure it isn't left mid-dictation if the mode was switched away
         if (continuousDictating) {
-            continuousDictating = false;
-            setDictateContinuousButton(false);
+            stopContinuousDictation();
         }
     }
 };
@@ -67,6 +68,7 @@ let isRecording = false;
 let isStoppingRecording = false;
 let isStartingRecording = false;
 let continuousDictating = false;
+let activeProvider = null; // which provider is actually recording: MODE_BROWSER, MODE_WHISPER, or null
 let lastTexts = [];
 let lastPosition;
 
@@ -79,8 +81,13 @@ let recognitionFinalBuffer = '';
 
 const storage_api_key = 'openai_api_key';
 const storage_relevant_terms = 'net-stoerr-chatgpt-dictation-relevant-terms';
+const storage_textarea = 'net-stoerr-chatgpt-dictation-textarea';
+const storage_language = 'net-stoerr-chatgpt-dictation-language';
 
 if (!termsarea.value) termsarea.value = localStorage.getItem(storage_relevant_terms) || '';
+if (!textarea.value) textarea.value = localStorage.getItem(storage_textarea) || '';
+const storedLanguage = localStorage.getItem(storage_language);
+if (storedLanguage) document.getElementById('dictation-language').value = storedLanguage;
 
 const getOpenAIKey = () => {
     openaiAPIKey = localStorage.getItem(storage_api_key);
@@ -186,6 +193,7 @@ const startContinuousDictation = async () => {
     isStartingRecording = true;
     try {
         logMessage('Starting continuous dictation...', 'info');
+        activeProvider = MODE_BROWSER;
         await startBrowserRecognition();
         setDictateContinuousButton(true);
         logMessage('Continuous dictation started', 'success');
@@ -222,6 +230,10 @@ const startWhisperRecording = async () => {
 };
 
 const stopWhisperRecording = async () => {
+    if (!recorder) {
+        logMessage('No active Whisper recording to stop', 'warn');
+        return;
+    }
     recorder.stop();
     clearTimeout(timeoutCall);
     audioStream.getTracks().forEach(track => track.stop());
@@ -287,6 +299,7 @@ const startRecording = async () => {
     try {
         logMessage('Starting recording...', 'info');
         console.log('Recording...');
+        activeProvider = getMode();
         if (getMode() === MODE_BROWSER) {
             await startBrowserRecognition();
         } else {
@@ -316,7 +329,7 @@ const stopRecording = async () => {
     console.log('Stopping recording');
     dictateButton.disabled = true;
 
-    if (getMode() === MODE_BROWSER) {
+    if (activeProvider === MODE_BROWSER) {
         stopBrowserRecognition();
         if (recognitionFinalBuffer) {
             lastTexts.push(textarea.value);
@@ -331,6 +344,7 @@ const stopRecording = async () => {
     recorder = null;
     recognition = null;
     audioStream = null;
+    activeProvider = null;
     isRecording = false;
     isStoppingRecording = false;
     dictateButton.disabled = false;
@@ -362,6 +376,41 @@ const insertResult = (data) => {
 
 textarea.addEventListener('blur', () => {
     lastPosition = textarea.selectionStart;
+});
+
+// ---------------- Markdown render toggle (View / Edit) ----------------
+const storage_view = 'net-stoerr-chatgpt-dictation-view';
+let converter = new showdown.Converter();
+const renderButton = document.getElementById('dictation-render');
+
+const showRendered = () => {
+    rendered.innerHTML = converter.makeHtml(textarea.value);
+    rendered.style.display = '';
+    textarea.style.display = 'none';
+    termsarea.style.display = 'none';
+    renderButton.textContent = 'Edit';
+    renderButton.title = 'Go back to editing the text';
+    rendered.scrollTop = 0;
+    localStorage.setItem(storage_view, 'render');
+};
+
+const showEditing = () => {
+    rendered.style.display = 'none';
+    textarea.style.display = '';
+    termsarea.style.display = '';
+    renderButton.textContent = 'Render';
+    renderButton.title = 'Render the text as markdown';
+    localStorage.setItem(storage_view, 'edit');
+};
+
+// Clicking into the rendered text switches back to editing
+rendered.addEventListener('mousedown', (e) => {
+    e.preventDefault(); // don't lose selection inside the rendered view
+    showEditing();
+});
+rendered.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    showEditing();
 });
 
 // Hotkey for dictation
@@ -410,6 +459,14 @@ const attachEventListeners = () => {
     fixupButton.addEventListener('click', fixupText);
     undoButton.addEventListener('click', undo);
 
+    readButton.addEventListener('click', () => {
+        if (reading) {
+            stopReading();
+        } else {
+            startReading();
+        }
+    });
+
     document.getElementById('dictation-help').addEventListener('click', function () {
         $('#helpModal').modal('show');
     });
@@ -424,6 +481,8 @@ const attachEventListeners = () => {
             // Remove stored relevant terms from localStorage as user cleared them
             try {
                 localStorage.removeItem(storage_relevant_terms);
+                localStorage.removeItem(storage_textarea);
+                localStorage.removeItem(storage_language);
             } catch (e) {
                 console.warn('Could not remove storage item', e);
             }
@@ -431,6 +490,40 @@ const attachEventListeners = () => {
             logMessage('Cleared all inputs and reset language', 'info');
         });
     }
+
+    // Markdown render toggle
+    renderButton.addEventListener('click', () => {
+        if (rendered.style.display === 'none') {
+            showRendered();
+        } else {
+            showEditing();
+        }
+    });
+
+    // Process text with an arbitrary prompt
+    processButton.addEventListener('click', openProcessModal);
+    // Enter starts processing; Shift+Enter adds a new line
+    processPrompt.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            document.getElementById('dictation-process-confirm').click();
+        }
+    });
+    // Selecting a saved prompt replaces the prompt input
+    processPrompts.addEventListener('change', () => {
+        processPrompt.value = processPrompts.value;
+    });
+    document.getElementById('dictation-process-confirm').addEventListener('click', async () => {
+        const prompt = processPrompt.value.trim();
+        if (!prompt) {
+            alert('Please enter a prompt.');
+            return;
+        }
+        $('#processModal').modal('hide');
+        savePrompt(prompt);
+        loadPromptHistory();
+        await processText(prompt);
+    });
 };
 
 // Resize textarea to fill screen space
@@ -454,6 +547,7 @@ function resizeTextarea() {
         textarea.style.height = `${areasheight * 9 / 10}px`;
         termsarea.style.height = `${areasheight / 10}px`;
     }
+    rendered.style.height = textarea.style.height;
 }
 
 window.addEventListener('resize', resizeTextarea);
@@ -519,8 +613,228 @@ const fixupText = async () => {
     }
 };
 
+// ---------------- Process text with an arbitrary prompt ----------------
+const processButton = document.getElementById('dictation-process');
+const processPrompt = document.getElementById('dictation-process-prompt');
+const processPrompts = document.getElementById('dictation-process-prompts');
+const storage_process_prompts = 'net-stoerr-chatgpt-dictation-process-prompts';
+
+// Load and populate the saved prompt history (most recent first, at most 20 unique entries)
+const loadPromptHistory = () => {
+    let prompts = [];
+    try { prompts = JSON.parse(localStorage.getItem(storage_process_prompts)) || []; } catch (e) { prompts = []; }
+    processPrompts.innerHTML = '<option value="">(select a previous prompt)</option>';
+    for (const p of prompts) {
+        const option = document.createElement('option');
+        option.value = p;
+        option.textContent = p.length > 80 ? p.substring(0, 80) + '…' : p;
+        processPrompts.appendChild(option);
+    }
+};
+
+const savePrompt = (prompt) => {
+    let prompts = [];
+    try { prompts = JSON.parse(localStorage.getItem(storage_process_prompts)) || []; } catch (e) { prompts = []; }
+    prompts = prompts.filter(p => p !== prompt); // keep unique
+    prompts.unshift(prompt);
+    prompts = prompts.slice(0, 20);
+    try { localStorage.setItem(storage_process_prompts, JSON.stringify(prompts)); } catch (e) { /* storage full */ }
+};
+
+const processText = async (prompt) => {
+    const text = textarea.value;
+    logMessage('Starting text processing...', 'info');
+    const requestBody = {
+        model: "gpt-5-mini",
+        messages: [
+            {"role": "assistant", "content": "Please give me the text to process."},
+            {"role": "user", "content": `${text}`},
+            {"role": "assistant", "content": "What shall I do with this text?"},
+            {"role": "user", "content": prompt}
+        ]
+    };
+    processButton.disabled = true;
+    try {
+        logMessage('Sending text to OpenAI for processing...', 'info');
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getOpenAIKey()}`
+            },
+            body: JSON.stringify(requestBody)
+        });
+        const data = await response.json();
+        if (response.ok && data.choices[0].finish_reason === "stop" && data.choices[0].message.content) {
+            logMessage('Text processing completed successfully', 'success');
+            lastTexts.push(textarea.value);
+            textarea.value = data.choices[0].message.content.trim();
+            if (rendered.style.display !== 'none') showRendered(); // refresh rendered view if active
+        } else {
+            logMessage(`API Error or unexpected response: ${JSON.stringify(data)}`, 'error');
+            throw new Error(`API Error or unexpected response: ${JSON.stringify(data)}`);
+        }
+    } catch (error) {
+        logMessage(`Processing error: ${error.message}`, 'error');
+        alert(`Error: ${error.message}`);
+        console.error(error);
+    } finally {
+        processButton.disabled = false;
+    }
+};
+
+const openProcessModal = () => {
+    loadPromptHistory();
+    processPrompt.value = '';
+    $('#processModal').modal('show');
+    processPrompt.focus();
+};
+
+// ---------------- Persist form settings ----------------
+textarea.addEventListener('input', () => {
+    try { localStorage.setItem(storage_textarea, textarea.value); } catch (e) { /* storage full/unavailable */ }
+});
+document.getElementById('dictation-language').addEventListener('change', (e) => {
+    try { localStorage.setItem(storage_language, e.target.value); } catch (err) { /* ignore */ }
+});
+
+// ---------------- Read out text (browser speech synthesis) ----------------
+let reading = false;
+
+const pickReadVoice = (lang) => {
+    const voices = window.speechSynthesis ? speechSynthesis.getVoices() : [];
+    const base = (lang || '').split('-')[0].toLowerCase();
+    return voices.find(v => base && v.lang.toLowerCase().split('-')[0] === base)
+        || voices.find(v => v.default)
+        || voices[0];
+};
+
+// Voices load asynchronously; trigger a refresh so pickReadVoice sees them early
+if ('speechSynthesis' in window) {
+    speechSynthesis.getVoices();
+    speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+}
+
+const setReadButton = (active) => {
+    reading = active;
+    if (active) {
+        readButton.textContent = '⏹ Stop Reading';
+        readButton.classList.remove('btn-info');
+        readButton.classList.add('btn-danger');
+        readButton.title = 'Stop reading out the text';
+    } else {
+        readButton.textContent = 'Read';
+        readButton.classList.remove('btn-danger');
+        readButton.classList.add('btn-info');
+        readButton.title = 'Read out the text starting from the cursor using the browser\'s speech synthesis';
+    }
+};
+
+// Split text into speakable chunks (~250 chars) at word boundaries, recording each chunk's absolute start offset
+const splitIntoChunks = (text) => {
+    const chunks = [];
+    const maxLen = 250;
+    let pos = 0; // absolute offset of the current chunk within the original `text` passed in
+    while (text.length > maxLen) {
+        let cut = text.lastIndexOf(' ', maxLen);
+        if (cut < 0) cut = maxLen;
+        const chunk = text.substring(0, cut);
+        chunks.push({text: chunk, start: pos});
+        pos += cut;
+        text = text.substring(cut).replace(/^\s+/, (m) => {
+            pos += m.length;
+            return '';
+        });
+    }
+    if (text) chunks.push({text, start: pos});
+    return chunks;
+};
+
+// Move the textarea caret to the position currently being read out, so the user can follow along
+const moveCursorTo = (pos) => {
+    textarea.selectionStart = pos;
+    textarea.selectionEnd = pos;
+    lastPosition = pos;
+};
+
+// Speak the chunks in sequence, updating the caret as the read-aloud position advances
+const speakSequence = (chunks, baseOffset, lang, voice) => {
+    let i = 0;
+    const speakNext = () => {
+        if (i >= chunks.length) {
+            setReadButton(false);
+            return;
+        }
+        const chunk = chunks[i++];
+        const utterance = new SpeechSynthesisUtterance(chunk.text);
+        if (voice) {
+            utterance.voice = voice;
+            utterance.lang = lang || voice.lang;
+        } else if (lang) {
+            utterance.lang = lang;
+        }
+        utterance.onboundary = (e) => {
+            if (typeof e.charIndex === 'number') {
+                moveCursorTo(baseOffset + chunk.start + e.charIndex);
+            }
+        };
+        utterance.onend = speakNext;
+        utterance.onerror = () => {
+            // Skip to the next chunk on transient errors; only stop on cancel
+            if (!chunks[i]) setReadButton(false);
+        };
+        speechSynthesis.speak(utterance);
+    };
+    speakNext();
+};
+
+const startReading = () => {
+    if (isRecording) {
+        logMessage('Cannot read while recording', 'warn');
+        return;
+    }
+    if (!('speechSynthesis' in window)) {
+        logMessage('Speech synthesis not supported in this browser', 'error');
+        alert('Speech synthesis is not supported in this browser.');
+        return;
+    }
+    const text = textarea.value;
+    if (!text.trim()) {
+        logMessage('Nothing to read out', 'warn');
+        return;
+    }
+    // Determine where to start: from the textarea cursor if focused, else from the last recorded position
+    let cursorPosition = document.activeElement === textarea ? textarea.selectionStart : lastPosition;
+    cursorPosition = Math.max(0, Math.min(cursorPosition, text.length));
+    // If there is nothing left after the cursor (e.g. it is at the very end), start from the beginning
+    if (!text.substring(cursorPosition).trim()) {
+        cursorPosition = 0;
+    }
+    const snippet = text.substring(cursorPosition); // keep leading whitespace so caret positions stay accurate
+    if (!snippet.trim()) {
+        logMessage('No text to read out', 'warn');
+        return;
+    }
+    speechSynthesis.cancel(); // stop any previous reading
+    const lang = document.getElementById('dictation-language').value;
+    const voice = pickReadVoice(lang);
+    logMessage(`Reading out ${snippet.length} characters from position ${cursorPosition}`, 'info');
+    setReadButton(true);
+    speakSequence(splitIntoChunks(snippet), cursorPosition, lang, voice);
+};
+
+const stopReading = () => {
+    if ('speechSynthesis' in window) speechSynthesis.cancel();
+    setReadButton(false);
+};
+
 attachEventListeners();
 updateContinuousButtonVisibility();
+
+// Restore last used view (Render/edit) on load
+if (localStorage.getItem(storage_view) === 'render' && textarea.value) {
+    showRendered();
+}
 
 // Log initialization
 logMessage('Dictation app initialized', 'success');
