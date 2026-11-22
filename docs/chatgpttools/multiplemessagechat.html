@@ -120,7 +120,18 @@
                         title="Adds some empty input fields">Add Fields
                 </button>
                 <button type="button" class="btn btn-primary" id="hps-chatgpt-dictate" onclick="startDictation()"
+                        onmousedown="if (event.target.tagName !== 'SELECT') event.preventDefault()"
                         title="Dictate into the field that had the focus last, at the cursor position">Dictate
+                    <select id="hps-chatgpt-dictate-lang" onclick="event.stopPropagation()"
+                            style="display:inline-block; width:auto; margin-left:0.4em; padding:0; border:none; background:transparent; color:inherit;"
+                            title="Language for speech recognition">
+                        <option value="en-US">en</option>
+                        <option value="de-DE">de</option>
+                        <option value="es-ES">es</option>
+                    </select>
+                </button>
+                <button type="button" class="btn btn-danger" id="hps-chatgpt-stop" onclick="stopDictation()"
+                        style="display: none;" title="Stop dictation">Stop
                 </button>
                 <br/>
                 <a href="#top">
@@ -1150,6 +1161,10 @@ Claude Haiku 5.5	claude-haiku-5-5	1M / 128K	from $0.10 / $0.50
     function shrinkOnBlur() {
         var that = this;
         setTimeout(function () {
+            // While dictating into this field, keep it expanded so the UI doesn't jump.
+            if (dictateActive && that === dictateTarget) {
+                return;
+            }
             that.rows = 1;
             while (that.scrollHeight > that.clientHeight) {
                 that.rows++;
@@ -1353,9 +1368,12 @@ Claude Haiku 5.5	claude-haiku-5-5	1M / 128K	from $0.10 / $0.50
     let dictateTarget = null;      // the textarea/input that had focus before dictating
     let dictateInsertPos = null;   // position where the next final text chunk is inserted
     let dictateRecognition = null;
+    let dictateActive = false;     // true while dictation runs; suppresses collapsing of the target field
 
     // Remember the last focused editable field so Dictate knows where to insert.
+    // The Dictate button and its language DDL must not become the dictation target.
     $(document).on('focusin', '.message, input[type="number"], input[type="text"], select', function () {
+        if ($(this).closest('#hps-chatgpt-dictate, #hps-chatgpt-stop').length) return;
         dictateTarget = this;
     });
 
@@ -1365,17 +1383,20 @@ Claude Haiku 5.5	claude-haiku-5-5	1M / 128K	from $0.10 / $0.50
             alert('Speech recognition is not supported by this browser.');
             return;
         }
+        // Read the caret of the target field (restoring focus there first, so the button click does not alter it).
         if (dictateTarget && dictateTarget.isConnected && dictateTarget.setSelectionRange) {
+            dictateTarget.focus();
             dictateInsertPos = dictateTarget.selectionStart;
         } else {
             dictateInsertPos = dictateTarget && dictateTarget.value ? dictateTarget.value.length : 0;
             dictateTarget = null;
         }
+        dictateActive = true;
         const recognition = new SpeechRecognition();
         dictateRecognition = recognition;
         recognition.interimResults = true;
         recognition.continuous = true;
-        recognition.lang = navigator.language || 'en-US';
+        recognition.lang = document.getElementById('hps-chatgpt-dictate-lang').value;
         recognition.onresult = function (event) {
             for (let i = event.resultIndex; i < event.results.length; i++) {
                 if (event.results[i].isFinal) {
@@ -1409,10 +1430,9 @@ Claude Haiku 5.5	claude-haiku-5-5	1M / 128K	from $0.10 / $0.50
     }
 
     function setDictateButton(dictating) {
-        const btn = document.getElementById('hps-chatgpt-dictate');
-        btn.innerHTML = dictating ? 'Stop' : 'Dictate';
-        btn.setAttribute('onclick', dictating ? 'stopDictation()' : 'startDictation()');
-        btn.title = dictating ? 'Stop dictation' : 'Dictate into the field that had the focus last, at the cursor position';
+        // The Stop button replaces the Dictate button (which becomes invisible) while dictating.
+        document.getElementById('hps-chatgpt-dictate').style.display = dictating ? 'none' : '';
+        document.getElementById('hps-chatgpt-stop').style.display = dictating ? '' : 'none';
     }
 
     function stopDictation() {
@@ -1420,6 +1440,7 @@ Claude Haiku 5.5	claude-haiku-5-5	1M / 128K	from $0.10 / $0.50
             dictateRecognition.stop();
             dictateRecognition = null;
         }
+        dictateActive = false;
         setDictateButton(false);
         dictateInsertPos = null;
     }
