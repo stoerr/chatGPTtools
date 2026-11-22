@@ -2,8 +2,8 @@
 const textarea = document.getElementById('dictation-textarea');
 const termsarea = document.getElementById('dictation-termsarea');
 const dictateButton = document.getElementById('dictation-dictate');
-const stopButton = document.getElementById('dictation-stop');
-const stopModalConfirm = document.getElementById('stopModalConfirm');
+const continuousButton = document.getElementById('dictation-dictate-continuous');
+const continuousGroup = document.getElementById('dictation-continuous-group');
 const helpButton = document.getElementById('dictation-help');
 const clearButton = document.getElementById('dictation-clear');
 const modeSelect = document.getElementById('dictation-mode');
@@ -36,21 +36,37 @@ const MODE_WHISPER = 'whisper';
 const MODE_BROWSER = 'browser';
 const storage_mode = 'net-stoerr-chatgpt-dictation-mode';
 
+const getMode = () => modeSelect.value === MODE_BROWSER ? MODE_BROWSER : MODE_WHISPER;
+
+// The continuous "Dictate" function (with its language DDL) is only available in browser speech mode
+const updateContinuousButtonVisibility = () => {
+    if (getMode() === MODE_BROWSER) {
+        continuousGroup.style.display = '';
+    } else {
+        continuousGroup.style.display = 'none';
+        // Ensure it isn't left mid-dictation if the mode was switched away
+        if (continuousDictating) {
+            continuousDictating = false;
+            setDictateContinuousButton(false);
+        }
+    }
+};
+
 if (localStorage.getItem(storage_mode)) {
     modeSelect.value = localStorage.getItem(storage_mode);
 }
 modeSelect.addEventListener('change', () => {
     localStorage.setItem(storage_mode, modeSelect.value);
-    logMessage(`Transcription engine switched to: ${modeSelect.value === MODE_BROWSER ? 'Browser Speech' : 'Whisper (OpenAI)'}`, 'warn');
+    logMessage(`Transcription engine switched to: ${getMode() === MODE_BROWSER ? 'Browser Speech' : 'Whisper (OpenAI)'}`, 'warn');
+    updateContinuousButtonVisibility();
 });
-
-const getMode = () => modeSelect.value === MODE_BROWSER ? MODE_BROWSER : MODE_WHISPER;
 
 // ---------------- Shared recording state ----------------
 let timeoutCall;
 let isRecording = false;
 let isStoppingRecording = false;
 let isStartingRecording = false;
+let continuousDictating = false;
 let lastTexts = [];
 let lastPosition;
 
@@ -107,8 +123,8 @@ const initBrowserRecognition = () => {
         if (event.error === 'aborted' || event.error === 'no-speech') return; // expected on normal stop
         logMessage(`Speech recognition error: ${event.error}`, 'error');
         alert(`Speech recognition error: ${event.error}`);
-        // No final results may have been produced; undo any partial insertion is not trivial, so stop cleanly
-        stopBrowserRecognition();
+        // Full teardown so the UI state (buttons, continuous dictation) is reset
+        stopRecording();
     };
     recognition.onend = () => {
         // Recognition ended on its own (e.g. browser timed out); finish normally
@@ -146,6 +162,48 @@ const stopBrowserRecognition = () => {
         try { recognition.stop(); } catch (e) { /* already stopped */ }
     }
     clearTimeout(timeoutCall);
+};
+
+// ---------------- Continuous dictation (browser mode only) ----------------
+// Morph the "Dictate" button into a red "Stop" button while dictating
+const setDictateContinuousButton = (dictating) => {
+    continuousDictating = dictating;
+    if (dictating) {
+        continuousButton.textContent = '⏹ Stop';
+        continuousButton.classList.remove('btn-primary');
+        continuousButton.classList.add('btn-danger');
+        continuousButton.title = 'Stop continuous dictation';
+    } else {
+        continuousButton.textContent = 'Dictate';
+        continuousButton.classList.remove('btn-danger');
+        continuousButton.classList.add('btn-primary');
+        continuousButton.title = 'Start continuous dictation';
+    }
+};
+
+const startContinuousDictation = async () => {
+    if (isRecording || isStoppingRecording || isStartingRecording) return;
+    isStartingRecording = true;
+    try {
+        logMessage('Starting continuous dictation...', 'info');
+        await startBrowserRecognition();
+        setDictateContinuousButton(true);
+        logMessage('Continuous dictation started', 'success');
+    } catch (error) {
+        logMessage(`Error starting continuous dictation: ${error.message}`, 'error');
+        alert(`Error starting continuous dictation: ${error.message}`);
+        isRecording = false;
+    } finally {
+        isStartingRecording = false;
+    }
+};
+
+const stopContinuousDictation = async () => {
+    if (continuousDictating) {
+        await stopRecording();
+        setDictateContinuousButton(false);
+        logMessage('Continuous dictation stopped', 'info');
+    }
 };
 
 // ---------------- Whisper recording ----------------
@@ -234,9 +292,6 @@ const startRecording = async () => {
         } else {
             await startWhisperRecording();
         }
-        // Show stop button
-        stopButton.style.display = '';
-        stopButton.disabled = false;
         logMessage('Recording started successfully', 'success');
     } catch (error) {
         logMessage(`Error starting recording: ${error.message}`, 'error');
@@ -260,8 +315,6 @@ const stopRecording = async () => {
     logMessage('Stopping recording...', 'info');
     console.log('Stopping recording');
     dictateButton.disabled = true;
-    // Hide stop button
-    stopButton.style.display = 'none';
 
     if (getMode() === MODE_BROWSER) {
         stopBrowserRecognition();
@@ -281,6 +334,10 @@ const stopRecording = async () => {
     isRecording = false;
     isStoppingRecording = false;
     dictateButton.disabled = false;
+    // Ensure the continuous Dictate button is restored even on auto-stop or error
+    if (continuousDictating) {
+        setDictateContinuousButton(false);
+    }
 };
 
 // Insert result into textarea
@@ -341,22 +398,14 @@ const attachEventListeners = () => {
         stopRecording();
     });
 
-    // Stop button: show confirmation dialog
-    stopButton.addEventListener('click', () => {
-        if (isRecording && !isStoppingRecording) {
-            logMessage('Stop button clicked, showing confirmation...', 'info');
-            $('#stopModal').modal('show');
+    // Continuous dictation (browser mode only): click to start, the button becomes Stop, click again to stop
+    continuousButton.addEventListener('click', () => {
+        if (continuousDictating) {
+            stopContinuousDictation();
+        } else {
+            startContinuousDictation();
         }
     });
-
-    // Confirm stop from modal
-    if (stopModalConfirm) {
-        stopModalConfirm.addEventListener('click', () => {
-            logMessage('Stop confirmed by user', 'info');
-            $('#stopModal').modal('hide');
-            stopRecording();
-        });
-    }
 
     fixupButton.addEventListener('click', fixupText);
     undoButton.addEventListener('click', undo);
@@ -471,6 +520,7 @@ const fixupText = async () => {
 };
 
 attachEventListeners();
+updateContinuousButtonVisibility();
 
 // Log initialization
 logMessage('Dictation app initialized', 'success');
