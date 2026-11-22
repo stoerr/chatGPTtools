@@ -59,6 +59,10 @@
                       placeholder="Optionally, enter relevant terms here to improve spelling..." title="Optional relevant terms to help transcription and spelling"></textarea>
         </div>
         <div class="card-footer text-muted d-flex justify-content-around" style="border-radius: 0 0 20px 20px;">
+            <select id="dictation-mode" class="btn btn-light mr-2" title="Choose transcription engine: OpenAI Whisper (needs an API key) or the browser's built-in speech recognition">
+                <option value="whisper">Whisper (OpenAI)</option>
+                <option value="browser">Browser Speech</option>
+            </select>
             <select id="dictation-language" class="btn btn-light mr-2" title="Select language for transcription (optional)">
                 <option value="">(language)</option>
                 <option value="en">English</option>
@@ -134,13 +138,22 @@
                     and execute any correction instructions in the text and format it, like a dictation assistant.
                 </p>
                 <p>
-                    If there is already text in the text area this application will provide it to the AI as context.
+                    <strong>Transcription engine:</strong> Use the dropdown to choose between two engines.
+                    <strong>Whisper (OpenAI)</strong> records a snippet and sends it to the OpenAI Whisper API, which keeps
+                    typing while you stop and gives the best accuracy (needs an OpenAI API key).
+                    <strong>Browser Speech</strong> uses the browser's built-in speech recognition, which inserts text live
+                    as you speak. It needs no API key and works fully locally, but accuracy and supported languages depend
+                    on your browser.
+                </p>
+                <p>
+                    If there is already text in the text area this application will provide it to the AI as context
+                    (Whisper mode).
                     This improves the quality of the transcription because the AI can guess better which word you meant
                     if there are several words that sound alike, and also because the AI knows the beginning of the
                     sentence if the cursor is in mid-sentence.
                 </p>
                 <p>
-                    This application is meant for a browser on a desktop computer, and is based on the
+                    In <strong>Whisper</strong> mode this application is meant for a browser on a desktop computer, and is based on the
                     OpenAI Whisper AI. You will need an <a href="https://platform.openai.com/api-keys">OpenAI API
                     key</a>
                     to use this application.

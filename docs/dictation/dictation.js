@@ -6,6 +6,7 @@ const stopButton = document.getElementById('dictation-stop');
 const stopModalConfirm = document.getElementById('stopModalConfirm');
 const helpButton = document.getElementById('dictation-help');
 const clearButton = document.getElementById('dictation-clear');
+const modeSelect = document.getElementById('dictation-mode');
 
 // Logging functionality
 const logContent = document.getElementById('logContent');
@@ -30,16 +31,35 @@ $('#logPanel').on('hidden.bs.collapse', function () {
     logToggleIcon.textContent = '▶';
 });
 
-// Recorder setup
-let recorder;
-let audioStream;
+// ---------------- Mode selection (Whisper vs Browser Speech) ----------------
+const MODE_WHISPER = 'whisper';
+const MODE_BROWSER = 'browser';
+const storage_mode = 'net-stoerr-chatgpt-dictation-mode';
+
+if (localStorage.getItem(storage_mode)) {
+    modeSelect.value = localStorage.getItem(storage_mode);
+}
+modeSelect.addEventListener('change', () => {
+    localStorage.setItem(storage_mode, modeSelect.value);
+    logMessage(`Transcription engine switched to: ${modeSelect.value === MODE_BROWSER ? 'Browser Speech' : 'Whisper (OpenAI)'}`, 'warn');
+});
+
+const getMode = () => modeSelect.value === MODE_BROWSER ? MODE_BROWSER : MODE_WHISPER;
+
+// ---------------- Shared recording state ----------------
 let timeoutCall;
 let isRecording = false;
 let isStoppingRecording = false;
 let isStartingRecording = false;
-let openaiAPIKey;
 let lastTexts = [];
 let lastPosition;
+
+// Provider-specific state (only one provider is active at a time)
+let recorder;
+let audioStream;
+let openaiAPIKey;
+let recognition = null;
+let recognitionFinalBuffer = '';
 
 const storage_api_key = 'openai_api_key';
 const storage_relevant_terms = 'net-stoerr-chatgpt-dictation-relevant-terms';
@@ -53,44 +73,182 @@ const getOpenAIKey = () => {
         if (openaiAPIKey) localStorage.setItem(storage_api_key, openaiAPIKey);
     }
     return openaiAPIKey;
-
 };
 
 const maxRecordingMs = 2 * 60 * 1000; // 2 minutes
 
-// Start recording
-const startRecording = async (event, e1, e2) => {
-    if (!isRecording && !isStoppingRecording && !isStartingRecording) try {
-        isStartingRecording = true;
+const browserRecognizer = () => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) throw new Error('Browser speech recognition is not supported in this browser. Use Whisper mode instead.');
+    return new SR();
+};
+
+// ---------------- Browser speech recognition ----------------
+const initBrowserRecognition = () => {
+    recognition = browserRecognizer();
+    recognition.continuous = true;
+    recognition.interimResults = false; // insert only final (stable) results
+    const lang = document.getElementById('dictation-language').value;
+    recognition.lang = lang || (navigator.language || 'en-US'); // BCP-47 is required by the Web Speech API
+    recognition.onresult = (event) => {
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            const result = event.results[i];
+            if (result.isFinal) {
+                const text = result[0].transcript.trim();
+                if (text) {
+                    recognitionFinalBuffer += (recognitionFinalBuffer ? ' ' : '') + text;
+                    insertText(text);
+                    logMessage(`Recognized: "${text}"`, 'info');
+                }
+            }
+        }
+    };
+    recognition.onerror = (event) => {
+        if (event.error === 'aborted' || event.error === 'no-speech') return; // expected on normal stop
+        logMessage(`Speech recognition error: ${event.error}`, 'error');
+        alert(`Speech recognition error: ${event.error}`);
+        // No final results may have been produced; undo any partial insertion is not trivial, so stop cleanly
+        stopBrowserRecognition();
+    };
+    recognition.onend = () => {
+        // Recognition ended on its own (e.g. browser timed out); finish normally
+        if (isRecording) {
+            stopBrowserRecognition();
+        }
+    };
+};
+
+const startBrowserRecognition = async () => {
+    initBrowserRecognition();
+    try {
+        recognition.start();
+    } catch (e) {
+        // Recognition may already be started from a previous session; retry once after abort
+        try {
+            recognition.abort();
+            recognition.start();
+        } catch (e2) {
+            logMessage(`Error starting speech recognition: ${e2.message}`, 'error');
+            throw e2;
+        }
+    }
+    isRecording = true;
+    recognitionFinalBuffer = '';
+    // The Web Speech API keeps listening until stopped or it times out on its own.
+    timeoutCall = setTimeout(() => {
+        logMessage('Auto-stopping speech recognition after 2 minutes', 'warn');
+        stopRecording();
+    }, maxRecordingMs);
+};
+
+const stopBrowserRecognition = () => {
+    if (recognition) {
+        try { recognition.stop(); } catch (e) { /* already stopped */ }
+    }
+    clearTimeout(timeoutCall);
+};
+
+// ---------------- Whisper recording ----------------
+const startWhisperRecording = async () => {
+    audioStream = await navigator.mediaDevices.getUserMedia({audio: true});
+    logMessage('Microphone access granted', 'success');
+    const audioContext = new AudioContext();
+    const input = audioContext.createMediaStreamSource(audioStream);
+    recorder = new Recorder(input, {numChannels: 1});
+    recorder.record();
+    timeoutCall = setTimeout(() => {
+        logMessage('Auto-stopping recording after 2 minutes', 'warn');
+        stopRecording();
+    }, maxRecordingMs);
+    isRecording = true;
+};
+
+const stopWhisperRecording = async () => {
+    recorder.stop();
+    clearTimeout(timeoutCall);
+    audioStream.getTracks().forEach(track => track.stop());
+    logMessage('Recording stopped, processing audio...', 'info');
+    await new Promise((resolve) => {
+        recorder.exportWAV(async (blob) => {
+            try {
+                logMessage(`Audio blob size: ${blob.size} bytes`, 'info');
+                const formData = new FormData();
+                formData.append('file', blob);
+                formData.append('model', 'whisper-1');
+                let value = document.getElementById('dictation-language').value;
+                if (value) {
+                    formData.append('language', value);
+                    logMessage(`Language set to: ${value}`, 'info');
+                }
+                // Create a prompt from the existing text to guide the transcription
+                let cursorPosition = document.activeElement === textarea ? textarea.selectionStart : lastPosition;
+                let textAreaValue = textarea.value || '';
+                let termsAreaValue = termsarea.value;
+                if (termsAreaValue) localStorage.setItem(storage_relevant_terms, termsAreaValue);
+                const textBefore = textAreaValue.substring(0, cursorPosition);
+                const textAfter = textAreaValue.substring(cursorPosition);
+                var promptText = '';
+                if (textAfter) promptText = '... ' + textAfter + '\n\n' + '-'.repeat(80) + '\n\n';
+                if (termsAreaValue) promptText += termsAreaValue + '\n\n' + '-'.repeat(80) + '\n\n';
+                promptText += ' ';
+                if (textBefore) promptText = textBefore;
+                if (promptText) formData.append('prompt', promptText);
+
+                logMessage('Sending audio to OpenAI Whisper API...', 'info');
+                const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${getOpenAIKey()}`
+                    },
+                    body: formData
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    logMessage(`Transcription received: "${data.text}"`, 'success');
+                    lastTexts.push(textarea.value);
+                    insertResult(data);
+                } else {
+                    logMessage(`API Error: ${JSON.stringify(data.error)}`, 'error');
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                logMessage(`Error: ${error.message}`, 'error');
+                alert(`Error: ${error.message}`);
+                console.error(error);
+            } finally {
+                resolve();
+            }
+        });
+    });
+};
+
+// ---------------- Recording lifecycle (mode-agnostic) ----------------
+const startRecording = async () => {
+    if (isRecording || isStoppingRecording || isStartingRecording) return;
+    isStartingRecording = true;
+    try {
         logMessage('Starting recording...', 'info');
         console.log('Recording...');
-        audioStream = await navigator.mediaDevices.getUserMedia({audio: true});
-        logMessage('Microphone access granted', 'success');
-        const audioContext = new AudioContext();
-        const input = audioContext.createMediaStreamSource(audioStream);
-        recorder = new Recorder(input, {numChannels: 1});
-        recorder.record();
-        // 2-minute auto-stop
-        timeoutCall = setTimeout(() => {
-            logMessage('Auto-stopping recording after 2 minutes', 'warn');
-            stopRecording();
-        }, maxRecordingMs);
+        if (getMode() === MODE_BROWSER) {
+            await startBrowserRecognition();
+        } else {
+            await startWhisperRecording();
+        }
         // Show stop button
         stopButton.style.display = '';
         stopButton.disabled = false;
-        isRecording = true;
         logMessage('Recording started successfully', 'success');
     } catch (error) {
         logMessage(`Error starting recording: ${error.message}`, 'error');
         console.error('Error starting recording:', error);
         alert(`Error starting recording: ${error.message}`);
+        isRecording = false;
     } finally {
         isStartingRecording = false;
     }
 };
 
-// Stop recording and handle audio
-const stopRecording = async (event, e1, e2) => {
+const stopRecording = async () => {
     if (isStartingRecording) {
         logMessage('Double click detected, waiting...', 'warn');
         alert('You probably did a double click. Please use "push to talk" - press and hold the button to record.');
@@ -102,82 +260,48 @@ const stopRecording = async (event, e1, e2) => {
     logMessage('Stopping recording...', 'info');
     console.log('Stopping recording');
     dictateButton.disabled = true;
-    recorder.stop();
-    clearTimeout(timeoutCall);
-    audioStream.getTracks().forEach(track => track.stop());
     // Hide stop button
     stopButton.style.display = 'none';
-    logMessage('Recording stopped, processing audio...', 'info');
-    recorder.exportWAV(async (blob) => {
 
-        try {
-            logMessage(`Audio blob size: ${blob.size} bytes`, 'info');
-            const formData = new FormData();
-            formData.append('file', blob);
-            formData.append('model', 'whisper-1');
-            let value = document.getElementById('dictation-language').value;
-            if (value) {
-                formData.append('language', value);
-                logMessage(`Language set to: ${value}`, 'info');
-            }
-            // Create a prompt from the existing text to guide the transcription
-            let cursorPosition = document.activeElement === textarea ? textarea.selectionStart : lastPosition;
-            let textAreaValue = textarea.value || '';
-            let termsAreaValue = termsarea.value;
-            if (termsAreaValue) localStorage.setItem(storage_relevant_terms, termsAreaValue);
-            const textBefore = textAreaValue.substring(0, cursorPosition);
-            const textAfter = textAreaValue.substring(cursorPosition);
-            var promptText = '';
-            if (textAfter) promptText = '... ' + textAfter + '\n\n' + '-'.repeat(80) + '\n\n';
-            if (termsAreaValue) promptText += termsAreaValue + '\n\n' + '-'.repeat(80) + '\n\n';
-            promptText += ' ';
-            if (textBefore) promptText = textBefore;
-            if (promptText) formData.append('prompt', promptText);
-
-            logMessage('Sending audio to OpenAI Whisper API...', 'info');
-            const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${getOpenAIKey()}`
-                },
-                body: formData
-            });
-            const data = await response.json();
-            if (response.ok) {
-                logMessage(`Transcription received: "${data.text}"`, 'success');
-                lastTexts.push(textarea.value);
-                insertResult(data);
-            } else {
-                logMessage(`API Error: ${JSON.stringify(data.error)}`, 'error');
-                throw new Error(data.error);
-            }
-        } catch (error) {
-            logMessage(`Error: ${error.message}`, 'error');
-            alert(`Error: ${error.message}`);
-            console.error(error);
-        } finally {
-            dictateButton.disabled = false;
-            recorder = null;
-            isRecording = false;
-            isStoppingRecording = false;
+    if (getMode() === MODE_BROWSER) {
+        stopBrowserRecognition();
+        if (recognitionFinalBuffer) {
+            lastTexts.push(textarea.value);
+            logMessage('Browser speech results', 'info');
+        } else {
+            logMessage('No speech recognized', 'warn');
         }
-    });
+    } else {
+        await stopWhisperRecording();
+    }
+
+    recorder = null;
+    recognition = null;
+    audioStream = null;
+    isRecording = false;
+    isStoppingRecording = false;
+    dictateButton.disabled = false;
 };
 
 // Insert result into textarea
-const insertResult = (data) => {
-    // Insert transcription at current cursor position
+const insertText = (text) => {
     // set cursorPosition to textarea.selectionStart if textarea is focussed, otherwise to lastPosition
     let cursorPosition = document.activeElement === textarea ? textarea.selectionStart : lastPosition;
     let value = textarea.value || '';
     const textBefore = value.substring(0, cursorPosition);
     const textAfter = value.substring(cursorPosition);
-    textarea.value = `${textBefore}${/\s$/.test(textBefore) || !textBefore ? '' : ' '}${data.text}${/^\s/.test(textAfter) ? '' : ' '}${textAfter}`;
+    textarea.value = `${textBefore}${/\s$/.test(textBefore) || !textBefore ? '' : ' '}${text}${/^\s/.test(textAfter) ? '' : ' '}${textAfter}`;
     // set the cursor position just after the inserted text . Observe the possibly inserted space after textBefore, and before textAfter
-    textarea.selectionStart = cursorPosition + (/\s$/.test(textBefore) ? 0 : 1) + data.text.length + (/^\s/.test(textAfter) ? 0 : 1);
+    textarea.selectionStart = cursorPosition + (/\s$/.test(textBefore) ? 0 : 1) + text.length + (/^\s/.test(textAfter) ? 0 : 1);
     textarea.selectionEnd = textarea.selectionStart;
     lastPosition = textarea.selectionStart;
-}
+    textarea.focus();
+};
+
+const insertResult = (data) => {
+    lastPosition = document.activeElement === textarea ? textarea.selectionStart : lastPosition;
+    insertText(data.text);
+};
 
 textarea.addEventListener('blur', () => {
     lastPosition = textarea.selectionStart;
@@ -350,4 +474,5 @@ attachEventListeners();
 
 // Log initialization
 logMessage('Dictation app initialized', 'success');
+logMessage('Transcription engine: ' + (getMode() === MODE_BROWSER ? 'Browser Speech' : 'Whisper (OpenAI)'), 'info');
 logMessage('User agent: ' + navigator.userAgent, 'info');
