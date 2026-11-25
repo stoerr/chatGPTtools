@@ -7,6 +7,7 @@ const continuousGroup = document.getElementById('dictation-continuous-group');
 const helpButton = document.getElementById('dictation-help');
 const clearButton = document.getElementById('dictation-clear');
 const modeSelect = document.getElementById('dictation-mode');
+const deviceSelect = document.getElementById('dictation-device');
 const readButton = document.getElementById('dictation-read');
 const rendered = document.getElementById('dictation-rendered');
 
@@ -83,11 +84,66 @@ const storage_api_key = 'openai_api_key';
 const storage_relevant_terms = 'net-stoerr-chatgpt-dictation-relevant-terms';
 const storage_textarea = 'net-stoerr-chatgpt-dictation-textarea';
 const storage_language = 'net-stoerr-chatgpt-dictation-language';
+const storage_device = 'net-stoerr-chatgpt-dictation-device';
 
 if (!termsarea.value) termsarea.value = localStorage.getItem(storage_relevant_terms) || '';
 if (!textarea.value) textarea.value = localStorage.getItem(storage_textarea) || '';
 const storedLanguage = localStorage.getItem(storage_language);
 if (storedLanguage) document.getElementById('dictation-language').value = storedLanguage;
+
+// ---------------- Input device selection ----------------
+// Helper to return an exact deviceId constraint for the selected input, or {} for the default
+const getSelectedDeviceConstraint = () => {
+    const id = deviceSelect ? deviceSelect.value : '';
+    return id ? { audio: { deviceId: { exact: id } } } : { audio: true };
+};
+
+const getSelectedDeviceId = () => deviceSelect ? deviceSelect.value : '';
+
+// Enumerate available audio input devices and (re)populate the dropdown.
+// device.labels are empty until the user grants microphone permission.
+const refreshInputDevices = async () => {
+    if (!deviceSelect) return;
+    const previous = getSelectedDeviceId();
+    let devices = [];
+    try {
+        devices = await navigator.mediaDevices.enumerateDevices();
+        // Getting a real label may require an active mic permission (from a prior getUserMedia call).
+        if (!devices.some(d => d.kind === 'audioinput' && d.label)) {
+            await navigator.mediaDevices.getUserMedia({ audio: true }).then(s => s.getTracks().forEach(t => t.stop())).catch(() => {});
+            devices = await navigator.mediaDevices.enumerateDevices();
+        }
+    } catch (e) {
+        logMessage(`Could not enumerate input devices: ${e.message}`, 'error');
+    }
+    const mics = devices.filter(d => d.kind === 'audioinput');
+    // Keep the current selection only if the device is still present.
+    const currentStillPresent = mics.some(d => d.deviceId === previous);
+    deviceSelect.innerHTML = '<option value="">(input device: default)</option>';
+    mics.forEach(d => {
+        const option = document.createElement('option');
+        option.value = d.deviceId;
+        option.textContent = d.label || 'Mic (no label - grant mic permission)';
+        deviceSelect.appendChild(option);
+    });
+    if (currentStillPresent) {
+        deviceSelect.value = previous;
+    }
+    if (mics.length > 0) {
+        logMessage(`Input devices refreshed: ${mics.length} available`, 'info');
+    }
+};
+
+if (localStorage.getItem(storage_device)) {
+    deviceSelect.value = localStorage.getItem(storage_device);
+}
+deviceSelect.addEventListener('change', () => {
+    localStorage.setItem(storage_device, deviceSelect.value);
+    logMessage(`Input source selected: ${deviceSelect.value ? (deviceSelect.selectedOptions[0]?.text || 'device') : 'system default'}`, 'info');
+});
+deviceSelect.addEventListener('focus', () => {
+    refreshInputDevices();
+});
 
 const getOpenAIKey = () => {
     openaiAPIKey = localStorage.getItem(storage_api_key);
@@ -111,6 +167,12 @@ const initBrowserRecognition = () => {
     recognition = browserRecognizer();
     recognition.continuous = true;
     recognition.interimResults = false; // insert only final (stable) results
+    // Best-effort device selection for browser speech recognition (Chromium supports audioTrackConstraints);
+    // older engines ignore it and use the system default.
+    const deviceId = getSelectedDeviceId();
+    if (deviceId) {
+        try { recognition.audioTrackConstraints = { deviceId: { exact: deviceId } }; } catch (e) { /* ignored */ }
+    }
     const lang = document.getElementById('dictation-language').value;
     recognition.lang = lang || (navigator.language || 'en-US'); // BCP-47 is required by the Web Speech API
     recognition.onresult = (event) => {
@@ -216,7 +278,7 @@ const stopContinuousDictation = async () => {
 
 // ---------------- Whisper recording ----------------
 const startWhisperRecording = async () => {
-    audioStream = await navigator.mediaDevices.getUserMedia({audio: true});
+    audioStream = await navigator.mediaDevices.getUserMedia(getSelectedDeviceConstraint());
     logMessage('Microphone access granted', 'success');
     const audioContext = new AudioContext();
     const input = audioContext.createMediaStreamSource(audioStream);
@@ -367,6 +429,7 @@ const insertText = (text) => {
     textarea.selectionEnd = textarea.selectionStart;
     lastPosition = textarea.selectionStart;
     textarea.focus();
+    saveTextarea();
 };
 
 const insertResult = (data) => {
@@ -476,6 +539,7 @@ const attachEventListeners = () => {
         clearButton.addEventListener('click', function () {
             textarea.value = '';
             termsarea.value = '';
+            saveTextarea();
             const langSelect = document.getElementById('dictation-language');
             if (langSelect) langSelect.value = '';
             // Remove stored relevant terms from localStorage as user cleared them
@@ -559,6 +623,7 @@ const undoButton = document.getElementById('dictation-undo');
 function undo() {
     if (lastTexts.length > 0) {
         textarea.value = lastTexts.pop();
+        saveTextarea();
         logMessage('Undo performed', 'info');
     }
 }
@@ -600,6 +665,7 @@ const fixupText = async () => {
             logMessage('Text fixup completed successfully', 'success');
             lastTexts.push(textarea.value);
             textarea.value = data.choices[0].message.content.trim();
+            saveTextarea();
         } else {
             logMessage(`API Error or unexpected response: ${JSON.stringify(data)}`, 'error');
             throw new Error(`API Error or unexpected response: ${JSON.stringify(data)}`);
@@ -669,6 +735,7 @@ const processText = async (prompt) => {
             logMessage('Text processing completed successfully', 'success');
             lastTexts.push(textarea.value);
             textarea.value = data.choices[0].message.content.trim();
+            saveTextarea();
             if (rendered.style.display !== 'none') showRendered(); // refresh rendered view if active
         } else {
             logMessage(`API Error or unexpected response: ${JSON.stringify(data)}`, 'error');
@@ -691,9 +758,14 @@ const openProcessModal = () => {
 };
 
 // ---------------- Persist form settings ----------------
-textarea.addEventListener('input', () => {
+const saveTextarea = () => {
     try { localStorage.setItem(storage_textarea, textarea.value); } catch (e) { /* storage full/unavailable */ }
-});
+};
+const saveTerms = () => {
+    try { localStorage.setItem(storage_relevant_terms, termsarea.value); } catch (e) { /* storage full/unavailable */ }
+};
+textarea.addEventListener('input', saveTextarea);
+termsarea.addEventListener('input', saveTerms);
 document.getElementById('dictation-language').addEventListener('change', (e) => {
     try { localStorage.setItem(storage_language, e.target.value); } catch (err) { /* ignore */ }
 });

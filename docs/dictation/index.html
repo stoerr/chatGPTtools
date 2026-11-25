@@ -19,6 +19,22 @@
             flex: 0 0 auto; /* don't stretch inside flex container */
         }
 
+        /* Make the input device dropdown only as wide as its contents */
+        #dictation-device {
+            width: auto !important;
+            display: inline-block;
+            white-space: nowrap;
+            padding-left: .5rem;
+            padding-right: .5rem;
+            flex: 0 0 auto; /* don't stretch inside flex container */
+            max-width: 18rem; /* keep a long device name from blowing up the footer bar */
+        }
+
+        /* Widen the main dictation window beyond the default Bootstrap container */
+        #dictation-window {
+            max-width: 1800px;
+        }
+
         /* Allow footer buttons to wrap on small screens (phones/tablets) */
         .card-footer.d-flex {
             flex-wrap: wrap;
@@ -78,7 +94,7 @@
     </style>
 </head>
 <body>
-<div class="container mt-0">
+<div class="container mt-0" id="dictation-window">
     <div class="card" style="border-radius: 20px; background: linear-gradient(#f0f0f0, #dcdcdc);">
         <div class="card-body">
             <h5 class="card-title text-center">
@@ -102,6 +118,9 @@
                     <option value="en">English</option>
                     <option value="de">Deutsch</option>
                     <option value="es">Español</option>
+                </select>
+                <select id="dictation-device" class="btn btn-light ml-2" title="Select the audio input source (default system microphone if empty). List refreshes when this dropdown is opened.">
+                    <option value="">(input device: default)</option>
                 </select>
             </div>
             <!-- Push to Talk: press-and-hold for a single snippet -->
