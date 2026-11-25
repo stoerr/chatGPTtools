@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4d9fff"/>
+      <stop offset="1" stop-color="#2563eb"/>
+    </linearGradient>
+  </defs>
+  <!-- Chat bubble -->
+  <rect x="8" y="8" width="112" height="112" rx="28" fill="url(#bg)"/>
+  <!-- Speech bubble -->
+  <path d="M26 34 h76 a10 10 0 0 1 10 10 v36 a10 10 0 0 1 -10 10 h-46 l-20 20 v-20 h-10 a10 10 0 0 1 -10 -10 v-36 a10 10 0 0 1 10 -10 z"
+        fill="#ffffff"/>
+  <!-- Text lines -->
+  <rect x="40" y="48" width="48" height="9" rx="4.5" fill="#2563eb"/>
+  <rect x="40" y="63" width="36" height="9" rx="4.5" fill="#2563eb"/>
+  <rect x="40" y="78" width="24" height="9" rx="4.5" fill="#2563eb"/>
+</svg>
