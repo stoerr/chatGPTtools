@@ -336,8 +336,14 @@
                             <input type="number" class="form-control" id="tokens" value="10000">
                         </div>
                         <div class="input-group me-2">
-                            <label class="input-group-text" for="model" data-detext="Modell:">Model:</label>
-                            <select class="form-select" id="model" style="width: auto;">
+                            <label class="input-group-text" for="model1" data-detext="Modell 1:">Model 1:</label>
+                            <select class="form-select" id="model1" style="width: auto;">
+                                <option value="gpt-6.1-sol" selected>gpt-6.1-sol</option>
+                            </select>
+                        </div>
+                        <div class="input-group me-2">
+                            <label class="input-group-text" for="model2" data-detext="Modell 2:">Model 2:</label>
+                            <select class="form-select" id="model2" style="width: auto;">
                                 <option value="gpt-6.1-sol" selected>gpt-6.1-sol</option>
                             </select>
                         </div>
@@ -473,15 +479,17 @@
     var modelsLoading = false;
 
     function sizeModelSelect() {
-        const select = $('#model')[0];
-        const style = window.getComputedStyle(select);
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        context.font = style.font;
-        const textWidth = context.measureText(select.options[select.selectedIndex].text).width;
-        const horizontalSpace = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) +
-            parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth) + 24;
-        select.style.width = Math.ceil(textWidth + horizontalSpace) + 'px';
+        $('.buttonrow select[id^="model"]').each(function () {
+            const select = this;
+            const style = window.getComputedStyle(select);
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            context.font = style.font;
+            const textWidth = context.measureText(select.options[select.selectedIndex].text).width;
+            const horizontalSpace = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) +
+                parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth) + 24;
+            select.style.width = Math.ceil(textWidth + horizontalSpace) + 'px';
+        });
     }
 
     function sizeNumberInput(input) {
@@ -524,14 +532,16 @@
                 'Authorization': 'Bearer ' + apiKey,
             },
             success: function (data) {
-                const currentModel = $('#model').val();
+                const currentModels = {model1: $('#model1').val(), model2: $('#model2').val()};
                 const modelIds = data.data.map(model => model.id).sort((a, b) => a.localeCompare(b));
                 if (!modelIds.includes('gpt-6.1-sol')) modelIds.unshift('gpt-6.1-sol');
-                $('#model').empty();
+                $('#model1, #model2').empty();
                 modelIds.forEach(modelId => {
-                    $('#model').append($('<option>').val(modelId).text(modelId));
+                    $('#model1').append($('<option>').val(modelId).text(modelId));
+                    $('#model2').append($('<option>').val(modelId).text(modelId));
                 });
-                $('#model').val(modelIds.includes(currentModel) ? currentModel : 'gpt-6.1-sol');
+                $('#model1').val(modelIds.includes(currentModels.model1) ? currentModels.model1 : 'gpt-6.1-sol');
+                $('#model2').val(modelIds.includes(currentModels.model2) ? currentModels.model2 : 'gpt-6.1-sol');
                 sizeModelSelect();
                 modelsLoaded = true;
                 modelsLoading = false;
@@ -544,8 +554,8 @@
         });
     }
 
-    $('#model').on('focus', loadModels);
-    $('#model').on('change', sizeModelSelect);
+    $('#model1, #model2').on('focus', loadModels);
+    $('#model1, #model2').on('change', sizeModelSelect);
     sizeModelSelect();
     if (localStorage.getItem('openai_api_key')) loadModels();
 
@@ -863,7 +873,8 @@
                 return;
             }
         }
-        submitToGPT(messages, function (data) {
+        var model = $(sysmsgkey === 'sysmsg1' ? '#model1' : '#model2').val();
+        submitToGPT(messages, model, function (data) {
             let content = data.choices[0].message.content;
             if (data.choices[0].finish_reason === 'length') {
                 content = content + "...\n\n";
@@ -886,7 +897,7 @@
      * @param messages array of messages [{"role": role, "content": thecontent}, ...] where role is 'user' or 'agent' or 'system'
      * @param resultcallback gets the data from the result
      * @param errorcallback in case of errors. */
-    function submitToGPT(messages, resultcallback, errorcallback) {
+    function submitToGPT(messages, model, resultcallback, errorcallback) {
         // fetch api key from local storage, or else prompt if not found
         var api_key = localStorage.getItem('openai_api_key');
         if (!api_key) {
@@ -899,7 +910,7 @@
         var retries = 0;
         var temperature = $('#temperature').val();
         var requestData = {
-            model: $('#model').val(),
+            model: model,
             max_completion_tokens: maxtokens,
             messages: messages,
         };
