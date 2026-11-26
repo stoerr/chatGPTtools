@@ -260,9 +260,73 @@
 <script>
     const STORAGE_KEY = 'net.stoerr.chatgpt.tools.multiplemessagechat';
     const CHAT_STATE_SELECTOR = '#hps-chatgpt-chat-state';
+    // Prefix for the URL hash that carries the shared conversation; anchors without it are ignored.
+    const URL_STATE_PREFIX = 'chat=';
     let chatStateReady = false;
     let pendingModel = null;
     let modelLoadVersion = 0;
+
+    // --- URL-anchor conversation encoding.
+    // The full chat state (settings + fields + rows) is deflate-compressed and base64url-encoded
+    // into the URL hash, so a conversation can be shared/transferred as a plain link. The anchor
+    // takes precedence over the local form state (#hps-chatgpt-chat-state) on load.
+    var urlEncoder = new TextEncoder();
+    var urlDecoder = new TextDecoder();
+    function urlCompress(bytes) {
+        var s = new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate-raw'));
+        return new Response(s).arrayBuffer();
+    }
+    function urlDecompress(bytes) {
+        var s = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+        return new Response(s).arrayBuffer();
+    }
+    function b64urlEncode(bytes) {
+        var s = '';
+        for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+        return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+    function b64urlDecode(str) {
+        str = str.replace(/-/g, '+').replace(/_/g, '/');
+        while (str.length % 4) str += '=';
+        var bin = atob(str);
+        var out = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+        return out;
+    }
+
+    /** Encodes the given chat state object into the URL hash value (without '#'). */
+    function encodeUrlState(state) {
+        if (typeof CompressionStream === 'undefined') return null;
+        return urlCompress(urlEncoder.encode(JSON.stringify(state))).then(function (buf) {
+            return URL_STATE_PREFIX + b64urlEncode(new Uint8Array(buf));
+        });
+    }
+
+    /** Decodes the raw hash (without '#') into a chat state object; null when invalid/absent. */
+    function decodeUrlState(hash) {
+        try {
+            var h = String(hash).split('?')[0];
+            if (!h.startsWith(URL_STATE_PREFIX) || typeof DecompressionStream === 'undefined') return null;
+            var bytes = b64urlDecode(h.slice(URL_STATE_PREFIX.length));
+            return urlDecompress(bytes).then(function (buf) {
+                return JSON.parse(urlDecoder.decode(new Uint8Array(buf)));
+            });
+        } catch (e) {
+            return Promise.resolve(null);
+        }
+    }
+
+    // Debounced anchor write so typing does not compress+hash on every keystroke.
+    var anchorTimer = null;
+    function scheduleAnchorUpdate(state) {
+        if (anchorTimer) clearTimeout(anchorTimer);
+        anchorTimer = setTimeout(function () {
+            anchorTimer = null;
+            encodeUrlState(state).then(function (hash) {
+                if (hash) window.history.replaceState(null, '', '#' + hash);
+            });
+        }, 300);
+    }
 
     /*
     Model	API ID	Context / max output	Price per MTok (in / out)
@@ -335,11 +399,56 @@ Claude Haiku 5.5	claude-haiku-5-5	1M / 128K	from $0.10 / $0.50
 
     function initializeChat() {
         if (chatStateReady) return;
-        if (!restoreChat()) reset();
+        // The URL anchor takes precedence over the local form state.
+        const anchor = location.hash.slice(1);
+        if (anchor) {
+            decodeUrlState(anchor).then(function (state) {
+                if (state && !restoreUrlState(state)) {
+                    if (!restoreChat()) reset();
+                    // A clean (non-anchor) page: clear the anchor so the URL stays shareable.
+                    window.history.replaceState(null, '', location.pathname + location.search);
+                }
+                finishInitialize();
+            }).catch(function () { finishInitialize(); });
+        } else {
+            if (!restoreChat()) reset();
+            finishInitialize();
+        }
+    }
+
+    function finishInitialize() {
+        if (chatStateReady) return;
         chatStateReady = true;
         toggleOtherApiSettings();
         setModels(pendingModel);
         saveChat();
+    }
+
+    /** Applies a decoded URL-anchor state (same shape as restoreChat's). */
+    function restoreUrlState(state) {
+        try {
+            const roles = ['system', 'user', 'assistant', 'toolscalls', 'tool'];
+            if (state.version !== 1 || !state.settings || typeof state.settings !== 'object' ||
+                !Array.isArray(state.rows) || !state.rows.length ||
+                !state.rows.every(row => row && roles.includes(row.role) && typeof row.text === 'string')) {
+                return false;
+            }
+            applySettings(state.settings);
+            for (const field of ['json', 'tools', 'response_format', 'initialprompt']) {
+                $('#' + field).val(state.fields?.[field] || '');
+            }
+            $('.messagefields').not('#row-1').remove();
+            const [first, ...remaining] = state.rows;
+            $('#row-1 .type').val(first.role);
+            $('#row-1 .message').val(first.text);
+            for (const row of remaining) addRow(row.role, row.text);
+            fixRowChaining();
+            adjustTextAreas(false);
+            return true;
+        } catch (e) {
+            console.error('Error restoring chat from URL:', e);
+            return false;
+        }
     }
 
     function applySettings(settings) {
@@ -379,6 +488,14 @@ Claude Haiku 5.5	claude-haiku-5-5	1M / 128K	from $0.10 / $0.50
         };
     }
 
+    /** Settings for the URL anchor: the auth secret must never reach the URL (leaks via logs/history). */
+    function readSettingsForUrl() {
+        const s = readSettings();
+        delete s.otherAuthValue;
+        delete s.otherAuthHeader;
+        return s;
+    }
+
     function saveSettings() {
         if (!chatStateReady) return;
         saveChat();
@@ -405,6 +522,8 @@ Claude Haiku 5.5	claude-haiku-5-5	1M / 128K	from $0.10 / $0.50
             field.value = JSON.stringify({version: 1, settings: readSettings(), fields, rows});
             // Notify browser form-state tracking after programmatic changes, too.
             field.dispatchEvent(new Event('input', {bubbles: true}));
+            // Mirror the conversation into the URL hash (without the auth secret).
+            scheduleAnchorUpdate({version: 1, settings: readSettingsForUrl(), fields, rows});
         } catch (e) {
             console.error('Error saving chat:', e);
         }
