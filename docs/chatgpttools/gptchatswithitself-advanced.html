@@ -338,13 +338,13 @@
                         <div class="input-group me-2">
                             <label class="input-group-text" for="model1" data-detext="Modell 1:">Model 1:</label>
                             <select class="form-select" id="model1" style="width: auto;">
-                                <option value="gpt-6.1-sol" selected>gpt-6.1-sol</option>
+                                <option value="gpt-6.2-sol" selected>gpt-6.2-sol</option>
                             </select>
                         </div>
                         <div class="input-group me-2">
                             <label class="input-group-text" for="model2" data-detext="Modell 2:">Model 2:</label>
                             <select class="form-select" id="model2" style="width: auto;">
-                                <option value="gpt-6.1-sol" selected>gpt-6.1-sol</option>
+                                <option value="gpt-6.2-sol" selected>gpt-6.2-sol</option>
                             </select>
                         </div>
                         <span id="modelStatus" role="status" aria-live="polite"></span>
@@ -534,14 +534,14 @@
             success: function (data) {
                 const currentModels = {model1: $('#model1').val(), model2: $('#model2').val()};
                 const modelIds = data.data.map(model => model.id).sort((a, b) => a.localeCompare(b));
-                if (!modelIds.includes('gpt-6.1-sol')) modelIds.unshift('gpt-6.1-sol');
+                if (!modelIds.includes('gpt-6.2-sol')) modelIds.unshift('gpt-6.2-sol');
                 $('#model1, #model2').empty();
                 modelIds.forEach(modelId => {
                     $('#model1').append($('<option>').val(modelId).text(modelId));
                     $('#model2').append($('<option>').val(modelId).text(modelId));
                 });
-                $('#model1').val(modelIds.includes(currentModels.model1) ? currentModels.model1 : 'gpt-6.1-sol');
-                $('#model2').val(modelIds.includes(currentModels.model2) ? currentModels.model2 : 'gpt-6.1-sol');
+                $('#model1').val(modelIds.includes(currentModels.model1) ? currentModels.model1 : 'gpt-6.2-sol');
+                $('#model2').val(modelIds.includes(currentModels.model2) ? currentModels.model2 : 'gpt-6.2-sol');
                 sizeModelSelect();
                 modelsLoaded = true;
                 modelsLoading = false;
