@@ -91,6 +91,13 @@ if (!textarea.value) textarea.value = localStorage.getItem(storage_textarea) || 
 const storedLanguage = localStorage.getItem(storage_language);
 if (storedLanguage) document.getElementById('dictation-language').value = storedLanguage;
 
+// The URL #anchor takes precedence over localStorage: if a valid compressed state is
+// present in the hash, it overrides the fields restored above.
+(async () => {
+    const restored = await restoreStateFromAnchor(window.location.hash);
+    if (restored) logMessage('Restored state from URL anchor', 'success');
+})();
+
 // ---------------- Input device selection ----------------
 // Helper to return an exact deviceId constraint for the selected input, or {} for the default
 const getSelectedDeviceConstraint = () => {
@@ -758,16 +765,105 @@ const openProcessModal = () => {
 };
 
 // ---------------- Persist form settings ----------------
-const saveTextarea = () => {
-    try { localStorage.setItem(storage_textarea, textarea.value); } catch (e) { /* storage full/unavailable */ }
+// State is stored twice: in localStorage and (with precedence) compressed into the URL #anchor
+// so the whole text can be shared by copying the link. The anchor is a self-describing blob:
+// "1:" + raw-deflate of the JSON state, base64url-encoded (widest URL-safe charset).
+
+// Encode a binary string over the full URL-safe base64url alphabet (A-Z a-z 0-9 - _).
+const bytesToBase64Url = (bytes) => {
+    let binary = '';
+    for (const b of bytes) binary += String.fromCharCode(b);
+    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 };
-const saveTerms = () => {
-    try { localStorage.setItem(storage_relevant_terms, termsarea.value); } catch (e) { /* storage full/unavailable */ }
+
+const base64UrlToBytes = (b64) => {
+    b64 = b64.replace(/-/g, '+').replace(/_/g, '/');
+    while (b64.length % 4) b64 += '=';
+    const binary = atob(b64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes;
 };
+
+// Collect the persistent state object.
+const collectState = () => ({
+    text: textarea.value,
+    terms: termsarea.value,
+    language: document.getElementById('dictation-language').value || '',
+    render: localStorage.getItem(storage_view) === 'render',
+    updated: Date.now(), // forces a distinct anchor even if the text is unchanged, so share links stay fresh
+});
+
+// Compress + encode the state as a URL anchor value, e.g. "1:AbC…". Best effort.
+const stateToAnchor = async () => {
+    try {
+        const json = JSON.stringify(collectState());
+        const input = new TextEncoder().encode(json);
+        const cs = new CompressionStream('deflate-raw');
+        const stream = new Blob([input]).stream().pipeThrough(cs);
+        const compressed = new Uint8Array(await new Response(stream).arrayBuffer());
+        return '1:' + bytesToBase64Url(compressed);
+    } catch (e) {
+        return null;
+    }
+};
+
+// Async restore that reads the anchor with precedence over localStorage.
+const restoreStateFromAnchor = async (hash) => {
+    try {
+        const h = (hash || '').replace(/^#/, '');
+        const sep = h.indexOf(':');
+        if (sep < 0) return false;
+        if (h.substring(0, sep) !== '1') return false;
+        const compressed = base64UrlToBytes(h.substring(sep + 1));
+        const ds = new DecompressionStream('deflate-raw');
+        const stream = new Blob([compressed]).stream().pipeThrough(ds);
+        const json = new TextDecoder().decode(await new Response(stream).arrayBuffer());
+        const state = JSON.parse(json);
+        if (typeof state !== 'object' || state === null) return false;
+        if (typeof state.text === 'string') textarea.value = state.text;
+        if (typeof state.terms === 'string') termsarea.value = state.terms;
+        if (typeof state.language === 'string') {
+            const langSelect = document.getElementById('dictation-language');
+            if (langSelect) langSelect.value = state.language;
+        }
+        if (state.render && textarea.value) showRendered();
+        // Mirror the anchor state into localStorage so it survives an empty-hash reload
+        try {
+            localStorage.setItem(storage_textarea, textarea.value);
+            localStorage.setItem(storage_relevant_terms, termsarea.value);
+            localStorage.setItem(storage_language, document.getElementById('dictation-language').value);
+        } catch (e) { /* ignored */ }
+        return true;
+    } catch (e) {
+        return false;
+    }
+};
+
+// Update the URL anchor (debounced) and localStorage together.
+let anchorTimer;
+const saveState = () => {
+    try {
+        localStorage.setItem(storage_textarea, textarea.value);
+        localStorage.setItem(storage_relevant_terms, termsarea.value);
+        localStorage.setItem(storage_language, document.getElementById('dictation-language').value || '');
+    } catch (e) { /* storage full/unavailable */ }
+    clearTimeout(anchorTimer);
+    anchorTimer = setTimeout(async () => {
+        const anchor = await stateToAnchor();
+        if (anchor) {
+            try { history.replaceState(null, '', '#' + anchor); } catch (e) { /* ignored */ }
+        }
+    }, 500);
+};
+
+const saveTextarea = () => saveState();
+const saveTerms = () => saveState();
 textarea.addEventListener('input', saveTextarea);
 termsarea.addEventListener('input', saveTerms);
 document.getElementById('dictation-language').addEventListener('change', (e) => {
     try { localStorage.setItem(storage_language, e.target.value); } catch (err) { /* ignore */ }
+    saveState();
 });
 
 // ---------------- Read out text (browser speech synthesis) ----------------
@@ -912,3 +1008,9 @@ if (localStorage.getItem(storage_view) === 'render' && textarea.value) {
 logMessage('Dictation app initialized', 'success');
 logMessage('Transcription engine: ' + (getMode() === MODE_BROWSER ? 'Browser Speech' : 'Whisper (OpenAI)'), 'info');
 logMessage('User agent: ' + navigator.userAgent, 'info');
+
+// Reload state when the URL anchor changes (history nav, or a pasted share link)
+window.addEventListener('hashchange', async () => {
+    const restored = await restoreStateFromAnchor(window.location.hash);
+    if (restored) logMessage('Restored state from URL anchor', 'success');
+});
